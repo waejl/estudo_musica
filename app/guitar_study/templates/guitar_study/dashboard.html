@@ -1,0 +1,227 @@
+{% extends 'guitar_study/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-12 col-md-8">
+        <h1 class="fw-extrabold mb-1">Bem-vindo ao seu Estúdio, <span class="text-primary">{{ current_user.name }}</span>!</h1>
+        <p class="text-muted mb-0">Acompanhe seu progresso, metas e volte aos estudos de onde parou.</p>
+    </div>
+    <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
+        <a href="{{ url_for('guitar_study.fretboard') }}" class="btn btn-primary shadow d-inline-flex align-items-center gap-2">
+            <i class="bi bi-guitar"></i> Abrir Braço da Guitarra
+        </a>
+    </div>
+</div>
+
+<!-- Cards de Estatísticas Principais -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card card-hover h-100 border-start border-primary border-4 p-3 bg-body-tertiary">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="fs-7 text-muted fw-medium d-block mb-1">Sessões Realizadas</span>
+                    <h2 class="fw-bold mb-0 text-primary">{{ total_sessions }}</h2>
+                </div>
+                <div class="bg-primary-subtle text-primary p-2 rounded-3">
+                    <i class="bi bi-music-note fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card card-hover h-100 border-start border-success border-4 p-3 bg-body-tertiary">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="fs-7 text-muted fw-medium d-block mb-1">Tempo Total de Estudo</span>
+                    <h2 class="fw-bold mb-0 text-success">{{ total_duration }} <span class="fs-6 fw-normal text-muted">min</span></h2>
+                </div>
+                <div class="bg-success-subtle text-success p-2 rounded-3">
+                    <i class="bi bi-clock-history fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card card-hover h-100 border-start border-warning border-4 p-3 bg-body-tertiary">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="fs-7 text-muted fw-medium d-block mb-1">Sequência Diária (Streak)</span>
+                    <h2 class="fw-bold mb-0 text-warning">{{ streak }} <span class="fs-6 fw-normal text-muted">dias seguidos</span></h2>
+                </div>
+                <div class="bg-warning-subtle text-warning p-2 rounded-3">
+                    <i class="bi bi-fire fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card card-hover h-100 border-start border-info border-4 p-3 bg-body-tertiary">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="fs-7 text-muted fw-medium d-block mb-1">Prática nos Últimos 7 dias</span>
+                    <h2 class="fw-bold mb-0 text-info">{{ weekly_sessions_count }} <span class="fs-6 fw-normal text-muted">sessões</span></h2>
+                </div>
+                <div class="bg-info-subtle text-info p-2 rounded-3">
+                    <i class="bi bi-calendar-check fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    
+    <!-- Coluna Esquerda: Recomendações e Metas -->
+    <div class="col-12 col-lg-8">
+        
+        <!-- Recomendações do Sistema -->
+        <div class="card mb-4 bg-body-tertiary">
+            <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-lightning-charge text-warning fs-5"></i>
+                <h5 class="fw-bold mb-0">Recomendações de Estudo</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% for rec in recommendations %}
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 bg-body-secondary rounded-3 h-100 d-flex flex-column justify-content-between border border-secondary-subtle">
+                            <div>
+                                <h6 class="fw-bold text-primary mb-2">{{ rec.title }}</h6>
+                                <p class="fs-7 text-muted mb-3">{{ rec.desc }}</p>
+                            </div>
+                            <a href="{{ rec.url }}" class="btn btn-sm btn-outline-primary w-100 fw-medium mt-auto">Iniciar Prática</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Metas de Estudos -->
+        <div class="card bg-body-tertiary">
+            <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-trophy text-primary fs-5"></i>
+                    <h5 class="fw-bold mb-0">Metas Ativas</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if goals %}
+                    <div class="d-flex flex-column gap-3">
+                        {% for goal in goals %}
+                        <div>
+                            <div class="d-flex align-items-center justify-content-between mb-1 fs-7">
+                                <span class="fw-semibold text-body">{{ goal.title }}</span>
+                                <span class="text-muted fw-bold">{{ goal.current_minutes }}/{{ goal.target_minutes }} min</span>
+                            </div>
+                            {% set pct = (goal.current_minutes / goal.target_minutes * 100)|int %}
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar {% if goal.is_completed %}bg-success{% else %}bg-primary{% endif %} progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ pct }}%;" aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-1 fs-8 text-muted">
+                                <span>Status: {% if goal.is_completed %}<span class="text-success fw-bold">Concluído!</span>{% else %}Em progresso ({{ pct }}%){% endif %}</span>
+                                {% if goal.deadline %}
+                                <span>Prazo: {{ goal.deadline.strftime('%d/%m/%Y') }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <!-- Estado Vazio Lindo -->
+                    <div class="text-center py-4">
+                        <i class="bi bi-plus-circle text-muted fs-2 mb-2 d-block"></i>
+                        <h6 class="fw-bold mb-1">Nenhuma meta ativa cadastrada</h6>
+                        <p class="fs-7 text-muted mb-0">Defina uma meta nas configurações para focar na sua evolução!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Coluna Direita: Histórico, Favoritos e Foco Teórico -->
+    <div class="col-12 col-lg-4">
+        
+        <!-- Último Estudo Realizado -->
+        <div class="card mb-4 bg-body-tertiary">
+            <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-clock text-info fs-5"></i>
+                <h5 class="fw-bold mb-0">Atividade Recente</h5>
+            </div>
+            <div class="card-body">
+                {% if last_session %}
+                    <div class="p-3 bg-body-secondary rounded-3 border border-secondary-subtle">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="badge bg-info text-white text-uppercase fs-8">{{ last_session.category }}</span>
+                            <span class="fs-8 text-muted fw-bold">{{ last_session.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                        </div>
+                        <h6 class="fw-bold mb-1 text-primary">{{ last_session.item_key.replace('_', ' ').title() }}</h6>
+                        <p class="fs-7 text-muted mb-2">Duração: <strong>{{ last_session.duration_minutes }} minutos</strong></p>
+                        {% if last_session.notes %}
+                        <p class="fs-7 mb-0 text-body p-2 bg-body rounded-2 border border-secondary-subtle font-monospace italic">"{{ last_session.notes }}"</p>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4 bg-body-secondary rounded-3 border border-secondary-subtle">
+                        <p class="fs-7 text-muted mb-0">Nenhum estudo registrado ainda.</p>
+                    </div>
+                {% endif %}
+                
+                <div class="mt-3 row g-2">
+                    <div class="col-6">
+                        <div class="p-2 bg-body-secondary rounded-3 text-center border">
+                            <span class="fs-8 text-muted d-block mb-1">Escala Favorita</span>
+                            <span class="fw-bold text-truncate d-block fs-7" title="{{ most_studied_scale }}">{{ most_studied_scale }}</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 bg-body-secondary rounded-3 text-center border">
+                            <span class="fs-8 text-muted d-block mb-1">Modo Favorito</span>
+                            <span class="fw-bold text-truncate d-block fs-7" title="{{ most_studied_mode }}">{{ most_studied_mode }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Meus Favoritos -->
+        <div class="card bg-body-tertiary">
+            <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-heart-fill text-danger fs-5"></i>
+                <h5 class="fw-bold mb-0">Meus Favoritos</h5>
+            </div>
+            <div class="card-body">
+                {% if favorites %}
+                    <div class="d-flex flex-column gap-2">
+                        {% for fav in favorites %}
+                        <div class="p-2 bg-body-secondary rounded-3 d-flex align-items-center justify-content-between border border-secondary-subtle">
+                            <div class="d-flex flex-column">
+                                <span class="badge bg-dark-subtle text-muted align-self-start fs-8 text-uppercase mb-1" style="font-size: 9px !important;">{{ fav.category }}</span>
+                                <span class="fw-bold text-body fs-7">{{ fav.item_key.replace('_', ' ').title() }}</span>
+                            </div>
+                            {% if fav.category == 'scale' %}
+                                <a href="{{ url_for('guitar_study.scales') }}?root={{ fav.item_key.split('_')[0] }}&type={{ fav.item_key.split('_')[1:]|join('_') }}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Estudar"><i class="bi bi-arrow-right"></i></a>
+                            {% elif fav.category == 'mode' %}
+                                <a href="{{ url_for('guitar_study.modes') }}?root={{ fav.item_key.split('_')[0] }}&type={{ fav.item_key.split('_')[1:]|join('_') }}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Estudar"><i class="bi bi-arrow-right"></i></a>
+                            {% elif fav.category == 'chord' %}
+                                <a href="{{ url_for('guitar_study.chords') }}?root={{ fav.item_key.split('_')[0] }}&type={{ fav.item_key.split('_')[1:]|join('_') }}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Estudar"><i class="bi bi-arrow-right"></i></a>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4 bg-body-secondary rounded-3 border border-secondary-subtle">
+                        <i class="bi bi-heart text-muted fs-3 mb-2 d-block"></i>
+                        <p class="fs-7 text-muted mb-0">Você ainda não favoritou nada. Clique no ícone de coração ao estudar escalas, modos ou acordes para salvar aqui.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+    </div>
+    
+</div>
+{% endblock %}

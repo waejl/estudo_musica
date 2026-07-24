@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: guitar_study_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-guitar_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-guitar_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-guitar_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-guitar_user} -d ${POSTGRES_DB:-guitar_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: guitar_study_web
+    restart: always
+    ports:
+      - "${PORT:-5000}:5000"
+    environment:
+      - FLASK_APP=run.py
+      - FLASK_DEBUG=${FLASK_DEBUG:-1}
+      - SECRET_KEY=${SECRET_KEY:-dev_secret_key_change_in_production_12345}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-guitar_user}:${POSTGRES_PASSWORD:-guitar_pass}@db:5432/${POSTGRES_DB:-guitar_db}
+    volumes:
+      - .:/workspace
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+    name: postgres_data

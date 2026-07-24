@@ -1,0 +1,466 @@
+{% extends 'guitar_study/base.html' %}
+
+{% block title %}Modos Gregos{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-12 col-md-8">
+        <h1 class="fw-extrabold mb-1"><i class="bi bi-brightness-high text-primary"></i> Estudo de Modos Gregos</h1>
+        <p class="text-muted">Desvende a sonoridade mística, mística ou festiva de cada modo grego e aprenda a aplicá-los.</p>
+    </div>
+</div>
+
+<!-- Abas para Alternar entre Estudo de Modo e Comparador de Modos -->
+<ul class="nav nav-tabs mb-4" id="modesTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active fw-bold" id="study-tab" data-bs-toggle="tab" data-bs-target="#study-tab-pane" type="button" role="tab" aria-controls="study-tab-pane" aria-selected="true">
+            <i class="bi bi-book"></i> Explorar Modo
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="compare-tab" data-bs-toggle="tab" data-bs-target="#compare-tab-pane" type="button" role="tab" aria-controls="compare-tab-pane" aria-selected="false">
+            <i class="bi bi-layout-split"></i> Comparador de Modos
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="modesTabContent">
+    
+    <!-- ABA 1: EXPLORAR MODOS GREGOS -->
+    <div class="tab-pane fade show active" id="study-tab-pane" role="tabpanel" aria-labelledby="study-tab" tabindex="0">
+        <!-- Filtros do Modo -->
+        <div class="card mb-4 bg-body-tertiary">
+            <div class="card-body p-3">
+                <div class="row g-3 align-items-end">
+                    <div class="col-6 col-md-2">
+                        <label for="modeRoot" class="form-label fs-7 fw-bold text-muted">Tônica</label>
+                        <select id="modeRoot" class="form-select form-select-sm">
+                            {% for note in chromatic_notes %}
+                            <option value="{{ note }}" {% if note == 'A' %}selected{% endif %}>{{ note }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-6 col-md-3">
+                        <label for="modeType" class="form-label fs-7 fw-bold text-muted">Selecione o Modo</label>
+                        <select id="modeType" class="form-select form-select-sm">
+                            <option value="ionian">1. Jônio (Escala Maior)</option>
+                            <option value="dorian" selected>2. Dórico (Menor Sofisticada)</option>
+                            <option value="phrygian">3. Frígio (Metal / Flamenco)</option>
+                            <option value="lydian">4. Lídio (Espacial / Místico)</option>
+                            <option value="mixolydian">5. Mixolídio (Rock / Nordeste / Blues)</option>
+                            <option value="aeolian">6. Eólio (Escala Menor)</option>
+                            <option value="locrian">7. Lócrio (Tensão Máxima)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-12 col-md-7 d-flex gap-2 justify-content-md-end">
+                        <button id="btnPlayMode" class="btn btn-sm btn-primary fw-semibold d-inline-flex align-items-center gap-1">
+                            <i class="bi bi-play-fill"></i> Tocar Modo
+                        </button>
+                        <button id="btnFavMode" class="btn btn-sm btn-outline-danger fw-semibold d-inline-flex align-items-center gap-1">
+                            <i class="bi bi-heart"></i> Favoritar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Detalhes Teóricos do Modo -->
+        <div class="row g-4 mb-4">
+            <div class="col-12 col-md-4">
+                <div class="card h-100 bg-body-tertiary">
+                    <div class="card-body">
+                        <span class="badge bg-primary text-white text-uppercase fs-8 mb-2">Modo Ativo</span>
+                        <h3 id="modeTitleName" class="fw-extrabold text-body">A Dórico</h3>
+                        <p id="modeDescription" class="fs-7 text-muted">Sombrio, mas com esperança, misterioso, jazzístico. Muito usado por Santana.</p>
+                        
+                        <div class="mt-4 border-top pt-3 fs-7 text-muted">
+                            <div class="mb-2"><strong>Origem:</strong> <span id="modeParent" class="text-body fw-semibold">Escala Maior de Sol (2º Grau)</span></div>
+                            <div class="mb-2"><strong>Sensação Sonora:</strong> <span id="modeFeeling" class="text-body fw-semibold">Intensa e brilhante</span></div>
+                            <div class="mb-2"><strong>Nota Característica:</strong> <span id="modeCharacteristic" class="text-warning fw-extrabold">6ª Maior (F#)</span></div>
+                            <div class="mb-0"><strong>Acorde Característico:</strong> <span id="modeChord" class="text-primary fw-bold">Am6 / Am7</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-12 col-md-8">
+                <div class="card h-100 bg-body-tertiary">
+                    <div class="card-body">
+                        <h6 class="fw-bold text-muted text-uppercase fs-8 mb-3">Notas e Graus do Modo:</h6>
+                        <div class="row g-2 mb-4" id="modeNotesContainer">
+                            <!-- Notas geradas via JS -->
+                        </div>
+                        
+                        <div class="row border-top pt-3 g-3 fs-7">
+                            <div class="col-12 col-md-6 border-end">
+                                <h6 class="fw-bold mb-2">Comparação com Modo Maior:</h6>
+                                <p id="modeCompareMajor" class="text-muted mb-0">Idêntico à Escala Maior mas com graus alterados.</p>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <h6 class="fw-bold mb-2">Comparação com Modo Menor:</h6>
+                                <p id="modeCompareMinor" class="text-muted mb-0">Idêntico à Escala Menor com 6ª elevada.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Fretboard para o modo -->
+        <div class="card mb-4 bg-body-tertiary border-0 shadow-sm overflow-hidden">
+            <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0">
+                <h5 class="fw-bold mb-0">Notas do Modo no Braço</h5>
+            </div>
+            <div class="card-body p-0">
+                <div id="modeFretboard">
+                    <!-- Gerado via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ABA 2: COMPARADOR DE MODOS GREGOS -->
+    <div class="tab-pane fade" id="compare-tab-pane" role="tabpanel" aria-labelledby="compare-tab" tabindex="0">
+        <!-- Filtros do Comparador -->
+        <div class="card mb-4 bg-body-tertiary">
+            <div class="card-body p-3">
+                <div class="row g-3 align-items-end">
+                    <div class="col-12 col-md-2">
+                        <label for="compareRoot" class="form-label fs-7 fw-bold text-muted">Tônica de Comparação</label>
+                        <select id="compareRoot" class="form-select form-select-sm">
+                            {% for note in chromatic_notes %}
+                            <option value="{{ note }}" {% if note == 'A' %}selected{% endif %}>{{ note }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-6 col-md-4">
+                        <label for="compareMode1" class="form-label fs-7 fw-bold text-muted">Modo de Referência (A)</label>
+                        <select id="compareMode1" class="form-select form-select-sm">
+                            <option value="ionian" selected>Jônio (Escala Maior)</option>
+                            <option value="dorian">Dórico</option>
+                            <option value="phrygian">Frígio</option>
+                            <option value="lydian">Lídio</option>
+                            <option value="mixolydian">Mixolídio</option>
+                            <option value="aeolian">Eólio (Escala Menor)</option>
+                            <option value="locrian">Lócrio</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-6 col-md-4">
+                        <label for="compareMode2" class="form-label fs-7 fw-bold text-muted">Modo Comparado (B)</label>
+                        <select id="compareMode2" class="form-select form-select-sm">
+                            <option value="ionian">Jônio (Escala Maior)</option>
+                            <option value="dorian" selected>Dórico</option>
+                            <option value="phrygian">Frígio</option>
+                            <option value="lydian">Lídio</option>
+                            <option value="mixolydian">Mixolídio</option>
+                            <option value="aeolian">Eólio (Escala Menor)</option>
+                            <option value="locrian">Lócrio</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-12 col-md-2 d-flex justify-content-md-end">
+                        <button id="btnCompareExecute" class="btn btn-sm btn-primary w-100 fw-bold py-1">
+                            <i class="bi bi-arrow-left-right"></i> COMPARAR
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Resultados da Comparação -->
+        <div class="row g-4 mb-4">
+            <div class="col-12 col-md-6">
+                <div class="card h-100 bg-body-tertiary">
+                    <div class="card-header bg-transparent pt-3 pb-0 border-bottom-0">
+                        <h5 class="fw-bold mb-0">Análise de Notas e Intervalos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle">
+                                <thead>
+                                    <tr class="table-secondary">
+                                        <th style="width: 30%;">Grau</th>
+                                        <th style="width: 35%;" id="labelComp1">Modo A</th>
+                                        <th style="width: 35%;" id="labelComp2">Modo B</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="compareTableBody">
+                                    <!-- Gerado dinamicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-12 col-md-6">
+                <div class="card h-100 bg-body-tertiary">
+                    <div class="card-header bg-transparent pt-3 pb-0 border-bottom-0">
+                        <h5 class="fw-bold mb-0">O que muda de um modo para outro?</h5>
+                    </div>
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="p-3 bg-body-secondary rounded-3 border mb-3">
+                                <h6 class="fw-bold text-success"><i class="bi bi-check-circle"></i> Notas Iguais (Geometria Comum)</h6>
+                                <p id="compareNotesCommon" class="fs-7 text-muted mb-0">Calculando notas comuns...</p>
+                            </div>
+                            <div class="p-3 bg-body-secondary rounded-3 border">
+                                <h6 class="fw-bold text-danger"><i class="bi bi-exclamation-triangle"></i> Notas Diferentes (Diferença de Cor do Solo)</h6>
+                                <p id="compareNotesDiff" class="fs-7 text-muted mb-0">Estas notas geram o contraste entre as duas escalas.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 p-3 bg-warning-subtle text-warning-emphasis rounded-3 border fs-7">
+                            <i class="bi bi-info-circle"></i> **Segredo Teórico:** Ao improvisar ou solar e fazer a transição de um modo para outro, foque o repouso melódico nas **Notas Diferentes** para escancarar a mudança de atmosfera e tempero emocional do seu solo!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Fretboard para Comparação -->
+        <div class="card mb-4 bg-body-tertiary border-0 shadow-sm overflow-hidden">
+            <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0">
+                <h5 class="fw-bold mb-0">Grade de Notas de Ambos os Modos sobrepostas no Braço</h5>
+            </div>
+            <div class="card-body p-0">
+                <div id="compareFretboard">
+                    <!-- Gerado via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+    import { Fretboard } from "{{ url_for('guitar_study.static', filename='js/fretboard.js') }}";
+    import { audioEngine } from "{{ url_for('guitar_study.static', filename='js/audio-engine.js') }}";
+    import { toggleFavorite, showToast } from "{{ url_for('guitar_study.static', filename='js/app.js') }}";
+    
+    document.addEventListener("DOMContentLoaded", async () => {
+        let activeModeData = null;
+        let fretboard = null;
+        let compareFretboard = null;
+        
+        // Inicializa o Fretboard de Estudo
+        fretboard = new Fretboard("modeFretboard", {
+            tuningId: "{{ settings.tuning_id }}",
+            fretCount: {{ settings.fret_count }},
+            viewMode: "highlight_set"
+        });
+        await fretboard.init();
+        
+        // Inicializa o Fretboard de Comparação
+        compareFretboard = new Fretboard("compareFretboard", {
+            tuningId: "{{ settings.tuning_id }}",
+            fretCount: {{ settings.fret_count }},
+            viewMode: "highlight_set"
+        });
+        await compareFretboard.init();
+        
+        // -------------------------------------------------------------
+        // CARREGA ABA ESTUDO
+        // -------------------------------------------------------------
+        async function loadMode() {
+            const root = document.getElementById("modeRoot").value;
+            const type = document.getElementById("modeType").value;
+            const pref = "{{ settings.accidentals_preference }}";
+            
+            try {
+                const response = await fetch(`/guitar-study/api/v1/modes?root=${root}&type=${type}&preference=${pref}`);
+                const res = await response.json();
+                
+                if (res.success) {
+                    activeModeData = res.data;
+                    
+                    // Atualiza HTML teórico do modo
+                    document.getElementById("modeTitleName").textContent = activeModeData.name;
+                    document.getElementById("modeDescription").textContent = activeModeData.description;
+                    document.getElementById("modeParent").textContent = activeModeData.parent;
+                    document.getElementById("modeFeeling").textContent = activeModeData.feeling;
+                    document.getElementById("modeCharacteristic").textContent = activeModeData.characteristic_note;
+                    document.getElementById("modeChord").textContent = activeModeData.characteristic_chord;
+                    document.getElementById("modeCompareMajor").textContent = activeModeData.comparison_major;
+                    document.getElementById("modeCompareMinor").textContent = activeModeData.comparison_minor;
+                    
+                    // Notas e graus do modo
+                    const container = document.getElementById("modeNotesContainer");
+                    container.innerHTML = "";
+                    
+                    activeModeData.notes.forEach((note, idx) => {
+                        const symbol = activeModeData.symbols[idx];
+                        const isTonic = idx === 0;
+                        const charNoteLower = activeModeData.characteristic_note.toLowerCase();
+                        const isChar = charNoteLower.includes(symbol.toLowerCase()) || charNoteLower.includes(note.toLowerCase());
+                        
+                        const itemHtml = `
+                            <div class="col-4 col-sm-3 col-md-2 text-center">
+                                <div class="p-2 bg-body-secondary rounded-3 border ${isTonic ? 'border-danger border-2' : (isChar ? 'border-warning border-2' : '')}">
+                                    <span class="d-block fw-extrabold text-primary fs-5">${note}</span>
+                                    <span class="fs-8 text-muted fw-bold d-block">${symbol}</span>
+                                </div>
+                            </div>
+                        `;
+                        container.insertAdjacentHTML("beforeend", itemHtml);
+                    });
+                    
+                    // Favorito
+                    checkFavoriteState(activeModeData.key);
+                    
+                    // Atualiza braço
+                    fretboard.setHighlightedSet(activeModeData.root, activeModeData.notes);
+                }
+            } catch (e) {
+                console.error("Erro ao carregar modo:", e);
+            }
+        }
+        
+        async function checkFavoriteState(itemKey) {
+            const btnFav = document.getElementById("btnFavMode");
+            const icon = btnFav.querySelector("i");
+            try {
+                const response = await fetch("/guitar-study/api/v1/favorites");
+                const res = await response.json();
+                if (res.success) {
+                    const isFav = res.data.favorites.some(f => f.category === "mode" && f.item_key === itemKey);
+                    if (isFav) {
+                        btnFav.classList.add("favorited");
+                        btnFav.classList.add("btn-danger");
+                        btnFav.classList.remove("btn-outline-danger");
+                        icon.className = "bi bi-heart-fill";
+                    } else {
+                        btnFav.classList.remove("favorited");
+                        btnFav.classList.remove("btn-danger");
+                        btnFav.classList.add("btn-outline-danger");
+                        icon.className = "bi bi-heart";
+                    }
+                }
+            } catch (e) {}
+        }
+        
+        document.getElementById("btnFavMode").addEventListener("click", async function() {
+            if (!activeModeData) return;
+            await toggleFavorite(this, "mode", activeModeData.key);
+            checkFavoriteState(activeModeData.key);
+        });
+        
+        document.getElementById("modeRoot").addEventListener("change", loadMode);
+        document.getElementById("modeType").addEventListener("change", loadMode);
+        
+        // Tocar Áudio do Modo
+        document.getElementById("btnPlayMode").addEventListener("click", () => {
+            if (!activeModeData) return;
+            const freqs = [];
+            activeModeData.notes.forEach(note => {
+                let fVal = 0;
+                let minFret = 99;
+                fretboard.stringsData.forEach(str => {
+                    str.frets.forEach(f => {
+                        if (fretboard.isNotesEqual(f.note, note) && f.fret < minFret) {
+                            minFret = f.fret;
+                            fVal = f.frequency;
+                        }
+                    });
+                });
+                if (fVal > 0) freqs.push(fVal);
+            });
+            if (freqs.length > 0) {
+                freqs.push(freqs[0] * 2); // Oitava final
+                audioEngine.playScale(freqs, 400, true);
+            }
+        });
+        
+        await loadMode();
+        
+        // -------------------------------------------------------------
+        // CARREGA ABA COMPARADOR
+        // -------------------------------------------------------------
+        async function runComparison() {
+            const root = document.getElementById("compareRoot").value;
+            const m1 = document.getElementById("compareMode1").value;
+            const m2 = document.getElementById("compareMode2").value;
+            const pref = "{{ settings.accidentals_preference }}";
+            
+            try {
+                const r1 = await fetch(`/guitar-study/api/v1/modes?root=${root}&type=${m1}&preference=${pref}`);
+                const res1 = await r1.json();
+                
+                const r2 = await fetch(`/guitar-study/api/v1/modes?root=${root}&type=${m2}&preference=${pref}`);
+                const res2 = await r2.json();
+                
+                if (res1.success && res2.success) {
+                    const data1 = res1.data;
+                    const data2 = res2.data;
+                    
+                    document.getElementById("labelComp1").textContent = data1.name.split(" ")[1];
+                    document.getElementById("labelComp2").textContent = data2.name.split(" ")[1];
+                    
+                    // Monta tabela comparativa de graus
+                    const tbody = document.getElementById("compareTableBody");
+                    tbody.innerHTML = "";
+                    
+                    const degrees = ["1", "2", "3", "4", "5", "6", "7"];
+                    
+                    // Notas comuns e diferentes
+                    const common = [];
+                    const diff = [];
+                    
+                    for (let idx = 0; idx < 7; idx++) {
+                        const note1 = data1.notes[idx];
+                        const note2 = data2.notes[idx];
+                        const s1 = data1.symbols[idx];
+                        const s2 = data2.symbols[idx];
+                        
+                        const isEqual = fretboard.isNotesEqual(note1, note2);
+                        
+                        if (isEqual) {
+                            common.push(note1);
+                        } else {
+                            diff.push(`De **${note1} (${s1})** para **${note2} (${s2})**`);
+                        }
+                        
+                        const row = `
+                            <tr class="${isEqual ? '' : 'table-warning'}">
+                                <td class="fw-bold">Grau ${idx + 1}</td>
+                                <td>${note1} <span class="badge bg-secondary-subtle text-muted fs-8">${s1}</span></td>
+                                <td>${note2} <span class="badge bg-secondary-subtle text-muted fs-8">${s2}</span></td>
+                            </tr>
+                        `;
+                        tbody.insertAdjacentHTML("beforeend", row);
+                    }
+                    
+                    // Escreve as notas comuns e as diferenças
+                    document.getElementById("compareNotesCommon").innerHTML = common.map(n => `<span class="badge bg-success-subtle text-success border border-success p-2 fs-7 me-1 mb-1">${n}</span>`).join("");
+                    document.getElementById("compareNotesDiff").innerHTML = diff.length > 0 
+                        ? diff.map(d => `<div class="fs-7 mb-2 text-danger fw-semibold"><i class="bi bi-caret-right-fill"></i> ${d}</div>`).join("")
+                        : `<div class="text-success fs-7 fw-bold">Ambos os modos possuem notas idênticas!</div>`;
+                    
+                    // Grade combinada no Braço de Comparação
+                    const combinedNotes = Array.from(new Set([...data1.notes, ...data2.notes]));
+                    compareFretboard.setHighlightedSet(data1.root, combinedNotes);
+                    
+                    showToast("Comparação realizada!", "success");
+                }
+            } catch (e) {
+                console.error("Erro na comparação:", e);
+                showToast("Erro ao comparar modos.", "danger");
+            }
+        }
+        
+        document.getElementById("btnCompareExecute").addEventListener("click", runComparison);
+        
+        // Aciona comparação inicial ao mudar de aba
+        const compareTabBtn = document.getElementById("compare-tab");
+        compareTabBtn.addEventListener("shown.bs.tab", () => {
+            runComparison();
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,258 @@
+{% extends 'guitar_study/base.html' %}
+
+{% block title %}Configurações{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-12">
+        <h1 class="fw-extrabold mb-1"><i class="bi bi-gear text-primary"></i> Configurações do Estúdio</h1>
+        <p class="text-muted">Ajuste seu perfil, gerencie preferências de exibição do braço e cadastre afinações personalizadas.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    
+    <!-- Coluna Esquerda: Preferências do Braço e Tema -->
+    <div class="col-12 col-lg-6">
+        <div class="card bg-body-tertiary mb-4">
+            <div class="card-header bg-transparent border-bottom pt-3 pb-2">
+                <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-sliders"></i> Preferências Musicais e Visuais</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('guitar_study.update_preferences') }}" method="POST">
+                    
+                    <div class="mb-3">
+                        <label for="prefTuning" class="form-label fw-bold fs-7">Afinação Padrão</label>
+                        <select id="prefTuning" name="tuning_id" class="form-select">
+                            {% for key, val in tunings.items() %}
+                            <option value="{{ key }}" {% if settings.tuning_id == key %}selected{% endif %}>{{ val.name }}</option>
+                            {% endfor %}
+                            {% for custom in custom_tunings %}
+                            <option value="{{ custom.id }}" {% if settings.tuning_id == custom.id|string %}selected{% endif %}>{{ custom.name }} (Personalizada)</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text fs-8">Afinação inicial carregada ao abrir o braço de guitarra.</div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label for="prefFrets" class="form-label fw-bold fs-7">Quantidade de Casas</label>
+                            <select id="prefFrets" name="fret_count" class="form-select">
+                                <option value="21" {% if settings.fret_count == 21 %}selected{% endif %}>21 Casas</option>
+                                <option value="22" {% if settings.fret_count == 22 %}selected{% endif %}>22 Casas</option>
+                                <option value="24" {% if settings.fret_count == 24 %}selected{% endif %}>24 Casas</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label for="prefAccidentals" class="form-label fw-bold fs-7">Acidente Preferido</label>
+                            <select id="prefAccidentals" name="accidentals_preference" class="form-select">
+                                <option value="sharps" {% if settings.accidentals_preference == 'sharps' %}selected{% endif %}>Sustenidos (#)</option>
+                                <option value="flats" {% if settings.accidentals_preference == 'flats' %}selected{% endif %}>Bemóis (b)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="prefTheme" class="form-label fw-bold fs-7">Tema do Visual</label>
+                        <select id="prefTheme" name="theme" class="form-select">
+                            <option value="dark" {% if settings.theme == 'dark' %}selected{% endif %}>Tema Escuro (Padrão)</option>
+                            <option value="light" {% if settings.theme == 'light' %}selected{% endif %}>Tema Claro</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="prefTimbre" class="form-label fw-bold fs-7">Timbre do Som (Instrumento)</label>
+                        <select id="prefTimbre" name="instrument_timbre" class="form-select">
+                            <option value="default" selected>Sintetizador Padrão (Default)</option>
+                            <option value="violao_classico">Violão Clássico (Nylon)</option>
+                            <option value="les_paul_clean">Guitarra Les Paul Clean</option>
+                            <option value="les_paul_crunch">Guitarra Les Paul com Saturação</option>
+                            <option value="les_paul_drive">Guitarra Les Paul com Drive</option>
+                        </select>
+                        <div class="form-text fs-8 text-muted mt-1">Defina o modelo de simulação de onda e ganho de distorção de amplificador valvulado para reproduzir no braço.</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary fw-bold px-4">Salvar Preferências</button>
+                    
+                </form>
+            </div>
+        </div>
+        
+        <!-- Afinações Personalizadas -->
+        <div class="card bg-body-tertiary">
+            <div class="card-header bg-transparent border-bottom pt-3 pb-2 d-flex align-items-center justify-content-between">
+                <h5 class="fw-bold mb-0 text-success"><i class="bi bi-music-note-beamed"></i> Afinações Personalizadas</h5>
+            </div>
+            <div class="card-body">
+                <!-- Se tiver afinações já salvas, lista -->
+                {% if custom_tunings %}
+                <div class="table-responsive mb-4">
+                    <table class="table table-bordered table-sm align-middle fs-7">
+                        <thead>
+                            <tr class="table-secondary">
+                                <th>Nome</th>
+                                <th>Cordas (Grave -> Aguda)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for custom in custom_tunings %}
+                            <tr>
+                                <td class="fw-bold text-body">{{ custom.name }}</td>
+                                <td class="font-monospace text-primary fw-bold">{{ custom.notes }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+                
+                <!-- Formulário para Criar uma Nova -->
+                <h6 class="fw-bold mb-2">Adicionar Nova Afinação:</h6>
+                <form id="formCustomTuning" class="row g-2 align-items-end">
+                    <div class="col-12 col-sm-5">
+                        <input type="text" id="customTuningName" class="form-control form-control-sm" placeholder="Ex: Drop C, Open D" required>
+                    </div>
+                    <div class="col-12 col-sm-5">
+                        <input type="text" id="customTuningNotes" class="form-control form-control-sm font-monospace" placeholder="C G C F A D (separado por espaços)" required>
+                    </div>
+                    <div class="col-12 col-sm-2">
+                        <button type="button" onclick="saveCustomTuning()" class="btn btn-success btn-sm w-100 fw-bold py-1">Criar</button>
+                    </div>
+                </form>
+                <div class="form-text fs-8 text-muted mt-2">Dica: Insira exatamente 6 notas representadas por letras (C, D, E, F, G, A, B e sustenidos/bemóis) separadas por espaço, começando da 6ª corda (mais grossa) até a 1ª (mais fina).</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Coluna Direita: Perfil de Usuário e Senha -->
+    <div class="col-12 col-lg-6">
+        <div class="card bg-body-tertiary">
+            <div class="card-header bg-transparent border-bottom pt-3 pb-2">
+                <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-person-badge"></i> Gerenciamento de Perfil</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('guitar_study.update_profile') }}" method="POST">
+                    
+                    <div class="mb-3">
+                        <label for="profileName" class="form-label fw-bold fs-7">Nome Completo</label>
+                        <input type="text" id="profileName" name="name" class="form-control" value="{{ current_user.name }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="profileEmail" class="form-label fw-bold fs-7">E-mail</label>
+                        <input type="email" id="profileEmail" name="email" class="form-control" value="{{ current_user.email }}" required>
+                    </div>
+                    
+                    <div class="border-top my-4 pt-3">
+                        <h6 class="fw-bold text-danger mb-3"><i class="bi bi-shield-lock"></i> Alteração de Senha</h6>
+                        
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label fw-bold fs-7">Senha Atual</label>
+                            <input type="password" id="currentPassword" name="current_password" class="form-control" placeholder="Informe sua senha atual">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label fw-bold fs-7">Nova Senha</label>
+                            <input type="password" id="newPassword" name="new_password" class="form-control" placeholder="Mínimo 6 caracteres">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary fw-bold px-4">Salvar Perfil</button>
+                    
+                </form>
+            </div>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+    import { showToast } from "{{ url_for('guitar_study.static', filename='js/app.js') }}";
+    
+    // Salvar afinação personalizada via FETCH
+    window.saveCustomTuning = async function() {
+        const name = document.getElementById("customTuningName").value.trim();
+        const notes = document.getElementById("customTuningNotes").value.trim().toUpperCase();
+        
+        if (!name || !notes) {
+            showToast("Preencha todos os campos da afinação.", "warning");
+            return;
+        }
+        
+        // Validação básica se possui exatamente 6 notas válidas
+        const splitNotes = notes.split(/\s+/);
+        if (splitNotes.length !== 6) {
+            showToast("A afinação de guitarra deve conter exatamente 6 notas de cordas.", "warning");
+            return;
+        }
+        
+        const validPattern = /^[A-G][#B]?$/i;
+        const isValid = splitNotes.every(n => {
+            // Normaliza para comparar (permite # e b)
+            const cleaned = n.replace("♯", "#").replace("♭", "b");
+            return validPattern.test(cleaned);
+        });
+        
+        if (!isValid) {
+            showToast("Formato de notas inválido. Use letras de A a G (com # ou b). Ex: E A D G B E", "warning");
+            return;
+        }
+        
+        try {
+            // Envia para uma API de cadastro de afinação personalizada (podemos criar uma rota simples na API)
+            // Ou implementar direto no backend via Form. Para agilidade de sintonização, faremos via formulário HTML de envio.
+            // Para manter RESTful e interativo, criaremos um POST na API
+            const response = await fetch("/guitar-study/api/v1/settings", {
+                method: "POST", // Criaremos suporte a criar afinação personalizada no backend
+                // No entanto, para simplificar e garantir 100% de funcionamento offline imediato, podemos usar formulários comuns.
+                // Mas enviar via fetch é mais moderno e limpo. Vamos salvar direto enviando à rota de criação.
+            });
+            
+            // Para garantir que funcione de forma nativa e sem complicar, criaremos uma rota rápida de POST ou salvaremos via recarga.
+            // Vamos submeter e recarregar a página para atualizar as tabelas do Jinja2 de forma 100% livre de erros!
+            // Criaremos uma rota no python para POST de afinação personalizada e salvamos de forma síncrona/recarga.
+            // Para isso, faremos um formulário invisível ou criamos no python a rota.
+            // Na verdade, podemos apenas enviar via Fetch para uma nova rota que implementaremos!
+            // Vamos enviar via POST para /guitar-study/settings/tuning:
+            
+            const formData = new URLSearchParams();
+            formData.append("name", name);
+            formData.append("notes", notes);
+            
+            const req = await fetch("{{ url_for('guitar_study.update_preferences') }}/custom", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: formData.toString()
+            });
+            
+            if (req.ok) {
+                showToast("Afinação personalizada criada!", "success");
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast("Erro ao salvar afinação personalizada.", "danger");
+            }
+            
+        } catch (e) {
+            console.error(e);
+            showToast("Erro de conexão.", "danger");
+        }
+    }
+
+    // Lógica para inicializar e salvar o timbre de forma persistente no localStorage
+    const timbreSelect = document.getElementById("prefTimbre");
+    if (timbreSelect) {
+        // Inicializa o valor ativo com base no localStorage
+        const activeTimbre = localStorage.getItem("guitarTimbre") || "default";
+        timbreSelect.value = activeTimbre;
+        
+        // Salva na hora ao mudar
+        timbreSelect.addEventListener("change", (e) => {
+            const val = e.target.value;
+            localStorage.setItem("guitarTimbre", val);
+            showToast("Timbre alterado com sucesso!", "success");
+        });
+    }
+</script>
+{% endblock %}

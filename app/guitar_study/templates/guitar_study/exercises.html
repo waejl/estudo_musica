@@ -1,0 +1,540 @@
+{% extends 'guitar_study/base.html' %}
+
+{% block title %}Exercícios Práticos{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-12 col-md-8">
+        <h1 class="fw-extrabold mb-1"><i class="bi bi-controller text-primary"></i> Treinamento Interativo</h1>
+        <p class="text-muted">Pratique com desafios cronometrados e melhore drasticamente sua velocidade de raciocínio musical.</p>
+    </div>
+</div>
+
+<!-- Seletor de Exercícios (Tela Inicial) -->
+<div class="row g-4" id="exerciseSelectorArea">
+    
+    <!-- Exercício 1: Identificar a Nota -->
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card card-hover h-100 bg-body-tertiary">
+            <div class="card-body d-flex flex-column justify-content-between p-4">
+                <div>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="bg-primary text-white p-3 rounded-circle d-inline-flex">
+                            <i class="bi bi-question-circle fs-3"></i>
+                        </div>
+                        <h5 class="fw-bold mb-0">Identificar a Nota</h5>
+                    </div>
+                    <p class="fs-7 text-muted">O sistema destaca uma casa aleatória no braço e você deve acertar qual nota está soando ali. Excelente para memorizar as notas!</p>
+                </div>
+                <button onclick="startExercise('identify_note')" class="btn btn-primary w-100 fw-bold mt-3 shadow-sm">Iniciar Treino</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Exercício 2: Encontrar a Nota -->
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card card-hover h-100 bg-body-tertiary">
+            <div class="card-body d-flex flex-column justify-content-between p-4">
+                <div>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="bg-success text-white p-3 rounded-circle d-inline-flex">
+                            <i class="bi bi-geo-alt fs-3"></i>
+                        </div>
+                        <h5 class="fw-bold mb-0">Encontrar a Nota</h5>
+                    </div>
+                    <p class="fs-7 text-muted">O sistema solicita uma nota e você deve clicar na posição correta diretamente sobre o braço de guitarra de forma interativa.</p>
+                </div>
+                <button onclick="startExercise('find_note')" class="btn btn-success w-100 fw-bold mt-3 shadow-sm">Iniciar Treino</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Exercício 3: Intervalos -->
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card card-hover h-100 bg-body-tertiary">
+            <div class="card-body d-flex flex-column justify-content-between p-4">
+                <div>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="bg-warning text-dark p-3 rounded-circle d-inline-flex">
+                            <i class="bi bi-hash fs-3"></i>
+                        </div>
+                        <h5 class="fw-bold mb-0">Identificar o Intervalo</h5>
+                    </div>
+                    <p class="fs-7 text-muted">Estude a distância física entre duas notas. O sistema mostra a tônica e destaca outra nota; você diz o intervalo correspondente.</p>
+                </div>
+                <button onclick="startExercise('intervals')" class="btn btn-warning text-dark w-100 fw-bold mt-3 shadow-sm">Iniciar Treino</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Exercício 4: Treino Livre (Braço Limpo) -->
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card card-hover h-100 bg-body-tertiary">
+            <div class="card-body d-flex flex-column justify-content-between p-4">
+                <div>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="bg-purple text-white p-3 rounded-circle d-inline-flex" style="background-color: #8b5cf6 !important;">
+                            <i class="bi bi-brush fs-3"></i>
+                        </div>
+                        <h5 class="fw-bold mb-0">Treino Livre (Braço Limpo)</h5>
+                    </div>
+                    <p class="fs-7 text-muted">Monte seu próprio mapa de notas e treine de forma livre. O braço inicia totalmente limpo e você ativa apenas as notas que quer memorizar.</p>
+                </div>
+                <button onclick="startExercise('free_train')" class="btn text-white w-100 fw-bold mt-3 shadow-sm" style="background-color: #8b5cf6 !important;">Iniciar Treino</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ÁREA DE JOGO (Oculta por padrão) -->
+<div id="gamePlayArea" class="d-none">
+    
+    <!-- Barra de Status do Exercício -->
+    <div class="card mb-4 bg-body-tertiary">
+        <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <button onclick="quitGame()" class="btn btn-sm btn-outline-secondary fw-semibold"><i class="bi bi-chevron-left"></i> Sair</button>
+                <h5 id="gameTitleDisplay" class="fw-bold mb-0 text-primary">Identificar a Nota</h5>
+            </div>
+            
+            <div class="d-flex align-items-center gap-4">
+                <div class="fs-7" id="gameCounterGroup">Questão: <strong id="questionCounter" class="text-body">1/10</strong></div>
+                <div class="fs-7">Tempo: <strong id="gameTimer" class="text-primary font-monospace">0s</strong></div>
+                <div class="fs-7" id="gameScoreGroup">Acertos: <strong id="correctCounter" class="text-success">0</strong> | Erros: <strong id="incorrectCounter" class="text-danger">0</strong></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Desafio do Jogo -->
+    <div class="row g-4 mb-4">
+        
+        <!-- O Braço da Guitarra do Jogo -->
+        <div class="col-12">
+            <div class="card bg-body-tertiary">
+                <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0">
+                    <h5 id="gamePromptInstruction" class="fw-extrabold mb-0 text-center text-body-emphasis py-2">Qual nota está destacada abaixo?</h5>
+                </div>
+                <div class="card-body p-0 overflow-hidden">
+                    <div id="gameFretboard">
+                        <!-- Gerado via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Opções de Escolha / Resposta -->
+        <div class="col-12 col-md-8 mx-auto" id="choicesArea">
+            <div class="card bg-body-tertiary">
+                <div class="card-body p-4">
+                    <div class="row g-3" id="gameChoicesGrid">
+                        <!-- Botões de múltipla escolha gerados via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<!-- TELA DE RESULTADOS (Oculta por padrão) -->
+<div id="gameResultArea" class="d-none col-12 col-md-8 col-lg-6 mx-auto">
+    <div class="card bg-body-tertiary p-4 p-md-5 text-center shadow-lg border-primary border-2">
+        <div class="d-inline-flex align-items-center justify-content-center bg-success text-white rounded-circle mb-4 shadow" style="width: 80px; height: 80px;">
+            <i class="bi bi-check2-all fs-1"></i>
+        </div>
+        <h2 class="fw-extrabold text-body mb-2">Desafio Concluído!</h2>
+        <p class="text-muted mb-4">Seu progresso de treino foi enviado de forma persistente para o seu painel de estudos.</p>
+        
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-sm-3">
+                <div class="p-3 bg-body-secondary rounded-3 border">
+                    <span class="fs-8 text-muted fw-bold d-block text-uppercase mb-1">Questões</span>
+                    <h4 id="resTotal" class="fw-bold mb-0">10</h4>
+                </div>
+            </div>
+            <div class="col-6 col-sm-3">
+                <div class="p-3 bg-body-secondary rounded-3 border">
+                    <span class="fs-8 text-muted fw-bold d-block text-uppercase mb-1">Acertos</span>
+                    <h4 id="resCorrect" class="fw-bold text-success mb-0">8</h4>
+                </div>
+            </div>
+            <div class="col-6 col-sm-3">
+                <div class="p-3 bg-body-secondary rounded-3 border">
+                    <span class="fs-8 text-muted fw-bold d-block text-uppercase mb-1">Erros</span>
+                    <h4 id="resIncorrect" class="fw-bold text-danger mb-0">2</h4>
+                </div>
+            </div>
+            <div class="col-6 col-sm-3">
+                <div class="p-3 bg-body-secondary rounded-3 border">
+                    <span class="fs-8 text-muted fw-bold d-block text-uppercase mb-1">Tempo Gasto</span>
+                    <h4 id="resTime" class="fw-bold text-primary mb-0 font-monospace">45s</h4>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-4 bg-primary-subtle text-primary-emphasis rounded-3 border border-primary mb-4">
+            <h5 class="fw-bold mb-1">Pontuação Final:</h5>
+            <h1 id="resScore" class="fw-extrabold mb-0">80.0%</h1>
+        </div>
+        
+        <div class="d-flex gap-3 justify-content-center">
+            <button onclick="restartGame()" class="btn btn-primary btn-lg px-4 fw-bold">Jogar Novamente</button>
+            <button onclick="quitGame()" class="btn btn-outline-secondary btn-lg px-4 fw-medium">Voltar aos Exercícios</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+    import { Fretboard } from "{{ url_for('guitar_study.static', filename='js/fretboard.js') }}";
+    import { audioEngine } from "{{ url_for('guitar_study.static', filename='js/audio-engine.js') }}";
+    import { showToast } from "{{ url_for('guitar_study.static', filename='js/app.js') }}";
+    
+    // VARIÁVEIS DE ESTADO DO JOGO
+    let gameType = ""; // identify_note, find_note, intervals
+    let fretboard = null;
+    let currentRound = 1;
+    let maxRounds = 10;
+    let scoreCorrect = 0;
+    let scoreIncorrect = 0;
+    let timeElapsed = 0;
+    let timerInterval = null;
+    
+    let activeQuestionData = null; // Armazena dados da rodada ativa
+    
+    // Inicialização do Jogo
+    window.startExercise = async function(type) {
+        gameType = type;
+        
+        // Esconde menu inicial, exibe área de jogo
+        document.getElementById("exerciseSelectorArea").classList.add("d-none");
+        document.getElementById("gamePlayArea").classList.remove("d-none");
+        document.getElementById("gameResultArea").classList.add("d-none");
+        
+        // Atualiza títulos do jogo
+        const titles = {
+            "identify_note": "Identificar a Nota no Braço",
+            "find_note": "Encontrar a Nota no Braço",
+            "intervals": "Identificar o Intervalo",
+            "free_train": "Treino Livre (Braço Limpo)"
+        };
+        document.getElementById("gameTitleDisplay").textContent = titles[type] || "Exercício";
+        
+        // Esconde ou exibe contadores e scoreboard baseado no tipo de exercício
+        if (type === "free_train") {
+            document.getElementById("gameCounterGroup").classList.add("d-none");
+            document.getElementById("gameScoreGroup").classList.add("d-none");
+        } else {
+            document.getElementById("gameCounterGroup").classList.remove("d-none");
+            document.getElementById("gameScoreGroup").classList.remove("d-none");
+        }
+        
+        // Reseta pontuação
+        currentRound = 1;
+        scoreCorrect = 0;
+        scoreIncorrect = 0;
+        timeElapsed = 0;
+        
+        updateScoreboard();
+        
+        // Inicia cronômetro do jogo
+        timerInterval = setInterval(() => {
+            timeElapsed++;
+            document.getElementById("gameTimer").textContent = `${timeElapsed}s`;
+        }, 1000);
+        
+        // Inicializa Fretboard no container de jogo
+        fretboard = new Fretboard("gameFretboard", {
+            tuningId: "{{ settings.tuning_id if settings else 'standard' }}",
+            fretCount: 22, // Unificado para 22 casas de tamanho padrão para alinhamento simétrico total!
+            viewMode: type === "free_train" ? "modo_editor" : "hide_all", // Modo editor para treino livre!
+            onNoteClick: (noteData) => {
+                if (gameType === "find_note") {
+                    handleFindNoteClick(noteData);
+                }
+            }
+        });
+        await fretboard.init();
+        
+        generateQuestion();
+    };
+    
+    // Finalização e Retorno
+    window.quitGame = function() {
+        clearInterval(timerInterval);
+        document.getElementById("exerciseSelectorArea").classList.remove("d-none");
+        document.getElementById("gamePlayArea").classList.add("d-none");
+        document.getElementById("gameResultArea").classList.add("d-none");
+        audioEngine.stop();
+    };
+    
+    window.restartGame = function() {
+        startExercise(gameType);
+    };
+    
+    function updateScoreboard() {
+        document.getElementById("questionCounter").textContent = `${currentRound}/${maxRounds}`;
+        document.getElementById("correctCounter").textContent = scoreCorrect;
+        document.getElementById("incorrectCounter").textContent = scoreIncorrect;
+        document.getElementById("gameTimer").textContent = `${timeElapsed}s`;
+    }
+    
+    // GERAÇÃO DE PERGUNTAS DINÂMICAS
+    function generateQuestion() {
+        updateScoreboard();
+        audioEngine.stop();
+        
+        // Intercepta e trata o Modo de Auto-Treinamento (Treino Livre com braço limpo)
+        if (gameType === "free_train") {
+            document.getElementById("gamePromptInstruction").textContent = "Clique em qualquer nota do braço para acender ou apagar bolinhas e treinar sua memorização livre!";
+            document.getElementById("choicesArea").classList.add("d-none");
+            return; // Aborta geração automática de perguntas para o modo livre!
+        } else {
+            document.getElementById("choicesArea").classList.remove("d-none");
+        }
+        
+        if (currentRound > maxRounds) {
+            endGame();
+            return;
+        }
+        
+        const choicesGrid = document.getElementById("gameChoicesGrid");
+        choicesGrid.innerHTML = "";
+        
+        // Sorteia uma corda (1 a 6) e uma casa (0 a 12) aleatória no braço
+        const randomStrIdx = Math.floor(Math.random() * fretboard.stringsData.length);
+        const randomFret = Math.floor(Math.random() * 13); // Até a casa 12
+        
+        const strData = fretboard.stringsData[randomStrIdx];
+        const fretData = strData.frets[randomFret];
+        
+        activeQuestionData = {
+            string: randomStrIdx + 1,
+            fret: randomFret,
+            note: fretData.note,
+            frequency: fretData.frequency,
+            openString: strData.open_note
+        };
+        
+        if (gameType === "identify_note") {
+            // MODO: Identificar a nota destacada
+            document.getElementById("gamePromptInstruction").textContent = `Qual nota está localizada na Corda ${activeQuestionData.string} (${activeQuestionData.openString}), Casa ${activeQuestionData.fret}?`;
+            
+            // Destaca a nota solitária no braço ocultando as outras
+            fretboard.options.tonic = activeQuestionData.note;
+            fretboard.options.highlightedNotes = [activeQuestionData.note];
+            fretboard.setViewMode("hide_all");
+            
+            // Força a exibição somente da célula correspondente ao desafio
+            setTimeout(() => {
+                const cells = document.querySelectorAll("#gameFretboard .fretboard-cell");
+                cells.forEach(cell => {
+                    const cStr = parseInt(cell.getAttribute("data-string"));
+                    const cFret = parseInt(cell.getAttribute("data-fret"));
+                    const badge = cell.querySelector(".fret-note");
+                    
+                    if (cStr === activeQuestionData.string && cFret === activeQuestionData.fret) {
+                        badge.classList.add("visible");
+                        badge.classList.add("tonica");
+                        badge.textContent = "?"; // Interrogação para esconder o nome
+                    } else {
+                        badge.classList.remove("visible");
+                        badge.classList.remove("tonica");
+                    }
+                });
+            }, 100);
+            
+            // Toca o som para guiar
+            audioEngine.playNote(activeQuestionData.frequency);
+            
+            // Gera botões de múltipla escolha
+            const allNotes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+            const correctAnswer = activeQuestionData.note;
+            
+            // Filtra e escolhe 3 erradas
+            const wrongChoices = allNotes.filter(n => !fretboard.isNotesEqual(n, correctAnswer));
+            // Sorteia 3 erradas
+            wrongChoices.sort(() => Math.random() - 0.5);
+            const choices = [correctAnswer, ...wrongChoices.slice(0, 3)];
+            // Sorteia ordem das 4 opções
+            choices.sort(() => Math.random() - 0.5);
+            
+            choices.forEach(opt => {
+                const btn = `
+                    <div class="col-6">
+                        <button onclick="submitAnswer('${opt}')" class="btn btn-outline-primary btn-lg w-100 fw-bold py-3 fs-5">${opt}</button>
+                    </div>
+                `;
+                choicesGrid.insertAdjacentHTML("beforeend", btn);
+            });
+            
+        } else if (gameType === "find_note") {
+            // MODO: Encontrar a Nota solicitada clicando direto no braço
+            document.getElementById("gamePromptInstruction").textContent = `Clique em qualquer bolinha correspondente à nota: ${activeQuestionData.note}`;
+            document.getElementById("choicesArea").classList.add("d-none"); // Esconde botões de múltipla escolha
+            
+            // Ativa exibição silenciosa com interrogação sobre todas as bolinhas
+            fretboard.setViewMode("show_all");
+            setTimeout(() => {
+                const cells = document.querySelectorAll("#gameFretboard .fretboard-cell");
+                cells.forEach(cell => {
+                    const badge = cell.querySelector(".fret-note");
+                    badge.classList.add("visible");
+                    badge.classList.remove("natural");
+                    badge.classList.remove("accidental");
+                    badge.classList.remove("tonica");
+                    badge.style.backgroundColor = "var(--bs-primary)";
+                    badge.textContent = "?"; // Esconde nota
+                });
+            }, 100);
+            
+        } else if (gameType === "intervals") {
+            // MODO: Identificar o intervalo relativo
+            // Sorteia uma tônica fixa de referência
+            const roots = ["C", "D", "E", "G", "A"];
+            const randomRoot = roots[Math.floor(Math.random() * roots.length)];
+            
+            // Destaca a tônica e a nota alvo no braço
+            const intervalSymbol = fretboard.calculateIntervalSymbol(randomRoot, activeQuestionData.note);
+            const intervalNamePT = getIntervalNamePT(intervalSymbol);
+            
+            document.getElementById("gamePromptInstruction").textContent = `Qual é o intervalo da nota destacada em relação à TÔNICA ${randomRoot}?`;
+            
+            // Força destaque no braço da tônica e da nota alvo
+            setTimeout(() => {
+                const cells = document.querySelectorAll("#gameFretboard .fretboard-cell");
+                cells.forEach(cell => {
+                    const cStr = parseInt(cell.getAttribute("data-string"));
+                    const cFret = parseInt(cell.getAttribute("data-fret"));
+                    const cNote = cell.getAttribute("data-note");
+                    const badge = cell.querySelector(".fret-note");
+                    
+                    if (cNote === randomRoot) {
+                        badge.className = "fret-note visible tonica";
+                        badge.textContent = "T";
+                    } else if (cStr === activeQuestionData.string && cFret === activeQuestionData.fret) {
+                        badge.className = "fret-note visible accidental active-pulse";
+                        badge.style.backgroundColor = "var(--note-accidental-bg)";
+                        badge.textContent = "?";
+                    } else {
+                        badge.className = "fret-note";
+                    }
+                });
+            }, 100);
+            
+            // Gera múltipla escolha de intervalos
+            const intervals = ["1", "b2", "2", "b3", "3", "4", "b5", "5", "b6", "6", "b7", "7"];
+            const correctAnswer = intervalSymbol;
+            const wrongChoices = intervals.filter(i => i !== correctAnswer);
+            wrongChoices.sort(() => Math.random() - 0.5);
+            const choices = [correctAnswer, ...wrongChoices.slice(0, 3)];
+            choices.sort(() => Math.random() - 0.5);
+            
+            choices.forEach(opt => {
+                const intervalTextPT = getIntervalNamePT(opt);
+                const btn = `
+                    <div class="col-6">
+                        <button onclick="submitAnswer('${opt}')" class="btn btn-outline-warning btn-lg w-100 fw-bold py-3 fs-6">${intervalTextPT} (${opt})</button>
+                    </div>
+                `;
+                choicesGrid.insertAdjacentHTML("beforeend", btn);
+            });
+        }
+    }
+    
+    // SUBMISSÃO DE RESPOSTAS
+    window.submitAnswer = function(answer) {
+        if (gameType === "identify_note") {
+            const isCorrect = fretboard.isNotesEqual(answer, activeQuestionData.note);
+            if (isCorrect) {
+                scoreCorrect++;
+                showToast("Acertou! Parabéns.", "success");
+            } else {
+                scoreIncorrect++;
+                showToast(`Errou! A resposta correta era: ${activeQuestionData.note}`, "danger");
+            }
+        } else if (gameType === "intervals") {
+            // No modo de intervalos, comparamos o símbolo diretamente
+            const root = document.querySelector("#gamePromptInstruction").textContent.split("TÔNICA ")[1].replace("?", "").trim();
+            const correctSymbol = fretboard.calculateIntervalSymbol(root, activeQuestionData.note);
+            
+            if (answer === correctSymbol) {
+                scoreCorrect++;
+                showToast("Acertou! Intervalo perfeito.", "success");
+            } else {
+                scoreIncorrect++;
+                const textPT = getIntervalNamePT(correctSymbol);
+                showToast(`Errou! O intervalo era: ${textPT} (${correctSymbol})`, "danger");
+            }
+        }
+        
+        currentRound++;
+        generateQuestion();
+    };
+    
+    // Tratador específico de clique no braço para Encontrar a Nota
+    function handleFindNoteClick(clickedData) {
+        if (gameType !== "find_note") return;
+        
+        const isCorrect = fretboard.isNotesEqual(clickedData.note, activeQuestionData.note);
+        if (isCorrect) {
+            scoreCorrect++;
+            showToast("Acertou! Nota encontrada no braço.", "success");
+        } else {
+            scoreIncorrect++;
+            showToast(`Errou! Você clicou em: ${clickedData.note}. Procure por: ${activeQuestionData.note}`, "danger");
+        }
+        
+        currentRound++;
+        generateQuestion();
+    }
+    
+    // FINALIZAR JOGO
+    async function endGame() {
+        clearInterval(timerInterval);
+        
+        // Oculta área de jogo, exibe tela de resultados
+        document.getElementById("gamePlayArea").classList.add("d-none");
+        document.getElementById("gameResultArea").classList.remove("d-none");
+        
+        // Atualiza campos de resultado
+        document.getElementById("resTotal").textContent = maxRounds;
+        document.getElementById("resCorrect").textContent = scoreCorrect;
+        document.getElementById("resIncorrect").textContent = scoreIncorrect;
+        document.getElementById("resTime").textContent = `${timeElapsed}s`;
+        
+        const pct = ((scoreCorrect / maxRounds) * 100).toFixed(1);
+        document.getElementById("resScore").textContent = `${pct}%`;
+        
+        // Grava no PostgreSQL persistente via API
+        try {
+            await fetch("/guitar-study/api/v1/exercises", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    exercise_type: gameType,
+                    questions_count: maxRounds,
+                    correct_count: scoreCorrect,
+                    incorrect_count: scoreIncorrect,
+                    time_spent_seconds: timeElapsed,
+                    difficulty: "medium"
+                })
+            });
+            showToast("Seu treino foi sincronizado com sucesso!", "success");
+        } catch (e) {
+            console.error("Erro ao sincronizar treino:", e);
+        }
+    }
+    
+    // Tradutor auxiliar
+    function getIntervalNamePT(sym) {
+        const map = {
+            "1": "Tônica", "b2": "Segunda Menor", "2": "Segunda Maior", "b3": "Terça Menor", "3": "Terça Maior",
+            "4": "Quarta Justa", "b5": "Quinta Diminuta", "5": "Quinta Justa", "b6": "Sexta Menor", "6": "Sexta Maior",
+            "b7": "Sétima Menor", "7": "Sétima Maior"
+        };
+        return map[sym] || "Tônica";
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="{{ current_user.settings.theme if current_user.is_authenticated and current_user.settings else 'dark' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Guitar Study{% endblock %} - Estudo Moderno de Guitarra</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    
+    <!-- Custom App CSS -->
+    <link rel="stylesheet" href="{{ url_for('guitar_study.static', filename='css/app.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="d-flex flex-column min-vh-100">
+    
+    <!-- Barra Superior -->
+    <nav class="navbar navbar-expand-lg border-bottom px-3 sticky-top bg-body-tertiary">
+        <div class="container-fluid">
+            <button class="btn btn-outline-secondary d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas">
+                <i class="bi bi-list"></i>
+            </button>
+            
+            <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-primary" href="{{ url_for('guitar_study.dashboard') }}">
+                <i class="bi bi-guitar text-primary fs-3"></i>
+                <span class="d-none d-sm-inline">Guitar Study</span>
+            </a>
+            
+            <div class="ms-auto d-flex align-items-center gap-3">
+                {% if current_user.is_authenticated %}
+                
+                <!-- Botão Rápido Play/Stop Metrônomo (Lado Esquerdo) -->
+                <button id="btnFastMetronomePlayStop" class="btn btn-outline-success btn-sm rounded-circle d-flex align-items-center justify-content-center p-0 shadow-sm" style="width: 32px; height: 32px;" title="Iniciar/Parar Metrônomo">
+                    <i id="fastMetronomeIcon" class="bi bi-play-fill fs-5"></i>
+                </button>
+                
+                <!-- Metrônomo Global Interativo de Estudo -->
+                <div class="dropdown" id="globalMetronomeContainer">
+                    <button class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2 px-3 rounded-pill shadow-sm position-relative" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Metrônomo de Estudo">
+                        <i class="bi bi-metronome fs-6" id="metronomeIcon"></i>
+                        <span id="navbarBpmDisplay" class="fw-bold font-monospace">120 <span class="fs-8 fw-normal text-muted">BPM</span></span>
+                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle d-none" id="metronomeIndicatorLight" style="width: 10px; height: 10px;"></span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-3 shadow-lg border border-primary-subtle" style="width: 250px; z-index: 1060; border-radius: 12px;">
+                        <h6 class="fw-bold text-primary mb-3 d-flex align-items-center gap-2 border-bottom pb-2">
+                            <i class="bi bi-metronome"></i> Metrônomo de Estudo
+                        </h6>
+                        
+                        <div class="text-center mb-3 p-3 bg-body-secondary rounded-3 border">
+                            <h2 class="fw-extrabold mb-0 text-body font-monospace" id="menuBpmNumber">120</h2>
+                            <span class="fs-8 text-muted fw-bold">BATIDAS POR MINUTO</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <input type="range" class="form-range" id="metronomeBpmSlider" min="40" max="240" step="1" value="120">
+                            <div class="d-flex justify-content-between fs-8 text-muted mt-1 font-monospace">
+                                <span>40</span>
+                                <span>140</span>
+                                <span>240</span>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2 mb-3">
+                            <button class="btn btn-sm btn-outline-secondary flex-grow-1 fw-bold" id="btnBpmMinus">-5</button>
+                            <button class="btn btn-sm btn-outline-secondary flex-grow-1 fw-bold" id="btnBpmPlus">+5</button>
+                        </div>
+                        
+                        <button class="btn btn-success btn-sm w-100 fw-bold py-2 shadow" id="btnToggleMetronome">
+                            <i class="bi bi-play-fill"></i> INICIAR METRÔNOMO
+                        </button>
+                    </div>
+                </div>
+
+                <span class="text-muted d-none d-md-inline fs-7">Olá, <strong>{{ current_user.name }}</strong></span>
+                <div class="dropdown">
+                    <button class="btn btn-link link-body-emphasis text-decoration-none dropdown-toggle p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="avatar bg-primary text-white d-inline-flex align-items-center justify-content-center rounded-circle fw-bold" style="width: 36px; height: 36px; font-size: 14px;">
+                            {{ current_user.name[:2].upper() }}
+                        </div>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                        <li><a class="dropdown-menu-item dropdown-item d-flex align-items-center gap-2" href="{{ url_for('guitar_study.settings') }}"><i class="bi bi-gear"></i> Configurações</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-menu-item dropdown-item d-flex align-items-center gap-2 text-danger" href="{{ url_for('guitar_study.logout') }}"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
+                    </ul>
+                </div>
+                {% else %}
+                <a href="{{ url_for('guitar_study.login') }}" class="btn btn-sm btn-outline-primary fw-medium">Fazer Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container-fluid flex-grow-1 d-flex flex-column flex-lg-row p-0">
+        
+        <!-- Sidebar para telas Grandes (Desktop) -->
+        {% if current_user.is_authenticated %}
+        <aside class="sidebar-desktop d-none d-lg-flex flex-column border-end flex-shrink-0 bg-body-tertiary" style="width: 260px;">
+            <div class="p-3 flex-grow-1 overflow-y-auto">
+                {% include 'guitar_study/_menu.html' %}
+            </div>
+            <div class="p-3 border-top bg-body-secondary d-flex align-items-center justify-content-between">
+                <span class="fs-7 text-muted">Versão 1.0.0</span>
+                <button class="btn btn-sm btn-outline-secondary" id="themeTogglerDesktop" title="Alternar Tema">
+                    <i class="bi bi-sun-fill d-none-dark"></i>
+                    <i class="bi bi-moon-stars-fill d-none-light"></i>
+                </button>
+            </div>
+        </aside>
+        
+        <!-- Sidebar Responsivo Offcanvas (Mobile/Tablet) -->
+        <div class="offcanvas offcanvas-start bg-body-tertiary" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel" style="width: 280px;">
+            <div class="offcanvas-header border-bottom">
+                <h5 class="offcanvas-title fw-bold text-primary d-flex align-items-center gap-2" id="sidebarOffcanvasLabel">
+                    <i class="bi bi-guitar"></i> Guitar Study
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body p-3">
+                {% include 'guitar_study/_menu.html' %}
+            </div>
+            <div class="p-3 border-top bg-body-secondary d-flex align-items-center justify-content-between">
+                <span class="fs-7 text-muted">Versão 1.0.0</span>
+                <button class="btn btn-sm btn-outline-secondary" id="themeTogglerMobile">
+                    <i class="bi bi-sun-fill"></i> Alternar Tema
+                </button>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Área de Conteúdo Principal -->
+        <main class="flex-grow-1 p-3 p-md-4 overflow-x-hidden">
+            <!-- Alertas Flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show shadow-sm" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            {% block content %}{% endblock %}
+        </main>
+        
+    </div>
+    
+    <!-- Footer -->
+    <footer class="footer mt-auto py-3 bg-body-secondary border-top text-center">
+        <div class="container">
+            <span class="text-muted fs-7">© 2026 Guitar Study. Desenvolvido para Guitarristas e Músicos com foco em performance e estudo persistente.</span>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap 5 Bundle com Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    
+    <!-- ABCJS para Renderização Dinâmica de Partituras Clássicas -->
+    <script src="https://cdn.jsdelivr.net/npm/abcjs@6.3.0/dist/abcjs-basic-min.js" crossorigin="anonymous"></script>
+    
+    <!-- Custom Theme Logic -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const htmlElement = document.documentElement;
+            
+            function toggleTheme() {
+                const currentTheme = htmlElement.getAttribute("data-bs-theme");
+                const newTheme = currentTheme === "dark" ? "light" : "dark";
+                htmlElement.setAttribute("data-bs-theme", newTheme);
+                localStorage.setItem("theme", newTheme);
+                
+                // Envia para o servidor salvar na conta via fetch (operação segura)
+                fetch("{{ url_for('guitar_study.update_preferences') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    body: `theme=${newTheme}`
+                }).catch(e => console.log("Não foi possível persistir o tema no servidor:", e));
+            }
+            
+            const btnDesktop = document.getElementById("themeTogglerDesktop");
+            const btnMobile = document.getElementById("themeTogglerMobile");
+            
+            if (btnDesktop) btnDesktop.addEventListener("click", toggleTheme);
+            if (btnMobile) btnMobile.addEventListener("click", toggleTheme);
+        });
+    </script>
+    
+    <!-- Lógica de Áudio de Alta Precisão do Metrônomo Global -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            let metCtx = null;
+            let isMetPlaying = false;
+            let metBpm = 120;
+            let nextNoteTime = 0.0;        // Quando tocar o próximo beat
+            let currentBeat = 0;           // Contagem de compasso (0 a 3 para 4/4)
+            const scheduleAheadTime = 0.1;  // Antecedência de agendamento (100ms)
+            let timerInterval = null;
+            
+            // Elementos do DOM
+            const metIcon = document.getElementById("metronomeIcon");
+            const navBpmDisplay = document.getElementById("navbarBpmDisplay");
+            const menuBpmNumber = document.getElementById("menuBpmNumber");
+            const bpmSlider = document.getElementById("metronomeBpmSlider");
+            const btnBpmMinus = document.getElementById("btnBpmMinus");
+            const btnBpmPlus = document.getElementById("btnBpmPlus");
+            const btnToggle = document.getElementById("btnToggleMetronome");
+            const indicatorLight = document.getElementById("metronomeIndicatorLight");
+            
+            // Inicializa áudio sob demanda (evita restrições do navegador)
+            function initMetronomeAudio() {
+                if (!metCtx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    metCtx = new AudioContext();
+                }
+            }
+            
+            // Sincroniza displays
+            function updateBpm(val) {
+                metBpm = Math.max(40, Math.min(240, parseInt(val)));
+                if (bpmSlider) bpmSlider.value = metBpm;
+                if (menuBpmNumber) menuBpmNumber.textContent = metBpm;
+                if (navBpmDisplay) navBpmDisplay.innerHTML = `${metBpm} <span class="fs-8 fw-normal text-muted">BPM</span>`;
+                localStorage.setItem("metronomeBpm", metBpm);
+            }
+            
+            // Restaura BPM salvo
+            const savedBpm = localStorage.getItem("metronomeBpm");
+            if (savedBpm) {
+                updateBpm(savedBpm);
+            } else {
+                updateBpm(120);
+            }
+            
+            // Listeners de ajuste
+            if (bpmSlider) bpmSlider.addEventListener("input", (e) => updateBpm(e.target.value));
+            if (btnBpmMinus) btnBpmMinus.addEventListener("click", () => updateBpm(metBpm - 5));
+            if (btnBpmPlus) btnBpmPlus.addEventListener("click", () => updateBpm(metBpm + 5));
+            
+            // Sintetiza o clique clássico de metrônomo
+            function playClick(time, beatNumber) {
+                const osc = metCtx.createOscillator();
+                const gainNode = metCtx.createGain();
+                
+                // O tempo 1 (beat 0) recebe acento agudo
+                const isAccent = beatNumber === 0;
+                osc.frequency.setValueAtTime(isAccent ? 1000 : 700, time);
+                
+                gainNode.gain.setValueAtTime(0, time);
+                gainNode.gain.linearRampToValueAtTime(0.4, time + 0.002);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, time + 0.04); // Click curto seco
+                
+                osc.connect(gainNode);
+                gainNode.connect(metCtx.destination);
+                
+                osc.start(time);
+                osc.stop(time + 0.05);
+                
+                // Agenda a luz piscante no tempo exato em MS
+                setTimeout(() => {
+                    if (isMetPlaying && indicatorLight) {
+                        indicatorLight.classList.remove("d-none");
+                        indicatorLight.className = `position-absolute top-0 start-100 translate-middle p-1 border border-light rounded-circle ${isAccent ? 'bg-danger' : 'bg-success'}`;
+                        
+                        setTimeout(() => {
+                            if (indicatorLight) indicatorLight.classList.add("d-none");
+                        }, 50);
+                    }
+                }, (time - metCtx.currentTime) * 1000);
+            }
+            
+            // Agendador preciso de Web Audio API
+            function scheduler() {
+                while (nextNoteTime < metCtx.currentTime + scheduleAheadTime) {
+                    playClick(nextNoteTime, currentBeat);
+                    
+                    const secondsPerBeat = 60.0 / metBpm;
+                    nextNoteTime += secondsPerBeat;
+                    
+                    currentBeat = (currentBeat + 1) % 4; // Compasso 4/4
+                }
+            }
+            
+            function startMetronome() {
+                initMetronomeAudio();
+                if (metCtx.state === 'suspended') {
+                    metCtx.resume();
+                }
+                
+                isMetPlaying = true;
+                currentBeat = 0;
+                nextNoteTime = metCtx.currentTime + 0.05;
+                
+                // Roda o agendador a cada 25ms para agendar as batidas com precisão
+                timerInterval = setInterval(scheduler, 25);
+                
+                // Atualiza elementos visuais do DOM
+                if (btnToggle) {
+                    btnToggle.textContent = "PARAR METRÔNOMO";
+                    btnToggle.className = "btn btn-danger btn-sm w-100 fw-bold py-2 shadow";
+                }
+                if (metIcon) {
+                    metIcon.classList.add("text-danger");
+                    metIcon.style.animation = "pulse 0.5s infinite alternate";
+                }
+                if (indicatorLight) indicatorLight.classList.remove("d-none");
+                
+                // Sincroniza o botão rápido de play/stop da navbar
+                const btnFast = document.getElementById("btnFastMetronomePlayStop");
+                const fastIcon = document.getElementById("fastMetronomeIcon");
+                if (btnFast && fastIcon) {
+                    btnFast.className = "btn btn-outline-danger btn-sm rounded-circle d-flex align-items-center justify-content-center p-0 shadow-sm";
+                    fastIcon.className = "bi bi-stop-fill fs-5";
+                }
+                
+                if (window.showToast) window.showToast("Metrônomo iniciado!", "info");
+            }
+            
+            function stopMetronome() {
+                isMetPlaying = false;
+                clearInterval(timerInterval);
+                
+                if (btnToggle) {
+                    btnToggle.textContent = "INICIAR METRÔNOMO";
+                    btnToggle.className = "btn btn-success btn-sm w-100 fw-bold py-2 shadow";
+                }
+                if (metIcon) {
+                    metIcon.classList.remove("text-danger");
+                    metIcon.style.animation = "";
+                }
+                if (indicatorLight) indicatorLight.classList.add("d-none");
+                
+                // Sincroniza o botão rápido de play/stop da navbar
+                const btnFast = document.getElementById("btnFastMetronomePlayStop");
+                const fastIcon = document.getElementById("fastMetronomeIcon");
+                if (btnFast && fastIcon) {
+                    btnFast.className = "btn btn-outline-success btn-sm rounded-circle d-flex align-items-center justify-content-center p-0 shadow-sm";
+                    fastIcon.className = "bi bi-play-fill fs-5";
+                }
+                
+                if (window.showToast) window.showToast("Metrônomo parado.", "warning");
+            }
+            
+            if (btnToggle) {
+                btnToggle.addEventListener("click", () => {
+                    if (isMetPlaying) {
+                        stopMetronome();
+                    } else {
+                        startMetronome();
+                    }
+                });
+            }
+            
+            // Listener do botão rápido de Play/Stop da navbar
+            const btnFastPlayStop = document.getElementById("btnFastMetronomePlayStop");
+            if (btnFastPlayStop) {
+                btnFastPlayStop.addEventListener("click", () => {
+                    if (isMetPlaying) {
+                        stopMetronome();
+                    } else {
+                        startMetronome();
+                    }
+                });
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

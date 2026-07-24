@@ -1,0 +1,65 @@
+<ul class="nav nav-pills flex-column gap-1">
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'guitar_study.dashboard' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.dashboard') }}">
+            <i class="bi bi-speedometer2 fs-5"></i>
+            <span>Dashboard</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'guitar_study.fretboard' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.fretboard') }}">
+            <i class="bi bi-music-note-list fs-5"></i>
+            <span>Braço da Guitarra</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'guitar_study.scales' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.scales') }}">
+            <i class="bi bi-hash fs-5"></i>
+            <span>Escalas</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'guitar_study.modes' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.modes') }}">
+            <i class="bi bi-brightness-high fs-5"></i>
+            <span>Modos Gregos</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'guitar_study.chords' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.chords') }}">
+            <i class="bi bi-layers fs-5"></i>
+            <span>Dicionário de Acordes</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'guitar_study.harmony' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.harmony') }}">
+            <i class="bi bi-music-player-fill fs-5"></i>
+            <span>Harmonia Funcional</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'guitar_study.exercises' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.exercises') }}">
+            <i class="bi bi-controller fs-5"></i>
+            <span>Exercícios</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint in ('guitar_study.songs', 'guitar_study.song_view') %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.songs') }}">
+            <i class="bi bi-music-note-beamed fs-5"></i>
+            <span>Cifras</span>
+        </a>
+    </li>
+
+    <li class="nav-item my-2 border-top border-secondary-subtle"></li>
+    
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'guitar_study.settings' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3 text-muted-hover" href="{{ url_for('guitar_study.settings') }}">
+            <i class="bi bi-gear fs-5"></i>
+            <span>Configurações</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link d-flex align-items-center gap-3 py-2 px-3 rounded-3 text-danger" href="{{ url_for('guitar_study.logout') }}">
+            <i class="bi bi-box-arrow-right fs-5"></i>
+            <span>Sair</span>
+        </a>
+    </li>
+</ul>

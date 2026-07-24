@@ -1,0 +1,408 @@
+{% extends 'guitar_study/base.html' %}
+
+{% block title %}Braço da Guitarra Interativo{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-12 col-md-6">
+        <h1 class="fw-extrabold mb-1"><i class="bi bi-guitar text-primary"></i> Braço da Guitarra</h1>
+        <p class="text-muted">Interativo, dinâmico e auditivo. Descubra notas, frequências, graus e intervalos.</p>
+    </div>
+    <div class="col-12 col-md-6 text-md-end mt-3 mt-md-0 d-flex flex-wrap gap-2 justify-content-md-end">
+        <!-- Cronômetro de Estudo -->
+        <div class="card bg-body-tertiary border-primary px-3 py-1 d-flex flex-row align-items-center gap-3 shadow-sm">
+            <span class="fs-7 text-muted fw-bold"><i class="bi bi-stopwatch text-primary"></i> Sessão:</span>
+            <span id="studyTimer" class="font-monospace fw-bold text-primary fs-6">00:00</span>
+            <button id="btnToggleStudy" class="btn btn-sm btn-success py-0 px-2 fw-bold" style="font-size: 11px;">INICIAR</button>
+        </div>
+    </div>
+</div>
+
+<!-- Painel Superior de Configurações do Braço -->
+<div class="card mb-4 bg-body-tertiary">
+    <div class="card-body p-3">
+        <div class="row g-3">
+            <div class="col-12 col-sm-6 col-md-3 col-lg-2">
+                <label for="tuningSelect" class="form-label fs-7 fw-bold text-muted">Afinação</label>
+                <select id="tuningSelect" class="form-select form-select-sm">
+                    {% for key, val in tunings.items() %}
+                    <option value="{{ key }}" {% if settings.tuning_id == key %}selected{% endif %}>{{ val.name }}</option>
+                    {% endfor %}
+                    {% for custom in custom_tunings %}
+                    <option value="{{ custom.id }}">{{ custom.name }} (Personalizada)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-12 col-sm-6 col-md-2 col-lg-2">
+                <label for="fretCountSelect" class="form-label fs-7 fw-bold text-muted">Casas</label>
+                <select id="fretCountSelect" class="form-select form-select-sm">
+                    <option value="21" {% if settings.fret_count == 21 %}selected{% endif %}>21 Casas</option>
+                    <option value="22" {% if settings.fret_count == 22 %}selected{% endif %}>22 Casas</option>
+                    <option value="24" {% if settings.fret_count == 24 %}selected{% endif %}>24 Casas</option>
+                </select>
+            </div>
+            
+            <div class="col-12 col-sm-6 col-md-2 col-lg-2">
+                <label for="tonicSelect" class="form-label fs-7 fw-bold text-muted">Tônica Referência</label>
+                <select id="tonicSelect" class="form-select form-select-sm">
+                    {% for note in chromatic_notes %}
+                    <option value="{{ note }}" {% if note == 'C' %}selected{% endif %}>{{ note }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-12 col-sm-6 col-md-3 col-lg-3">
+                <label for="viewModeSelect" class="form-label fs-7 fw-bold text-muted">Visualização</label>
+                <select id="viewModeSelect" class="form-select form-select-sm">
+                    <option value="show_all" selected>Mostrar todas as notas</option>
+                    <option value="hide_all">Ocultar todas as notas</option>
+                    <option value="natural">Somente notas naturais (A-B-C...)</option>
+                    <option value="tonic_only">Somente a tônica selecionada</option>
+                    <option value="modo_editor">Modo Editor (Selecionar Notas)</option>
+                </select>
+            </div>
+            
+            <div class="col-12 col-sm-6 col-md-2 col-lg-2">
+                <label class="form-label fs-7 fw-bold text-muted">Exibição na Nota</label>
+                <div class="btn-group btn-group-sm w-100" role="group">
+                    <button type="button" class="btn btn-outline-primary active" id="btnDispNotes">Notas</button>
+                    <button type="button" class="btn btn-outline-primary" id="btnDispIntervals">Intervalos</button>
+                </div>
+            </div>
+            
+            <!-- Controle de Volume e Stop -->
+            <div class="col-12 col-sm-6 col-md-2 col-lg-1 d-flex flex-column justify-content-end align-items-center">
+                <button id="globalStopAudio" class="btn btn-sm btn-outline-danger w-100 fw-bold py-1" title="Parar Áudio Ativo">
+                    <i class="bi bi-volume-mute-fill"></i> MUTE
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CONTAINER PRINCIPAL DO BRAÇO INTERATIVO -->
+<div class="card mb-4 border-0 shadow-sm overflow-hidden bg-body-tertiary">
+    <div class="card-body p-0 position-relative">
+        <div id="guitarFretboard">
+            <!-- Gerado dinamicamente via JS -->
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    
+    <!-- Detalhes da Nota Clicada -->
+    <div class="col-12 col-md-6">
+        <div class="card h-100 bg-body-tertiary">
+            <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-info-circle text-primary fs-5"></i>
+                <h5 class="fw-bold mb-0">Análise da Nota Tocada</h5>
+            </div>
+            <div class="card-body">
+                <div id="emptyNoteState" class="text-center py-5">
+                    <i class="bi bi-hand-index-thumb text-muted fs-1 mb-2 d-block"></i>
+                    <h6 class="text-muted">Clique em qualquer nota do braço para analisar</h6>
+                </div>
+                
+                <div id="noteDetailsContent" class="d-none">
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div id="analyzedNoteBadge" class="avatar bg-primary text-white d-inline-flex align-items-center justify-content-center rounded-circle fw-bold shadow fs-2" style="width: 72px; height: 72px;">
+                            C
+                        </div>
+                        <div>
+                            <h4 id="analyzedNoteName" class="fw-extrabold text-body mb-0">Dó (C)</h4>
+                            <span id="analyzedNoteEnharmonic" class="text-muted fs-7">Enarmônico: B#</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="p-3 bg-body-secondary rounded-3 border">
+                                <span class="fs-8 text-muted fw-bold d-block text-uppercase mb-1">Corda e Casa</span>
+                                <span id="analyzedStringFret" class="fw-bold fs-6">Corda 1 (E) | Casa 8</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-body-secondary rounded-3 border">
+                                <span class="fs-8 text-muted fw-bold d-block text-uppercase mb-1">Frequência Física</span>
+                                <span id="analyzedFrequency" class="fw-bold fs-6">261.63 Hz</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-body-secondary rounded-3 border">
+                                <span class="fs-8 text-muted fw-bold d-block text-uppercase mb-1">Intervalo Relativo</span>
+                                <span id="analyzedInterval" class="fw-bold fs-6 text-primary">Tônica (1)</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-body-secondary rounded-3 border">
+                                <span class="fs-8 text-muted fw-bold d-block text-uppercase mb-1">Oitava Científica</span>
+                                <span id="analyzedOctave" class="fw-bold fs-6">C4</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3 p-3 bg-body rounded-3 border fs-7" id="analyzedExplanation">
+                        A nota C representa a tônica fundamental da tonalidade selecionada. É o centro de gravidade tonal de onde todas as outras notas e intervalos derivam.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lógica de Registro e Teoria Rápida -->
+    <div class="col-12 col-md-6">
+        <div class="card h-100 bg-body-tertiary">
+            <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-book text-success fs-5"></i>
+                <h5 class="fw-bold mb-0">Ajuda ao Guitarrista</h5>
+            </div>
+            <div class="card-body d-flex flex-column justify-content-between">
+                <div>
+                    <h6 class="fw-bold mb-2">Como ler e usar o braço:</h6>
+                    <ul class="fs-7 text-muted ps-3 mb-4">
+                        <li class="mb-2"><strong>Horizontalidade:</strong> O braço está disposto na horizontal. A corda superior representa a <strong>1ª Corda (E aguda)</strong>, e a inferior representa a <strong>6ª Corda (E grave)</strong>.</li>
+                        <li class="mb-2"><strong>Destaque Vermelho:</strong> Representa a <strong>Tônica</strong> ativa. Use-a como âncora para memorizar os intervalos.</li>
+                        <li class="mb-2"><strong>Estude os Intervalos:</strong> Mude a exibição para "Intervalos" para visualizar a estrutura geométrica dos acordes e escalas no braço de forma relativa, facilitando a transposição.</li>
+                    </ul>
+                </div>
+                
+                <div class="p-3 bg-body-secondary rounded-3 border border-secondary-subtle">
+                    <span class="fs-8 text-muted fw-bold d-block text-uppercase mb-2"><i class="bi bi-sliders"></i> Volume de Áudio do Sistema</span>
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-volume-down text-muted"></i>
+                        <input type="range" class="form-range" id="globalVolume" min="0" max="1" step="0.05" value="0.5">
+                        <i class="bi bi-volume-up text-muted"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<!-- Modal para Registrar Sessão ao parar o cronômetro -->
+<div class="modal fade" id="registerSessionModal" tabindex="-1" aria-labelledby="registerSessionModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold text-primary" id="registerSessionModalLabel"><i class="bi bi-bookmark-check"></i> Parabéns pelos estudos!</h5>
+            </div>
+            <div class="modal-body">
+                <p class="fs-7 text-muted">Você concluiu uma sessão de estudos do braço da guitarra. Gostaria de registrar essa sessão no seu histórico?</p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold fs-7">Tempo de Prática:</label>
+                    <h4 id="modalTimerDisplay" class="fw-extrabold text-success">15 minutos</h4>
+                </div>
+                <div class="mb-3">
+                    <label for="sessionNotes" class="form-label fw-bold fs-7">Anotações / Progresso de Estudo (Opcional):</label>
+                    <textarea class="form-control" id="sessionNotes" rows="3" placeholder="O que você praticou hoje? Ex: Memorização de notas na 5ª corda, exercícios cromáticos, etc."></textarea>
+                </div>
+            </div>
+            <div class="modal-content-footer p-3 border-top d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Descartar</button>
+                <button type="button" id="btnSaveSession" class="btn btn-primary">Salvar no Histórico</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Carregamento Modular de ES Modules -->
+<script type="module">
+    import { Fretboard } from "{{ url_for('guitar_study.static', filename='js/fretboard.js') }}";
+    import { registerStudySession, showToast } from "{{ url_for('guitar_study.static', filename='js/app.js') }}";
+    
+    document.addEventListener("DOMContentLoaded", async () => {
+        // Inicializa o Braço de Guitarra
+        const fretboard = new Fretboard("guitarFretboard", {
+            tuningId: document.getElementById("tuningSelect").value,
+            fretCount: parseInt(document.getElementById("fretCountSelect").value),
+            tonic: document.getElementById("tonicSelect").value,
+            viewMode: document.getElementById("viewModeSelect").value,
+            onNoteClick: (noteData) => {
+                showNoteDetails(noteData);
+            }
+        });
+        
+        await fretboard.init();
+        
+        // Listeners de Configurações
+        document.getElementById("tuningSelect").addEventListener("change", async (e) => {
+            fretboard.options.tuningId = e.target.value;
+            await fretboard.init();
+        });
+        
+        document.getElementById("fretCountSelect").addEventListener("change", async (e) => {
+            fretboard.options.fretCount = parseInt(e.target.value);
+            await fretboard.init();
+        });
+        
+        document.getElementById("tonicSelect").addEventListener("change", (e) => {
+            fretboard.options.tonic = e.target.value;
+            fretboard.renderNotesContent();
+            fretboard.updateNoteVisibilities();
+            
+            // Se houver nota selecionada em análise, recalcula o intervalo dela
+            if (activeNoteData) {
+                showNoteDetails(activeNoteData);
+            }
+        });
+        
+        document.getElementById("viewModeSelect").addEventListener("change", (e) => {
+            fretboard.setViewMode(e.target.value);
+        });
+        
+        // Modos de exibição da Nota (Letra vs Intervalo)
+        const btnDispNotes = document.getElementById("btnDispNotes");
+        const btnDispIntervals = document.getElementById("btnDispIntervals");
+        
+        btnDispNotes.addEventListener("click", () => {
+            btnDispNotes.classList.add("active");
+            btnDispIntervals.classList.remove("active");
+            fretboard.setDisplayType("notes");
+        });
+        
+        btnDispIntervals.addEventListener("click", () => {
+            btnDispIntervals.classList.add("active");
+            btnDispNotes.classList.remove("active");
+            fretboard.setDisplayType("intervals");
+        });
+        
+        // LÓGICA DE DETALHES DA NOTA CLICADA
+        let activeNoteData = null;
+        
+        function showNoteDetails(noteData) {
+            activeNoteData = noteData;
+            document.getElementById("emptyNoteState").classList.add("d-none");
+            
+            const content = document.getElementById("noteDetailsContent");
+            content.classList.remove("d-none");
+            
+            // Nome e enarmônica
+            document.getElementById("analyzedNoteBadge").textContent = noteData.note;
+            document.getElementById("analyzedNoteName").textContent = getFullNoteNamePT(noteData.note);
+            
+            const enarmonicas = {
+                "C#": "Db", "Db": "C#", "D#": "Eb", "Eb": "D#", "F#": "Gb", "Gb": "F#",
+                "G#": "Ab", "Ab": "G#", "A#": "Bb", "Bb": "A#"
+            };
+            const enh = enarmonicas[noteData.note] || "Nenhum";
+            document.getElementById("analyzedNoteEnharmonic").textContent = `Enarmônico: ${enh}`;
+            
+            // Corda e Casa
+            document.getElementById("analyzedStringFret").textContent = `Corda ${noteData.string} (${noteData.openString}) | Casa ${noteData.fret}`;
+            
+            // Frequência
+            document.getElementById("analyzedFrequency").textContent = `${noteData.frequency} Hz`;
+            
+            // Oitava científica aproximada
+            const baseOctave = noteData.string === 1 ? 4 : (noteData.string <= 3 ? 3 : 2);
+            const calculatedOctave = baseOctave + Math.floor((noteData.fret) / 12);
+            document.getElementById("analyzedOctave").textContent = `${noteData.note}${calculatedOctave}`;
+            
+            // Intervalo em relação à tônica ativa
+            const root = document.getElementById("tonicSelect").value;
+            const intervalSymbol = fretboard.calculateIntervalSymbol(root, noteData.note);
+            const intervalName = getIntervalNamePT(intervalSymbol);
+            document.getElementById("analyzedInterval").textContent = `${intervalName} (${intervalSymbol})`;
+            
+            // Explicação
+            document.getElementById("analyzedExplanation").textContent = getExplanationPT(noteData.note, root, intervalName);
+        }
+        
+        // Tradução de nomes para Português
+        function getFullNoteNamePT(note) {
+            const map = {
+                "C": "Dó", "C#": "Dó Sustenido", "Db": "Ré Bemol", "D": "Ré", "D#": "Ré Sustenido", "Eb": "Mi Bemol",
+                "E": "Mi", "F": "Fá", "F#": "Fá Sustenido", "Gb": "Sol Bemol", "G": "Sol", "G#": "Sol Sustenido",
+                "Ab": "Lá Bemol", "A": "Lá", "A#": "Lá Sustenido", "Bb": "Si Bemol", "B": "Si"
+            };
+            return map[note] || note;
+        }
+        
+        function getIntervalNamePT(sym) {
+            const map = {
+                "1": "Tônica", "b2": "Segunda Menor", "2": "Segunda Maior", "b3": "Terça Menor", "3": "Terça Maior",
+                "4": "Quarta Justa", "b5": "Quinta Diminuta", "5": "Quinta Justa", "b6": "Sexta Menor", "6": "Sexta Maior",
+                "b7": "Sétima Menor", "7": "Sétima Maior"
+            };
+            return map[sym] || "Tônica";
+        }
+        
+        function getExplanationPT(note, root, interval) {
+            if (note === root) {
+                return `A nota ${note} é a TÔNICA fundamental ativa de referência do estúdio. É o centro tonal de onde todos os outros intervalos são medidos geométrica e acusticamente no braço da guitarra.`;
+            }
+            return `A nota ${note} atua como o intervalo de ${interval} em relação à tônica ${root}. Na guitarra, memorizar a posição geométrica deste intervalo em relação à tônica é o segredo para dominar a formação de acordes, arpejos e escalas sem depender de fórmulas fixas.`;
+        }
+        
+        // LÓGICA DO CRONÔMETRO DE ESTUDO
+        let timerInterval = null;
+        let elapsedSeconds = 0;
+        let isTimerRunning = false;
+        
+        const timerDisplay = document.getElementById("studyTimer");
+        const btnToggleStudy = document.getElementById("btnToggleStudy");
+        
+        function updateTimerDisplay() {
+            const mins = Math.floor(elapsedSeconds / 60);
+            const secs = elapsedSeconds % 60;
+            timerDisplay.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        btnToggleStudy.addEventListener("click", () => {
+            if (isTimerRunning) {
+                // Parar cronômetro
+                clearInterval(timerInterval);
+                isTimerRunning = false;
+                btnToggleStudy.textContent = "INICIAR";
+                btnToggleStudy.className = "btn btn-sm btn-success py-0 px-2 fw-bold";
+                
+                // Abre o modal de registro se tiver praticado pelo menos 5 segundos
+                if (elapsedSeconds >= 5) {
+                    const durationMins = Math.max(1, Math.round(elapsedSeconds / 60));
+                    document.getElementById("modalTimerDisplay").textContent = `${durationMins} minutos (${elapsedSeconds}s)`;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById("registerSessionModal"));
+                    modal.show();
+                    
+                    // Ação de Salvar Sessão
+                    document.getElementById("btnSaveSession").onclick = async () => {
+                        const notes = document.getElementById("sessionNotes").value;
+                        const success = await registerStudySession("fretboard", "notes_memorization", durationMins, notes);
+                        
+                        if (success) {
+                            showToast("Sessão de estudos gravada com sucesso!", "success");
+                            modal.hide();
+                            // Reseta
+                            elapsedSeconds = 0;
+                            updateTimerDisplay();
+                        } else {
+                            showToast("Erro ao gravar sessão no servidor.", "danger");
+                        }
+                    };
+                } else {
+                    elapsedSeconds = 0;
+                    updateTimerDisplay();
+                    showToast("Sessão muito curta para ser registrada.", "info");
+                }
+            } else {
+                // Iniciar cronômetro
+                isTimerRunning = true;
+                btnToggleStudy.textContent = "CONCLUIR";
+                btnToggleStudy.className = "btn btn-sm btn-danger py-0 px-2 fw-bold";
+                
+                timerInterval = setInterval(() => {
+                    elapsedSeconds++;
+                    updateTimerDisplay();
+                }, 1000);
+                
+                showToast("Sessão de prática iniciada! Pratique e divirta-se.", "info");
+            }
+        });
+    });
+</script>
+{% endblock %}

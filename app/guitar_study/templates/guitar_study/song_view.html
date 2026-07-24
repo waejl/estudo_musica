@@ -1,0 +1,356 @@
+{% extends 'guitar_study/base.html' %}
+
+{% block title %}{{ song.artist }} - {{ song.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Visualizador de Cifra */
+#cifraContainer {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-break: break-word;
+    tab-size: 4;
+}
+
+.cifra-section-header {
+    font-family: inherit;
+    font-weight: 700;
+    color: var(--bs-primary);
+    font-size: 0.85em;
+    display: block;
+    margin-top: 1.2em;
+    margin-bottom: 0.1em;
+}
+
+.cifra-chord-line {
+    display: block;
+    line-height: 1.4;
+}
+
+.cifra-chord {
+    color: #4dabf7;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 3px;
+    padding: 0 1px;
+    transition: background .12s, color .12s;
+}
+
+.cifra-chord:hover {
+    background: #4dabf720;
+    color: #74c0fc;
+    text-decoration: none;
+}
+
+.cifra-lyric-line {
+    display: block;
+    color: var(--bs-body-color);
+    line-height: 1.6;
+}
+
+.cifra-blank-line {
+    display: block;
+    line-height: 0.8;
+}
+
+/* Painel de acorde selecionado */
+#chordInfoPanel {
+    position: sticky;
+    top: 72px;
+}
+
+/* Botões de controle de fonte */
+.font-size-controls .btn { min-width: 36px; }
+
+[data-bs-theme="light"] .cifra-chord { color: #1971c2; }
+[data-bs-theme="light"] .cifra-chord:hover { background: #1971c220; color: #1864ab; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Cabeçalho -->
+<div class="d-flex align-items-start gap-3 mb-4 flex-wrap">
+    <a href="{{ url_for('guitar_study.songs') }}" class="btn btn-outline-secondary btn-sm mt-1">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <div class="flex-fill">
+        <h1 class="fw-extrabold mb-0 lh-1">{{ song.title }}</h1>
+        <p class="text-muted mb-0 mt-1 fs-5">{{ song.artist }}</p>
+        <div class="d-flex flex-wrap gap-2 mt-2">
+            <span class="badge rounded-pill
+                {% if song.genre == 'rock' %}bg-danger
+                {% elif song.genre == 'mpb' %}bg-success
+                {% elif song.genre == 'rock_internacional' %}bg-warning text-dark
+                {% elif song.genre == 'metal' %}bg-dark border
+                {% elif song.genre == 'evangelica' %}bg-info text-dark
+                {% else %}bg-secondary{% endif %}
+                fw-semibold">
+                {{ {'rock':'Rock','mpb':'MPB','rock_internacional':'Rock Internacional','metal':'Metal','evangelica':'Evangélica','outros':'Outros'}[song.genre] }}
+            </span>
+            {% if song.capo > 0 %}
+            <span class="badge bg-body-secondary text-body border">
+                <i class="bi bi-grip-horizontal"></i> Capotraste na {{ song.capo }}ª casa
+            </span>
+            {% endif %}
+            {% if song.source_url %}
+            <a href="{{ song.source_url }}" target="_blank" rel="noopener" class="badge bg-body-secondary text-muted border text-decoration-none">
+                <i class="bi bi-box-arrow-up-right"></i> Ver fonte
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    <!-- Controles -->
+    <div class="d-flex align-items-center gap-2 font-size-controls">
+        <span class="text-muted fs-8 fw-semibold">Fonte:</span>
+        <button class="btn btn-outline-secondary btn-sm" onclick="changeFontSize(-1)" title="Diminuir">A-</button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="changeFontSize(1)" title="Aumentar">A+</button>
+        <button class="btn btn-outline-secondary btn-sm ms-1" onclick="toggleRaw()" title="Ver texto original" id="btnToggleRaw">
+            <i class="bi bi-code"></i>
+        </button>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Coluna principal: cifra -->
+    <div class="col-12 col-xl-8">
+        <div class="card bg-body-tertiary border-0 shadow-sm">
+            <div class="card-body p-3 p-md-4">
+                <div id="cifraContainer"></div>
+                <textarea id="cifraRaw" class="form-control font-monospace d-none" style="min-height:500px;font-size:13px" readonly>{{ song.content }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coluna lateral: acorde clicado -->
+    <div class="col-12 col-xl-4">
+        <div id="chordInfoPanel">
+            <div class="card bg-body-tertiary border-0 shadow-sm" id="chordCard">
+                <div class="card-body text-center py-4">
+                    <i class="bi bi-hand-index-thumb display-4 text-muted opacity-25"></i>
+                    <p class="text-muted fs-7 mt-2 mb-0">Clique em um acorde destacado na cifra para ver o diagrama.</p>
+                </div>
+            </div>
+            <div class="card bg-body-tertiary border-0 shadow-sm mt-3">
+                <div class="card-body p-3">
+                    <h6 class="fw-bold mb-3 text-muted fs-7 text-uppercase letter-spacing-1">Acordes desta cifra</h6>
+                    <div id="chordChipList" class="d-flex flex-wrap gap-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+import { audioEngine } from "{{ url_for('guitar_study.static', filename='js/audio-engine.js') }}";
+
+// Regex de detecção de acordes
+const CHORD_RE = /^[A-G][#b]?(?:m|M|maj|min|aug|dim|sus[24]?|(?:add|no)\d+|[679]|11|13|b?[579]|maj7|m7|7M|6\/9|[24])?(?:\/[A-G][#b]?)?$/;
+// Regex global para substituição inline
+const CHORD_RE_INLINE = /\b([A-G][#b]?(?:m|M|maj|min|aug|dim|sus[24]?|(?:add|no)\d+|[679]|11|13|b?[579]|maj7|m7|7M|6\/9|[24])?(?:\/[A-G][#b]?)?)\b/g;
+
+const rawContent = document.getElementById("cifraRaw").value;
+let currentFontSize = 14;
+
+// -----------------------------------------------
+// Detecta se uma linha é majoritariamente acordes
+// -----------------------------------------------
+function isChordLine(line) {
+    const trimmed = line.trim();
+    if (!trimmed) return false;
+    // Cabeçalhos como [Intro], [Verso], etc. — não é linha de acorde
+    if (/^\[.+\]/.test(trimmed)) return false;
+    const tokens = trimmed.split(/\s+/);
+    if (tokens.length === 0) return false;
+    const chordTokens = tokens.filter(t => CHORD_RE.test(t));
+    return chordTokens.length / tokens.length >= 0.6;
+}
+
+function isSectionHeader(line) {
+    return /^\[.+\]/.test(line.trim()) || /^(intro|verso|refrão|refrao|coro|bridge|solo|final|pre-refrão|pre-refrao|outro|interludio)/i.test(line.trim());
+}
+
+// -----------------------------------------------
+// Converte linha de acordes em HTML com spans
+// -----------------------------------------------
+function renderChordLine(line) {
+    // Substitui cada token de acorde por um span clicável
+    return line.replace(CHORD_RE_INLINE, (match, chord) => {
+        if (CHORD_RE.test(chord)) {
+            return `<span class="cifra-chord" data-chord="${chord}" onclick="window.onChordClick('${chord}')">${chord}</span>`;
+        }
+        return match;
+    });
+}
+
+// -----------------------------------------------
+// Renderiza toda a cifra
+// -----------------------------------------------
+function renderCifra(content) {
+    const lines = content.split('\n');
+    let html = '';
+
+    for (const line of lines) {
+        if (!line.trim()) {
+            html += `<span class="cifra-blank-line"> </span>`;
+            continue;
+        }
+        if (isSectionHeader(line)) {
+            const escaped = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            html += `<span class="cifra-section-header">${escaped}</span>`;
+            continue;
+        }
+        if (isChordLine(line)) {
+            html += `<span class="cifra-chord-line">${renderChordLine(line)}</span>`;
+        } else {
+            const escaped = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            html += `<span class="cifra-lyric-line">${escaped}</span>`;
+        }
+    }
+    return html;
+}
+
+// -----------------------------------------------
+// Extrai lista única de acordes da cifra
+// -----------------------------------------------
+function extractChords(content) {
+    const found = new Set();
+    for (const line of content.split('\n')) {
+        if (isChordLine(line)) {
+            const tokens = line.trim().split(/\s+/);
+            tokens.forEach(t => { if (CHORD_RE.test(t)) found.add(t); });
+        }
+    }
+    return [...found].sort();
+}
+
+// -----------------------------------------------
+// Popula chips de acordes detectados
+// -----------------------------------------------
+function buildChordChips(chords) {
+    const container = document.getElementById("chordChipList");
+    container.innerHTML = chords.length
+        ? chords.map(c => `<span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle px-2 py-1 fs-7 fw-bold rounded-pill cursor-pointer chord-chip"
+                style="cursor:pointer" onclick="window.onChordClick('${c}')">${c}</span>`).join('')
+        : '<span class="text-muted fs-8">Nenhum acorde detectado.</span>';
+}
+
+// -----------------------------------------------
+// Handler de clique em acorde
+// -----------------------------------------------
+window.onChordClick = async function(chordName) {
+    // Destaca o chip ativo
+    document.querySelectorAll('.chord-chip').forEach(el => el.classList.toggle('bg-primary', el.textContent.trim() === chordName));
+    document.querySelectorAll('.cifra-chord').forEach(el => el.classList.toggle('fw-black', el.dataset.chord === chordName));
+
+    const card = document.getElementById("chordCard");
+    card.innerHTML = `<div class="card-body text-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>`;
+
+    try {
+        const pref = document.documentElement.getAttribute('data-bs-theme') === 'light' ? 'sharps' : 'sharps';
+        // Tenta descobrir root + tipo do nome do acorde
+        const { root, type } = parseChordName(chordName);
+        const resp = await fetch(`/guitar-study/api/v1/chords?root=${encodeURIComponent(root)}&type=${encodeURIComponent(type)}&preference=${pref}`);
+        const data = await resp.json();
+
+        if (data.success) {
+            const info = data.data;
+            card.innerHTML = buildChordCard(chordName, info);
+            // Toca o acorde se engine estiver pronto
+            if (info.frequencies && info.frequencies.length > 0) {
+                audioEngine.initContext();
+                audioEngine.playChord(info.frequencies.filter(Boolean));
+            }
+        } else {
+            card.innerHTML = `<div class="card-body text-center text-muted py-3"><i class="bi bi-question-circle display-6 d-block mb-2 opacity-25"></i><p class="fs-7 mb-0">Acorde <strong>${chordName}</strong> não encontrado no dicionário.</p></div>`;
+        }
+    } catch (e) {
+        card.innerHTML = `<div class="card-body text-center text-danger py-3"><i class="bi bi-exclamation-triangle"></i> Erro ao buscar acorde.</div>`;
+    }
+};
+
+function parseChordName(name) {
+    // Extrai root (A-G com # ou b) e tipo (tudo depois)
+    const m = name.match(/^([A-G][#b]?)(.*?)(?:\/[A-G][#b]?)?$/);
+    if (!m) return { root: name, type: 'major' };
+    const root = m[1];
+    let suffix = m[2] || '';
+
+    const typeMap = {
+        '': 'major', 'm': 'minor', 'maj': 'major', 'min': 'minor',
+        'm7': 'minor_7', 'maj7': 'major_7', '7M': 'major_7',
+        '7': 'dominant_7', 'dim': 'diminished', 'aug': 'augmented',
+        'sus2': 'sus2', 'sus4': 'sus4', 'sus': 'sus4',
+        'm9': 'minor_9', '9': 'dominant_9', 'add9': 'add9',
+        '6': 'major_6', 'm6': 'minor_6', 'dim7': 'diminished_7',
+        'm7b5': 'half_diminished', '5': 'power_5',
+    };
+    const type = typeMap[suffix] || typeMap[suffix.toLowerCase()] || 'major';
+    return { root, type };
+}
+
+function buildChordCard(name, info) {
+    const notes = (info.notes || []).join(' · ');
+    const formula = (info.formula || '').replace(/,/g, ' - ');
+    return `
+    <div class="card-body p-3">
+        <div class="text-center mb-3">
+            <h3 class="fw-extrabold text-primary mb-0">${name}</h3>
+            <p class="text-muted fs-8 mb-0">${info.name || ''}</p>
+        </div>
+        <div class="d-flex flex-column gap-2">
+            <div class="bg-body-secondary rounded-2 p-2">
+                <div class="fs-8 text-muted fw-semibold text-uppercase mb-1">Notas</div>
+                <div class="fw-bold font-monospace">${notes}</div>
+            </div>
+            ${formula ? `<div class="bg-body-secondary rounded-2 p-2">
+                <div class="fs-8 text-muted fw-semibold text-uppercase mb-1">Fórmula</div>
+                <div class="fw-bold font-monospace fs-7">${formula}</div>
+            </div>` : ''}
+        </div>
+        <a href="/guitar-study/chords?root=${encodeURIComponent(info.root || name[0])}&type=${encodeURIComponent(info.chord_type || 'major')}"
+           class="btn btn-outline-primary btn-sm w-100 mt-3 fs-7" target="_blank">
+            <i class="bi bi-layers"></i> Ver diagrama CAGED
+        </a>
+    </div>`;
+}
+
+// -----------------------------------------------
+// Controle de tamanho de fonte
+// -----------------------------------------------
+window.changeFontSize = function(delta) {
+    currentFontSize = Math.min(22, Math.max(10, currentFontSize + delta));
+    document.getElementById("cifraContainer").style.fontSize = currentFontSize + 'px';
+};
+
+// -----------------------------------------------
+// Toggle modo raw / renderizado
+// -----------------------------------------------
+window.toggleRaw = function() {
+    const container = document.getElementById("cifraContainer");
+    const raw = document.getElementById("cifraRaw");
+    const btn = document.getElementById("btnToggleRaw");
+    const showRaw = container.classList.toggle("d-none");
+    raw.classList.toggle("d-none", !showRaw);
+    btn.classList.toggle("btn-primary", showRaw);
+    btn.classList.toggle("btn-outline-secondary", !showRaw);
+};
+
+// -----------------------------------------------
+// Init
+// -----------------------------------------------
+document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById("cifraContainer");
+    container.innerHTML = renderCifra(rawContent);
+    container.style.fontSize = currentFontSize + 'px';
+
+    const chords = extractChords(rawContent);
+    buildChordChips(chords);
+
+    audioEngine.initContext();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1098 @@
+{% extends 'guitar_study/base.html' %}
+
+{% block title %}Dicionário de Acordes{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-12 col-md-8">
+        <h1 class="fw-extrabold mb-1"><i class="bi bi-layers text-primary"></i> Formação e Diagrama de Acordes</h1>
+        <p class="text-muted">Aprenda a construir acordes e descubra as formas móveis do sistema CAGED para tocar em qualquer parte do braço.</p>
+    </div>
+</div>
+
+<!-- Filtros do Acorde -->
+<div class="card mb-4 bg-body-tertiary">
+    <div class="card-body p-3">
+        <div class="row g-3 align-items-end">
+            <div class="col-4 col-md-2">
+                <label for="chordRoot" class="form-label fs-7 fw-bold text-muted">Tônica</label>
+                <select id="chordRoot" class="form-select form-select-sm">
+                    {% for note in chromatic_notes %}
+                    <option value="{{ note }}" {% if note == 'C' %}selected{% endif %}>{{ note }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-8 col-md-3">
+                <label for="chordType" class="form-label fs-7 fw-bold text-muted">Qualidade / Tipo</label>
+                <select id="chordType" class="form-select form-select-sm">
+                    <option value="major" selected>Maior (Tríade)</option>
+                    <option value="minor">Menor (Tríade)</option>
+                    <option value="augmented">Aumentado (Tríade)</option>
+                    <option value="diminuted">Diminuto (Tríade)</option>
+                    <option value="sus2">Sus2 (Segunda Suspensa)</option>
+                    <option value="sus4">Sus4 (Quarta Suspensa)</option>
+                    <option value="maj7">Maior com Sétima (Maj7)</option>
+                    <option value="dom7">Dominante com Sétima (7)</option>
+                    <option value="min7">Menor com Sétima (m7)</option>
+                    <option value="half_dim">Meio Diminuto (m7b5)</option>
+                    <option value="dim7">Diminuto com Sétima (dim7)</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-3">
+                <label for="chordShapeSelect" class="form-label fs-7 fw-bold text-muted">Desenho no Braço (Isolar)</label>
+                <select id="chordShapeSelect" class="form-select form-select-sm">
+                    <option value="all" selected>Mostrar todas as notas (Violão todo)</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-4 d-flex gap-2 justify-content-md-end">
+                <button id="btnPlayChord" class="btn btn-sm btn-primary fw-semibold d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-play-fill"></i> Ouvir (Strumming)
+                </button>
+                <button id="btnFavChord" class="btn btn-sm btn-outline-danger fw-semibold d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-heart"></i> Favoritar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Coluna Esquerda: Teoria -->
+    <div class="col-12 col-md-5">
+        <div class="card h-100 bg-body-tertiary">
+            <div class="card-body">
+                <span class="badge bg-primary text-white text-uppercase fs-8 mb-2">Acorde Ativo</span>
+                <h3 id="chordTitleName" class="fw-extrabold text-body">C Maior</h3>
+                <p id="chordDescription" class="fs-7 text-muted">Consonante e feliz. Tríade básica maior.</p>
+                <div class="mt-4 border-top pt-3">
+                    <span class="fs-8 text-muted fw-bold d-block text-uppercase mb-2">Fórmula das Notas</span>
+                    <h5 id="chordFormula" class="font-monospace fw-bold text-primary">1 - 3 - 5</h5>
+                </div>
+                <div class="mt-3">
+                    <span class="fs-8 text-muted fw-bold d-block text-uppercase mb-2">Notas do Acorde</span>
+                    <div id="chordNotesBadges" class="d-flex gap-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coluna Direita: CAGED / Formas Móveis -->
+    <div class="col-12 col-md-7">
+        <div class="card bg-body-tertiary" id="cagedCard">
+            <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <h5 class="fw-bold mb-0"><i class="bi bi-grid-3x3-gap"></i> Formas Móveis do Sistema CAGED</h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" id="btnViewDiagrams" class="btn btn-primary">
+                        <i class="bi bi-grid-1x2-fill"></i> Diagramas
+                    </button>
+                    <button type="button" id="btnViewFretboard" class="btn btn-outline-secondary">
+                        <i class="bi bi-music-note-list"></i> Braço Completo
+                    </button>
+                    <button type="button" id="btnViewVoicings" class="btn btn-outline-secondary">
+                        <i class="bi bi-collection"></i> Todos os Voicings
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modo 1: Diagramas CAGED -->
+            <div id="viewDiagrams" class="card-body" style="max-height:420px;overflow-y:auto">
+                <p class="fs-7 text-muted mb-3">Formas que mostram como transpor e tocar em qualquer região do braço com pestana:</p>
+                <div class="row g-3" id="cagedContainer"></div>
+            </div>
+
+            <!-- Modo 2: Braço completo CAGED -->
+            <div id="viewFretboard" class="card-body" style="display:none">
+                <div class="d-flex flex-wrap gap-2 mb-3" id="shapeLegend"></div>
+                <div class="overflow-x-auto rounded-2" id="allShapesFretboard"></div>
+            </div>
+
+            <!-- Modo 3: Todos os Voicings -->
+            <div id="viewVoicings" class="card-body" style="display:none;padding-bottom:0">
+                <!-- Filtros -->
+                <div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
+                    <button class="btn btn-sm btn-primary rounded-pill voicing-filter-btn active" data-filter="all">Todos</button>
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill voicing-filter-btn" data-filter="3">Tríades</button>
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill voicing-filter-btn" data-filter="4">4 cordas</button>
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill voicing-filter-btn" data-filter="5">5 cordas</button>
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill voicing-filter-btn" data-filter="6">6 cordas</button>
+                    <div class="ms-auto form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="filterRootBass">
+                        <label class="form-check-label fs-8 fw-semibold text-muted" for="filterRootBass">Raiz no baixo</label>
+                    </div>
+                </div>
+                <p id="voicingStats" class="text-muted fs-8 mb-2"></p>
+                <!-- Grade de voicings -->
+                <div id="allVoicingsGrid" class="d-flex flex-wrap gap-2 pb-3"
+                     style="max-height:520px;overflow-y:auto;padding-right:4px"></div>
+                <div id="voicingEmpty" class="text-muted text-center py-4 d-none fs-7">
+                    <i class="bi bi-question-circle display-6 d-block mb-2 opacity-25"></i>
+                    Nenhum voicing encontrado com os filtros atuais.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FRETBOARD DO ACORDE -->
+<div class="card mb-4 bg-body-tertiary border-0 shadow-sm overflow-hidden">
+    <div class="card-header bg-transparent border-bottom-0 pt-3 pb-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <h5 class="fw-bold mb-0">Mapeamento Geométrico das Notas do Acorde por Todo o Braço</h5>
+        <button id="btnResetChordFretboard" class="btn btn-sm btn-outline-secondary fw-semibold d-inline-flex align-items-center gap-1">
+            <i class="bi bi-eye"></i> Mostrar todas as notas
+        </button>
+    </div>
+    <div class="card-body p-0">
+        <div id="chordFretboard"></div>
+    </div>
+</div>
+
+<!-- TABLATURA E PARTITURA -->
+<div class="card mb-4 bg-body-tertiary border-0 shadow-sm">
+    <div class="card-header bg-transparent border-bottom pt-3 pb-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <h5 class="fw-bold mb-0"><i class="bi bi-music-note text-primary"></i> Tablatura e Partitura</h5>
+            <p class="text-muted fs-8 mb-0 mt-1" id="tabPosLabel">Selecione um voicing ou shape CAGED para ver a posição</p>
+        </div>
+        <button id="btnClearTab" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-x-circle"></i> Limpar
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="row g-4 align-items-center">
+            <!-- Tablatura -->
+            <div class="col-12 col-md-4">
+                <div class="text-muted fs-8 fw-bold text-uppercase mb-2">Tablatura</div>
+                <div id="tabSvgContainer" class="d-flex align-items-center justify-content-center py-2">
+                    <span class="text-muted fs-8">—</span>
+                </div>
+            </div>
+            <!-- Partitura -->
+            <div class="col-12 col-md-8">
+                <div class="text-muted fs-8 fw-bold text-uppercase mb-2">Partitura <span class="fw-normal">(Clave de Sol)</span></div>
+                <div id="staffSvgContainer" class="d-flex align-items-center overflow-x-auto py-2">
+                    <span class="text-muted fs-8">—</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+    import { Fretboard } from "{{ url_for('guitar_study.static', filename='js/fretboard.js') }}";
+    import { audioEngine } from "{{ url_for('guitar_study.static', filename='js/audio-engine.js') }}";
+    import { toggleFavorite, showToast } from "{{ url_for('guitar_study.static', filename='js/app.js') }}";
+
+    const SHAPE_COLORS  = ['#4dabf7', '#51cf66', '#cc5de8', '#ff922b', '#fa5252'];
+    const SHAPE_LETTERS = ['C', 'A', 'G', 'E', 'D'];
+    const VOICING_COLORS = ['#4dabf7', '#51cf66', '#cc5de8', '#ff922b']; // 3,4,5,6 cordas
+    const CHROMATIC = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    const FLATS     = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
+
+    function noteIndex(n) {
+        n = (n || "").trim();
+        const i = CHROMATIC.indexOf(n);
+        return i >= 0 ? i : FLATS.indexOf(n);
+    }
+
+    // -----------------------------------------------------------------------
+    // PLAYABILITY FILTER
+    // Regras: ≤4 dedos; barre = 1 dedo para N cordas no mesmo traste mínimo;
+    // 4 trastes únicos sem barre com span=4 = impossível
+    // -----------------------------------------------------------------------
+    function isPlayable(v) {
+        const pressed = v.frets.filter(f => f > 0);
+        if (pressed.length === 0) return true;
+
+        const minF = Math.min(...pressed);
+        const uniqueFrets = [...new Set(pressed)];
+        const stringsAtMin = v.frets.filter(f => f === minF).length;
+        const canBarre = stringsAtMin >= 2;
+        const span = Math.max(...pressed) - minF;
+
+        // Dedos necessários: barre = 1 + demais trastes únicos; sem barre = qtd de trastes únicos
+        const fingersNeeded = canBarre
+            ? 1 + uniqueFrets.filter(f => f !== minF).length
+            : uniqueFrets.length;
+
+        if (fingersNeeded > 4) return false;
+        // 4 dedos separados (sem barre) com span de 4 casas = impossível
+        if (!canBarre && fingersNeeded === 4 && span >= 4) return false;
+        // 3 dedos separados com span de 4+ sem barre = muito difícil mas possível (manter)
+        return true;
+    }
+
+    function voicingDifficulty(v) {
+        const pressed = v.frets.filter(f => f > 0);
+        if (pressed.length === 0) return 'easy';
+        const minF = Math.min(...pressed);
+        const uniqueFrets = [...new Set(pressed)];
+        const canBarre = pressed.filter(f => f === minF).length >= 2;
+        const span = Math.max(...pressed) - minF;
+        const otherU = uniqueFrets.filter(f => f !== minF).length;
+        const fingersNeeded = canBarre ? 1 + otherU : uniqueFrets.length;
+        const hasOpen = v.frets.some(f => f === 0);
+
+        if (hasOpen && fingersNeeded <= 2) return 'easy';
+        if (fingersNeeded <= 2 && span <= 2) return 'easy';
+        if (fingersNeeded === 4 || span >= 4 || (canBarre && otherU >= 3)) return 'hard';
+        return 'medium';
+    }
+
+    // -----------------------------------------------------------------------
+    // Converte voicing ou shape CAGED para array fretsByString[0..5]
+    // strIdx 0=highE(1ª), 5=lowE(6ª); -1=muted
+    // -----------------------------------------------------------------------
+    function voicingToFrets(v) {
+        const f = new Array(6).fill(-1);
+        for (let si = v.startStr; si < v.startStr + v.numStrings; si++)
+            f[si] = v.frets[si - v.startStr];
+        return f;
+    }
+
+    // -----------------------------------------------------------------------
+    // TABLATURA SVG
+    // fretsByStr[0]=1ª corda(high e), [5]=6ª(low E); -1=muted
+    // -----------------------------------------------------------------------
+    function buildTabSVG(fretsByStr, openNotes, rootNote) {
+        const NAMES = ['e','B','G','D','A','E']; // highE → lowE
+        const LINES = 6, LINE_H = 22, LEFT = 28, BOX_W = 48;
+        const TOP = 8, W = LEFT + BOX_W + 16, H = TOP + LINES * LINE_H + 8;
+
+        let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`;
+
+        for (let i = 0; i < LINES; i++) {
+            const y = TOP + i * LINE_H + LINE_H / 2;
+            // nome da corda
+            s += `<text x="${LEFT-5}" y="${y+4}" font-size="10" text-anchor="end" fill="#888" font-family="monospace">${NAMES[i]}</text>`;
+            // linha da corda
+            s += `<line x1="${LEFT}" y1="${y}" x2="${LEFT+BOX_W}" y2="${y}" stroke="${i===0||i===5?'#555':'#444'}" stroke-width="${i===0||i===5?1.5:1}"/>`;
+
+            const fret = fretsByStr[i];
+            if (fret === -1) {
+                s += `<text x="${LEFT+BOX_W/2}" y="${y+4}" font-size="11" text-anchor="middle" fill="#e03131" font-weight="bold">x</text>`;
+            } else {
+                const on = openNotes ? openNotes[i] : null;
+                const oi = on ? noteIndex(on) : -1;
+                const isTonic = oi >= 0 && ((oi + fret) % 12) === noteIndex(rootNote);
+                const col = isTonic ? '#ef4444' : '#4dabf7';
+                s += `<rect x="${LEFT+BOX_W/2-12}" y="${y-9}" width="24" height="18" rx="5" fill="${col}"/>`;
+                s += `<text x="${LEFT+BOX_W/2}" y="${y+4.5}" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">${fret}</text>`;
+            }
+        }
+        // bordas verticais da tab
+        s += `<line x1="${LEFT}" y1="${TOP+LINE_H/2}" x2="${LEFT}" y2="${TOP+(LINES-0.5)*LINE_H}" stroke="#555" stroke-width="1.5"/>`;
+        s += `<line x1="${LEFT+BOX_W}" y1="${TOP+LINE_H/2}" x2="${LEFT+BOX_W}" y2="${TOP+(LINES-0.5)*LINE_H}" stroke="#555" stroke-width="1.5"/>`;
+        return s + `</svg>`;
+    }
+
+    // -----------------------------------------------------------------------
+    // PARTITURA SVG (clave de sol, posição fechada da tríade/acorde)
+    // -----------------------------------------------------------------------
+    function buildStaffSVG(chordNotes, rootNote) {
+        // Slot diatônico: C4=0, D4=1, E4=2, F4=3, G4=4, A4=5, B4=6, C5=7...
+        // y(slot) = STAFF_Y5 + (10 - slot) * STEP  onde STAFF_Y5 = linha 5 (topo)
+        const NOTE_SLOT = {'C':0,'D':1,'E':2,'F':3,'G':4,'A':5,'B':6};
+        const STEP = 9; // px por meio-espaço diatônico
+        const LEFT = 60, TOP = 14;
+        const STAFF_LINES = [10,8,6,4,2]; // slots das 5 linhas (F5,D5,B4,G4,E4)
+        const STAFF_Y = slot => TOP + (10 - slot) * STEP;
+        const LINE_W = 220;
+        const H = TOP + 12 * STEP + 28;
+        const W = LEFT + LINE_W + 24;
+
+        // Mapeia nota cromática → {slot, acc}
+        function noteToSlot(name) {
+            const base = name.replace('#','').replace('b','');
+            let slot = NOTE_SLOT[base] ?? 0;
+            const acc = name.includes('#') ? '#' : name.includes('b') ? 'b' : '';
+            return { slot, acc };
+        }
+
+        // Posiciona notas do acorde em posição fechada (perto de C4)
+        function chordSlots(notes) {
+            const result = [];
+            let refSlot = 0;
+            for (const n of notes) {
+                let { slot, acc } = noteToSlot(n);
+                while (slot < refSlot) slot += 7;
+                result.push({ slot, acc, name: n });
+                refSlot = slot + 1;
+            }
+            return result;
+        }
+
+        let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="min-width:${W}px">`;
+
+        // 5 linhas do pentagrama
+        STAFF_LINES.forEach(sl => {
+            const y = STAFF_Y(sl);
+            s += `<line x1="${LEFT}" y1="${y}" x2="${LEFT+LINE_W}" y2="${y}" stroke="#666" stroke-width="1"/>`;
+        });
+
+        // Clave de sol (𝄞 + círculo na linha G4=slot4)
+        s += `<text x="${LEFT+2}" y="${STAFF_Y(4)+34}" font-size="72" fill="#888" font-family="serif" style="user-select:none">𝄞</text>`;
+
+        // Linha divisória após clave
+        const CHORD_X = LEFT + 52;
+        s += `<line x1="${CHORD_X-8}" y1="${STAFF_Y(10)}" x2="${CHORD_X-8}" y2="${STAFF_Y(2)}" stroke="#555" stroke-width="1"/>`;
+
+        // Haste vertical do acorde
+        const noteSlots = chordSlots(chordNotes);
+        if (noteSlots.length > 0) {
+            const topY   = STAFF_Y(noteSlots[noteSlots.length-1].slot);
+            const botY   = STAFF_Y(noteSlots[0].slot);
+            const stemX  = CHORD_X + 7;
+            s += `<line x1="${stemX}" y1="${botY}" x2="${stemX}" y2="${topY - STEP*3.5}" stroke="#aaa" stroke-width="1.5"/>`;
+        }
+
+        // Notas
+        noteSlots.forEach(({ slot, acc, name }) => {
+            const y    = STAFF_Y(slot);
+            const x    = CHORD_X;
+            const isR  = noteIndex(name) === noteIndex(rootNote);
+            const col  = isR ? '#ef4444' : '#aaa';
+
+            // Linha suplementar inferior (C4=slot0, D4=slot1)
+            if (slot <= 0) s += `<line x1="${x-10}" y1="${y}" x2="${x+20}" y2="${y}" stroke="#666" stroke-width="1"/>`;
+            // Linha suplementar superior (G5=slot11+)
+            if (slot >= 12) s += `<line x1="${x-10}" y1="${y}" x2="${x+20}" y2="${y}" stroke="#666" stroke-width="1"/>`;
+
+            // Acidente
+            if (acc === '#') s += `<text x="${x-12}" y="${y+4}" font-size="13" fill="${col}" font-weight="bold">#</text>`;
+            if (acc === 'b') s += `<text x="${x-12}" y="${y+5}" font-size="16" fill="${col}">♭</text>`;
+
+            // Cabeça da nota (semibreve = elipse vazia)
+            s += `<ellipse cx="${x+7}" cy="${y}" rx="7" ry="5" fill="none" stroke="${col}" stroke-width="1.8"/>`;
+
+            // Nome da nota abaixo/acima
+            s += `<text x="${x+7}" y="${y+18}" font-size="9" text-anchor="middle" fill="${col}" font-weight="bold">${name}</text>`;
+        });
+
+        // Linha final do pentagrama
+        s += `<line x1="${LEFT+LINE_W}" y1="${STAFF_Y(10)}" x2="${LEFT+LINE_W}" y2="${STAFF_Y(2)}" stroke="#666" stroke-width="1.5"/>`;
+
+        return s + `</svg>`;
+    }
+
+    // -----------------------------------------------------------------------
+    // Atualiza tablatura + partitura com a posição selecionada
+    // -----------------------------------------------------------------------
+    function updateTabAndStaff(fretsByStr, label) {
+        if (!activeChordData) return;
+        const openNotes = fretboard.stringsData.map(sd => sd.open_note);
+
+        document.getElementById("tabPosLabel").textContent = label || "Posição selecionada";
+        document.getElementById("tabSvgContainer").innerHTML  = buildTabSVG(fretsByStr, openNotes, activeChordData.root);
+        document.getElementById("staffSvgContainer").innerHTML = buildStaffSVG(activeChordData.notes, activeChordData.root);
+    }
+
+    // -----------------------------------------------------------------------
+    // BANCO DE DADOS REAL — tombatossals/chords-db
+    // Voicings validados por guitarristas, não gerados algoritmicamente
+    // -----------------------------------------------------------------------
+    async function loadChordDatabase() {
+        if (window._guitarChordsDB) return window._guitarChordsDB;
+        const resp = await fetch("{{ url_for('guitar_study.static', filename='data/guitar_chords.json') }}");
+        window._guitarChordsDB = await resp.json();
+        return window._guitarChordsDB;
+    }
+
+    function rootToDBKey(root) {
+        const map = {
+            'C':'C','C#':'Csharp','Db':'Csharp',
+            'D':'D','D#':'Eb','Eb':'Eb',
+            'E':'E','F':'F',
+            'F#':'Fsharp','Gb':'Fsharp',
+            'G':'G','G#':'Ab','Ab':'Ab',
+            'A':'A','A#':'Bb','Bb':'Bb','B':'B'
+        };
+        return map[root] || root;
+    }
+
+    function typeToDBSuffix(chordType) {
+        const map = {
+            'major':'major','minor':'minor',
+            'dominant_7':'7','major_7':'maj7','minor_7':'m7',
+            'diminished':'dim','diminished_7':'dim7',
+            'augmented':'aug','augmented_7':'aug7',
+            'sus4':'sus4','sus2':'sus2',
+            'add9':'add9','add2':'add9',
+            'power_5':'5',
+            'major_6':'6','minor_6':'m6',
+            'half_diminished':'m7b5',
+            'dominant_9':'9','minor_9':'m9','major_9':'maj9',
+            'dominant_11':'11','major_11':'maj11',
+            'dominant_13':'13','major_13':'maj13',
+        };
+        return map[chordType] || chordType;
+    }
+
+    // Converte posição do tombatossals para o formato interno de voicing
+    // tombatossals: frets[0]=lowE(strIdx=5), frets[5]=highE(strIdx=0)
+    // interno: strIdx 0=highE, strIdx 5=lowE
+    function tombToVoicing(pos, stringsData, rootNote) {
+        const tf = pos.frets;
+        const baseFret = pos.baseFret;
+
+        // Converte para frets absolutos indexados por strIdx (0=highE, 5=lowE)
+        const myAbs = new Array(6);
+        for (let strIdx = 0; strIdx < 6; strIdx++) {
+            const rf = tf[5 - strIdx]; // tombIdx 0=lowE → strIdx 5
+            myAbs[strIdx] = rf === -1 ? -1 : (rf === 0 ? 0 : baseFret + rf - 1);
+        }
+
+        // Encontra o range [startStr, endStr] de strings não-muted
+        let startStr = -1, endStr = -1;
+        for (let si = 0; si < 6; si++) {
+            if (myAbs[si] >= 0) {
+                if (startStr === -1) startStr = si;
+                endStr = si;
+            }
+        }
+        if (startStr === -1) return null;
+
+        const frets = [];
+        let playedStrings = 0;
+        for (let si = startStr; si <= endStr; si++) {
+            frets.push(myAbs[si]);
+            if (myAbs[si] >= 0) playedStrings++;
+        }
+
+        const pressed = frets.filter(f => f > 0);
+        const minFret = pressed.length ? Math.min(...pressed) : 0;
+        const maxFret = pressed.length ? Math.max(...pressed) : 0;
+
+        // Nota do baixo: strIdx mais alto (corda mais grave) não-muted
+        let bassStrIdx = endStr;
+        while (bassStrIdx >= startStr && myAbs[bassStrIdx] < 0) bassStrIdx--;
+
+        let bassNoteIdx = -1;
+        const rootIdx = noteIndex(rootNote);
+        if (bassStrIdx >= 0 && stringsData[bassStrIdx]) {
+            const sd = stringsData[bassStrIdx];
+            const fd = sd.frets.find(f => f.fret === myAbs[bassStrIdx]);
+            if (fd) bassNoteIdx = noteIndex(fd.note);
+        }
+
+        // Combo para áudio (do grave para o agudo, ordem inversa dos strIdx)
+        const combo = [];
+        for (let si = endStr; si >= startStr; si--) {
+            if (myAbs[si] < 0 || !stringsData[si]) continue;
+            const fd = stringsData[si].frets.find(f => f.fret === myAbs[si]);
+            if (fd) combo.push({ fret: myAbs[si], note: fd.note, noteIdx: noteIndex(fd.note), frequency: fd.frequency });
+        }
+
+        return {
+            startStr,
+            numStrings: endStr - startStr + 1,
+            playedStrings,
+            frets,
+            combo,
+            minFret,
+            maxFret,
+            hasRootInBass: bassNoteIdx >= 0 && bassNoteIdx === rootIdx,
+            bassNoteIdx
+        };
+    }
+
+    async function lookupChordVoicings(root, chordType, rootNote, stringsData) {
+        const db = await loadChordDatabase();
+        const dbKey = rootToDBKey(root);
+        const dbSuffix = typeToDBSuffix(chordType);
+        const noteList = db.chords[dbKey];
+        if (!noteList) return [];
+        const entry = noteList.find(c => c.suffix === dbSuffix);
+        if (!entry) return [];
+        return entry.positions.map(pos => tombToVoicing(pos, stringsData, rootNote)).filter(Boolean);
+    }
+
+    // -----------------------------------------------------------------------
+    // SVG: chord box para shapes CAGED
+    // rels[0]=6ª corda(lowE)→ diagram col 0; abs[0]=1ª corda(highE)→ strIdx 0
+    // -----------------------------------------------------------------------
+    function buildChordBoxSVG(shape, rootNote, openNotes, shapeIdx) {
+        const rels = shape.frets_relative;
+        const abs  = shape.frets_absolute;
+        const isOpen  = shape.base_fret === "Nut (Aberta)";
+        const baseNum = isOpen ? 0 : parseInt(shape.base_fret.replace("Casa ", ""));
+        const color   = SHAPE_COLORS[shapeIdx];
+
+        const STR=6, VIS=5, SX=22, FH=22, L=28, T=40;
+        const GW=SX*(STR-1), GH=FH*VIS;
+        const W=L+GW+32, H=T+GH+10;
+
+        function isTon(col, absFret) {
+            if (absFret < 0 || !openNotes) return false;
+            const oi = noteIndex(openNotes[5 - col]);
+            return oi >= 0 && ((oi + absFret) % 12) === noteIndex(rootNote);
+        }
+
+        let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`;
+        for (let i=0;i<STR;i++) s+=`<line x1="${L+i*SX}" y1="${T}" x2="${L+i*SX}" y2="${T+GH}" stroke="#555" stroke-width="1.3"/>`;
+        for (let f=0;f<=VIS;f++) {
+            const y=T+f*FH, nut=f===0&&isOpen;
+            s+=`<line x1="${L}" y1="${y}" x2="${L+GW}" y2="${y}" stroke="${nut?'#ccc':'#444'}" stroke-width="${nut?4.5:1.2}"/>`;
+        }
+        if (!isOpen) s+=`<text x="${L-6}" y="${T+FH*0.68}" font-size="10" text-anchor="end" fill="#888">${baseNum}</text>`;
+        if (!isOpen) {
+            const bi = rels.map((r,i)=>r===0?i:-1).filter(i=>i>=0);
+            if (bi.length>=2) {
+                const cy=T+FH*0.5;
+                s+=`<rect x="${L+bi[0]*SX-6}" y="${cy-6}" width="${(bi[bi.length-1]-bi[0])*SX+12}" height="12" rx="6" fill="${color}" opacity="0.55"/>`;
+            }
+        }
+        for (let i=0;i<STR;i++) {
+            const x=L+i*SX, rel=rels[i], af=abs[5-i];
+            if (rel===-1) { s+=`<text x="${x}" y="${T-9}" font-size="12" text-anchor="middle" fill="#e03131">✕</text>`; continue; }
+            if (rel===0&&isOpen) { s+=`<circle cx="${x}" cy="${T-11}" r="5" fill="none" stroke="#888" stroke-width="1.5"/>`; continue; }
+            if (rel<0||rel>VIS) continue;
+            const cy=T+rel*FH+FH/2, ton=isTon(i,af);
+            s+=`<circle cx="${x}" cy="${cy}" r="8" fill="${ton?'#ef4444':color}"/>`;
+            if (ton) s+=`<circle cx="${x}" cy="${cy}" r="4.5" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.7"/>`;
+        }
+        return s+`</svg>`;
+    }
+
+    // -----------------------------------------------------------------------
+    // SVG: braço completo com 5 shapes CAGED sobrepostos
+    // -----------------------------------------------------------------------
+    function buildFullFretboardSVG(shapes, rootNote, fretCount, openNotes) {
+        const NUT_W=18, FRET_W=30, STR_H=18, STRINGS=6;
+        const LEFT=52, TOP=22, BOT=22;
+        const TW=LEFT+NUT_W+fretCount*FRET_W+8, TH=TOP+STRINGS*STR_H+BOT;
+        const LABELS=['1-MI','2-SI','3-SOL','4-RÉ','5-LÁ','6-MI'];
+        const INLAY=[3,5,7,9,15,17,19,21];
+
+        let s=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${TW} ${TH}" style="width:100%;min-width:600px">`;
+        s+=`<rect x="${LEFT}" y="${TOP}" width="${NUT_W+fretCount*FRET_W}" height="${STRINGS*STR_H}" fill="#1a1310" rx="4"/>`;
+        s+=`<rect x="${LEFT}" y="${TOP}" width="${NUT_W}" height="${STRINGS*STR_H}" fill="#252018" rx="2"/>`;
+        s+=`<line x1="${LEFT+NUT_W}" y1="${TOP}" x2="${LEFT+NUT_W}" y2="${TOP+STRINGS*STR_H}" stroke="#aaa" stroke-width="3.5"/>`;
+        for (let str=0;str<STRINGS;str++) {
+            const y=TOP+str*STR_H+STR_H/2;
+            s+=`<text x="${LEFT-4}" y="${y+3.5}" font-size="9" text-anchor="end" fill="#666">${LABELS[str]}</text>`;
+            s+=`<line x1="${LEFT+NUT_W}" y1="${y}" x2="${LEFT+NUT_W+fretCount*FRET_W}" y2="${y}" stroke="#444" stroke-width="${str===0||str===STRINGS-1?1.8:1}"/>`;
+        }
+        for (let f=1;f<=fretCount;f++) {
+            const x=LEFT+NUT_W+f*FRET_W, cx=x-FRET_W/2, cy=TOP+STRINGS*STR_H/2;
+            s+=`<line x1="${x}" y1="${TOP}" x2="${x}" y2="${TOP+STRINGS*STR_H}" stroke="#333" stroke-width="1"/>`;
+            if (INLAY.includes(f)) s+=`<circle cx="${cx}" cy="${cy}" r="3" fill="#2d2820"/>`;
+            else if (f===12||f===24) {
+                s+=`<circle cx="${cx}" cy="${TOP+STR_H*1.5}" r="3" fill="#2d2820"/>`;
+                s+=`<circle cx="${cx}" cy="${TOP+STR_H*4.5}" r="3" fill="#2d2820"/>`;
+            }
+            if ([1,3,5,7,9,12,15,17,19,21,24].includes(f))
+                s+=`<text x="${cx}" y="${TOP+STRINGS*STR_H+BOT-5}" font-size="9" text-anchor="middle" fill="#555">${f}</text>`;
+        }
+        shapes.forEach((shape,idx) => {
+            const color=SHAPE_COLORS[idx];
+            for (let str=0;str<STRINGS;str++) {
+                const af=shape.frets_absolute[str];
+                if (af<=0||af===-1||af>fretCount) continue;
+                const x=LEFT+NUT_W+(af-0.5)*FRET_W, y=TOP+str*STR_H+STR_H/2;
+                const on=openNotes?openNotes[str]:null, oi=on?noteIndex(on):-1;
+                const ton=oi>=0&&((oi+af)%12)===noteIndex(rootNote);
+                s+=`<circle cx="${x}" cy="${y}" r="7" fill="${ton?'#ef4444':color}" opacity="0.92"/>`;
+                if (ton) s+=`<circle cx="${x}" cy="${y}" r="4" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.75"/>`;
+            }
+            const valid=shape.frets_absolute.filter(f=>f>0&&f!==-1&&f<=fretCount);
+            if (valid.length>0) {
+                const cx=LEFT+NUT_W+(Math.min(...valid)-0.5+(Math.max(...valid)-Math.min(...valid))/2)*FRET_W;
+                s+=`<text x="${cx}" y="${TOP-6}" font-size="10" text-anchor="middle" fill="${color}" font-weight="bold">${SHAPE_LETTERS[idx]}</text>`;
+            }
+        });
+        shapes.forEach((shape,idx) => {
+            const color=SHAPE_COLORS[idx];
+            for (let str=0;str<STRINGS;str++) {
+                if (shape.frets_absolute[str]!==0) continue;
+                s+=`<circle cx="${LEFT+NUT_W/2}" cy="${TOP+str*STR_H+STR_H/2}" r="5" fill="${color}" opacity="0.75"/>`;
+            }
+        });
+        return s+`</svg>`;
+    }
+
+    // -----------------------------------------------------------------------
+    // SVG: diagrama de acorde para voicings (6 cordas, X nas muted, barre)
+    // col 0=lowE(strIdx=5) … col 5=highE(strIdx=0)
+    // -----------------------------------------------------------------------
+    function buildVoicingBoxSVG(v, rootNote, openNotes) {
+        const STR=6, VIS=5, SX=20, FH=20, L=26, T=36;
+        const GW=SX*(STR-1), GH=FH*VIS;
+        const W=L+GW+28, H=T+GH+10;
+
+        const usedFrets = v.frets.filter(f=>f>0);
+        const isOpen    = usedFrets.length===0 || v.frets.some(f=>f===0);
+        const baseFret  = isOpen ? 0 : v.minFret;
+        const colorStr  = v.playedStrings || v.numStrings;
+        const color     = VOICING_COLORS[colorStr-3] || '#4dabf7';
+
+        let s=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`;
+
+        // grade
+        for (let col=0;col<STR;col++) s+=`<line x1="${L+col*SX}" y1="${T}" x2="${L+col*SX}" y2="${T+GH}" stroke="#555" stroke-width="1.3"/>`;
+        for (let f=0;f<=VIS;f++) {
+            const y=T+f*FH, nut=f===0&&isOpen;
+            s+=`<line x1="${L}" y1="${y}" x2="${L+GW}" y2="${y}" stroke="${nut?'#ccc':'#444'}" stroke-width="${nut?4.5:1.2}"/>`;
+        }
+        if (!isOpen&&baseFret>0) s+=`<text x="${L-5}" y="${T+FH*0.7}" font-size="9" text-anchor="end" fill="#888">${baseFret}</text>`;
+
+        // barre: colunas no baseFret que pertencem ao voicing
+        if (!isOpen) {
+            const bc=[];
+            for (let col=0;col<STR;col++) {
+                const si=5-col;
+                if (si<v.startStr||si>=v.startStr+v.numStrings) continue;
+                if (v.frets[si-v.startStr]===baseFret) bc.push(col);
+            }
+            if (bc.length>=2) {
+                const cy=T+FH*0.5;
+                s+=`<rect x="${L+bc[0]*SX-7}" y="${cy-6}" width="${(bc[bc.length-1]-bc[0])*SX+14}" height="12" rx="6" fill="${color}" opacity="0.5"/>`;
+            }
+        }
+
+        // marcadores por corda
+        for (let col=0;col<STR;col++) {
+            const si=5-col; // strIdx
+            const x=L+col*SX;
+            const inV=si>=v.startStr&&si<v.startStr+v.numStrings;
+
+            const vi = si - v.startStr;
+            const fret = inV ? v.frets[vi] : undefined;
+            if (!inV || fret === -1 || fret === undefined) { s+=`<text x="${x}" y="${T-9}" font-size="12" text-anchor="middle" fill="#e03131">✕</text>`; continue; }
+            if (fret===0) { s+=`<circle cx="${x}" cy="${T-11}" r="5" fill="none" stroke="#888" stroke-width="1.5"/>`; continue; }
+
+            const dotRow=isOpen?fret:(fret-baseFret+1);
+            if (dotRow<1||dotRow>VIS) continue;
+            const cy=T+(dotRow-0.5)*FH;
+
+            const on=openNotes?openNotes[si]:null, oi=on?noteIndex(on):-1;
+            const isTonic=oi>=0&&((oi+fret)%12)===noteIndex(rootNote);
+
+            s+=`<circle cx="${x}" cy="${cy}" r="8" fill="${isTonic?'#ef4444':color}"/>`;
+            if (isTonic) s+=`<circle cx="${x}" cy="${cy}" r="4.5" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.7"/>`;
+        }
+        return s+`</svg>`;
+    }
+
+    // -----------------------------------------------------------------------
+    // MAIN
+    // -----------------------------------------------------------------------
+    document.addEventListener("DOMContentLoaded", async () => {
+        let activeChordData = null;
+        let allVoicings     = [];
+        let voicingFilterStr  = "all";
+        let voicingFilterRoot = false;
+
+        const fretboard = new Fretboard("chordFretboard", {
+            tuningId: "{{ settings.tuning_id }}",
+            fretCount: {{ settings.fret_count }},
+            viewMode: "highlight_set"
+        });
+        await fretboard.init();
+
+        // ---- toggle 3 abas ----
+        const VIEWS = ["Diagrams","Fretboard","Voicings"];
+        function setView(active) {
+            document.getElementById("viewDiagrams").style.display  = active==="Diagrams"  ? "" : "none";
+            document.getElementById("viewFretboard").style.display = active==="Fretboard" ? "" : "none";
+            document.getElementById("viewVoicings").style.display  = active==="Voicings"  ? "" : "none";
+            document.getElementById("btnViewDiagrams").className  = `btn btn-sm ${active==="Diagrams"  ? "btn-primary" : "btn-outline-secondary"}`;
+            document.getElementById("btnViewFretboard").className = `btn btn-sm ${active==="Fretboard" ? "btn-primary" : "btn-outline-secondary"}`;
+            document.getElementById("btnViewVoicings").className  = `btn btn-sm ${active==="Voicings"  ? "btn-primary" : "btn-outline-secondary"}`;
+        }
+        document.getElementById("btnViewDiagrams").addEventListener("click",  () => setView("Diagrams"));
+        document.getElementById("btnViewFretboard").addEventListener("click", () => setView("Fretboard"));
+        document.getElementById("btnViewVoicings").addEventListener("click",  () => setView("Voicings"));
+
+        // ---- carrega dados do acorde ----
+        async function loadChord() {
+            const root = document.getElementById("chordRoot").value;
+            const type = document.getElementById("chordType").value;
+            const pref = "{{ settings.accidentals_preference }}";
+
+            try {
+                const res = await (await fetch(`/guitar-study/api/v1/chords?root=${root}&type=${type}&preference=${pref}`)).json();
+                if (!res.success) { showToast("Erro ao buscar acorde.", "danger"); return; }
+
+                activeChordData = res.data;
+                document.getElementById("chordTitleName").textContent = activeChordData.name;
+                document.getElementById("chordDescription").textContent = activeChordData.description;
+                document.getElementById("chordFormula").textContent = activeChordData.formula;
+
+                const badgesEl = document.getElementById("chordNotesBadges");
+                badgesEl.innerHTML = "";
+                activeChordData.notes.forEach((note, idx) => {
+                    badgesEl.insertAdjacentHTML("beforeend",
+                        `<span class="badge bg-body-secondary text-body p-2 border ${idx===0?'border-danger border-2':'border-secondary-subtle'} fs-6 fw-bold">${note}</span>`);
+                });
+
+                // openNotes: stringsData[0]=highE(strIdx=0), [5]=lowE(strIdx=5)
+                const openNotes = fretboard.stringsData.map(sd => sd.open_note);
+
+                // dropdown de shapes
+                const shapeSelect = document.getElementById("chordShapeSelect");
+                shapeSelect.innerHTML = `<option value="all" selected>Mostrar todas as notas (Violão todo)</option>`;
+
+                // ---- Aba 1: Diagramas CAGED ----
+                const cagedContainer = document.getElementById("cagedContainer");
+                cagedContainer.innerHTML = "";
+                activeChordData.caged_shapes.forEach((shape, idx) => {
+                    const opt = document.createElement("option");
+                    opt.value = idx;
+                    opt.textContent = `${shape.shape_name} (${shape.base_fret})`;
+                    shapeSelect.appendChild(opt);
+
+                    cagedContainer.insertAdjacentHTML("beforeend", `
+                        <div class="col-12 col-sm-6">
+                            <div class="p-3 bg-body-secondary rounded-3 border h-100 d-flex flex-column justify-content-between border-secondary-subtle shadow-sm">
+                                <div class="d-flex align-items-start gap-3 mb-2">
+                                    <div class="flex-shrink-0">${buildChordBoxSVG(shape, activeChordData.root, openNotes, idx)}</div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold mb-1" style="color:${SHAPE_COLORS[idx]}">${shape.shape_name}</h6>
+                                        <p class="fs-8 text-muted mb-2">Estrutura: ${shape.base_fret}</p>
+                                        <div class="font-monospace fs-8 text-muted bg-body p-2 rounded-2 border">
+                                            <span class="fw-bold text-success me-1">Casas:</span>
+                                            ${shape.frets_relative.map(f=>f===-1?'<span class="text-danger">X</span>':f).join(' | ')}
+                                        </div>
+                                    </div>
+                                </div>
+                                <button onclick="highlightSpecificShape(${idx})" class="btn btn-sm btn-outline-success w-100 fw-bold mt-2">
+                                    <i class="bi bi-guitar"></i> Desenhar no Braço
+                                </button>
+                            </div>
+                        </div>`);
+                });
+
+                // ---- Aba 2: Braço completo ----
+                const legend = document.getElementById("shapeLegend");
+                const fretCount = {{ settings.fret_count }};
+                legend.innerHTML = activeChordData.caged_shapes.map((sh,i)=>
+                    `<span class="badge rounded-pill fw-semibold fs-8" style="background:${SHAPE_COLORS[i]};color:#fff">${SHAPE_LETTERS[i]} — ${sh.shape_name.split('(')[0].trim()}</span>`
+                ).join('') + `<span class="badge rounded-pill fw-semibold fs-8 bg-danger">
+                    <span style="display:inline-block;width:8px;height:8px;border:1.5px solid #fff;border-radius:50%;margin-right:4px;background:#ef4444;vertical-align:middle"></span>
+                    Tônica (${activeChordData.root})</span>`;
+                document.getElementById("allShapesFretboard").innerHTML =
+                    buildFullFretboardSVG(activeChordData.caged_shapes, activeChordData.root, fretCount, openNotes);
+
+                // ---- Aba 3: Todos os Voicings ----
+                allVoicings = await lookupChordVoicings(activeChordData.root, activeChordData.chord_type, activeChordData.root, fretboard.stringsData);
+                renderVoicingGrid();
+
+                // fretboard principal
+                fretboard.setHighlightedSet(activeChordData.root, activeChordData.notes);
+                checkFavoriteState(activeChordData.key);
+
+                // tablatura/partitura padrão = primeiro shape CAGED
+                if (activeChordData.caged_shapes && activeChordData.caged_shapes.length > 0) {
+                    const firstShape = activeChordData.caged_shapes[0];
+                    const fretsByStr = Array(6).fill(-1);
+                    firstShape.frets_absolute.forEach((f, si) => { fretsByStr[si] = f; });
+                    updateTabAndStaff(fretsByStr, `CAGED ${firstShape.shape_name} (padrão)`);
+                }
+
+            } catch (e) {
+                console.error("Erro ao carregar acorde:", e);
+            }
+        }
+
+        // ---- highlight shape CAGED no braço ----
+        window.highlightSpecificShape = function(shapeIndex) {
+            if (!activeChordData) return;
+            const shape = activeChordData.caged_shapes[shapeIndex];
+            if (!shape) return;
+            document.getElementById("chordShapeSelect").value = shapeIndex;
+            fretboard.setViewMode("hide_all");
+            setTimeout(() => {
+                document.querySelectorAll("#chordFretboard .fretboard-cell").forEach(cell => {
+                    const si   = parseInt(cell.getAttribute("data-string")) - 1;
+                    const fret = parseInt(cell.getAttribute("data-fret"));
+                    const badge = cell.querySelector(".fret-note");
+                    if (!badge) return;
+                    const target = shape.frets_absolute[si];
+                    if (target !== -1 && fret === target) {
+                        badge.classList.add("visible"); badge.style.opacity="1"; badge.style.transform="scale(1)";
+                        if (fretboard.isNotesEqual(cell.getAttribute("data-note"), activeChordData.root)) badge.classList.add("tonica");
+                        else badge.classList.remove("tonica");
+                    } else {
+                        badge.classList.remove("visible","tonica"); badge.style.opacity="0"; badge.style.transform="scale(0.6)";
+                    }
+                });
+                showToast(`Formato destacado: ${shape.shape_name}!`, "success");
+
+                const fretsByStr = Array(6).fill(-1);
+                shape.frets_absolute.forEach((f, si) => { fretsByStr[si] = f; });
+                updateTabAndStaff(fretsByStr, `CAGED ${shape.shape_name}`);
+            }, 100);
+        };
+
+        document.getElementById("chordShapeSelect").addEventListener("change", e => {
+            const val = e.target.value;
+            if (val === "all") {
+                fretboard.setViewMode("highlight_set");
+                fretboard.setHighlightedSet(activeChordData.root, activeChordData.notes);
+            } else {
+                highlightSpecificShape(parseInt(val));
+            }
+        });
+
+        document.getElementById("btnResetChordFretboard").addEventListener("click", () => {
+            if (!activeChordData) return;
+            document.getElementById("chordShapeSelect").value = "all";
+            fretboard.setViewMode("highlight_set");
+            fretboard.setHighlightedSet(activeChordData.root, activeChordData.notes);
+        });
+
+        document.getElementById("btnClearTab").addEventListener("click", () => {
+            document.getElementById("tabPosLabel").textContent = "Selecione um voicing ou shape CAGED para ver a posição";
+            document.getElementById("tabSvgContainer").innerHTML = "";
+            document.getElementById("staffSvgContainer").innerHTML = "";
+        });
+
+        // ---- favorito ----
+        async function checkFavoriteState(itemKey) {
+            const btn = document.getElementById("btnFavChord");
+            const icon = btn.querySelector("i");
+            try {
+                const res = await (await fetch("/guitar-study/api/v1/favorites")).json();
+                if (!res.success) return;
+                const isFav = res.data.favorites.some(f => f.category==="chord" && f.item_key===itemKey);
+                btn.className = isFav ? "btn btn-sm btn-danger fw-semibold d-inline-flex align-items-center gap-1"
+                                      : "btn btn-sm btn-outline-danger fw-semibold d-inline-flex align-items-center gap-1";
+                icon.className = isFav ? "bi bi-heart-fill" : "bi bi-heart";
+            } catch (e) {}
+        }
+        document.getElementById("btnFavChord").addEventListener("click", async function() {
+            if (!activeChordData) return;
+            await toggleFavorite(this, "chord", activeChordData.key);
+            checkFavoriteState(activeChordData.key);
+        });
+
+        // ---- play ----
+        document.getElementById("btnPlayChord").addEventListener("click", () => {
+            if (!activeChordData) return;
+            const visibles = document.querySelectorAll("#chordFretboard .fretboard-cell .fret-note.visible");
+            const freqs = [];
+            if (visibles.length > 0 && visibles.length <= 6) {
+                const sf = {1:0,2:0,3:0,4:0,5:0,6:0};
+                document.querySelectorAll("#chordFretboard .fretboard-cell").forEach(cell => {
+                    const b = cell.querySelector(".fret-note");
+                    if (b?.classList.contains("visible"))
+                        sf[parseInt(cell.getAttribute("data-string"))] = parseFloat(cell.getAttribute("data-freq"));
+                });
+                for (let s=6;s>=1;s--) if (sf[s]>0) freqs.push(sf[s]);
+            } else {
+                fretboard.stringsData.forEach(str => {
+                    let freq=0, minF=99;
+                    str.frets.forEach(f => {
+                        if (f.fret<=5 && activeChordData.notes.some(n=>fretboard.isNotesEqual(f.note,n)) && f.fret<minF) { minF=f.fret; freq=f.frequency; }
+                    });
+                    freqs.push(freq);
+                });
+                freqs.reverse();
+            }
+            const clean = freqs.filter(f=>f>0);
+            if (clean.length) audioEngine.playChord(clean);
+        });
+
+        // ================================================================
+        // VOICING FINDER
+        // stringsData[0]=highE(strIdx=0), [5]=lowE(strIdx=5)
+        // ================================================================
+        function findAllVoicings(stringsData, chordNotes, rootNote, fretCount) {
+            const chordIdxs = chordNotes.map(n => noteIndex(n));
+            const rootIdx   = noteIndex(rootNote);
+
+            const strTones = stringsData.map(str =>
+                str.frets
+                    .filter(f => f.fret <= fretCount)
+                    .filter(f => chordIdxs.includes(noteIndex(f.note)))
+                    .map(f => ({ fret:f.fret, note:f.note, noteIdx:noteIndex(f.note), frequency:f.frequency }))
+            );
+
+            const results=[], seen=new Set();
+            for (let numStr=3; numStr<=6; numStr++) {
+                for (let start=0; start+numStr<=6; start++) {
+                    const group = strTones.slice(start, start+numStr);
+                    genCombos(group, 0, [], results, seen, chordIdxs, rootIdx, start, numStr);
+                }
+            }
+            results.sort((a,b) => (a.minFret||0)-(b.minFret||0) || b.numStrings-a.numStrings);
+            return results.filter(isPlayable);
+        }
+
+        function genCombos(group, depth, cur, results, seen, chordIdxs, rootIdx, startStr, numStr) {
+            if (depth === group.length) {
+                if (!chordIdxs.every(ni => cur.some(c=>c.noteIdx===ni))) return;
+                const frets=cur.map(c=>c.fret), key=`${startStr}-${frets.join(',')}`;
+                if (seen.has(key)) return;
+                seen.add(key);
+                const nz=frets.filter(f=>f>0);
+                results.push({
+                    startStr, numStrings:numStr, frets, combo:cur.slice(),
+                    minFret: nz.length?Math.min(...nz):0,
+                    maxFret: nz.length?Math.max(...nz):0,
+                    hasRootInBass: cur[cur.length-1].noteIdx===rootIdx,
+                    bassNoteIdx: cur[cur.length-1].noteIdx
+                });
+                return;
+            }
+            for (const tone of group[depth]) {
+                const partial=[...cur, tone];
+                const nz=partial.map(c=>c.fret).filter(f=>f>0);
+                if (nz.length>=2 && Math.max(...nz)-Math.min(...nz)>4) continue;
+                genCombos(group, depth+1, partial, results, seen, chordIdxs, rootIdx, startStr, numStr);
+            }
+        }
+
+        // ---- render grade de voicings ----
+        function renderVoicingGrid() {
+            let filtered = allVoicings;
+            if (voicingFilterStr !== "all") filtered = filtered.filter(v=>(v.playedStrings||v.numStrings)===parseInt(voicingFilterStr));
+            if (voicingFilterRoot)          filtered = filtered.filter(v=>v.hasRootInBass);
+
+            const grid  = document.getElementById("allVoicingsGrid");
+            const empty = document.getElementById("voicingEmpty");
+            const stats = document.getElementById("voicingStats");
+            grid.innerHTML = "";
+
+            if (!filtered.length) {
+                empty.classList.remove("d-none");
+                stats.textContent = "0 voicings";
+                return;
+            }
+            empty.classList.add("d-none");
+
+            const total     = allVoicings.length;
+            const rootCount = allVoicings.filter(v=>v.hasRootInBass).length;
+            stats.textContent = `${filtered.length} de ${total} voicings  ·  ${rootCount} com raiz no baixo`;
+
+            const openNotes  = fretboard.stringsData.map(sd=>sd.open_note);
+            const rootNote   = activeChordData.root;
+            const chordNotes = activeChordData.notes;
+
+            const regionLabel = f => {
+                if (f<=0)  return "Posição Aberta";
+                if (f<=4)  return "Posição I (1–4)";
+                if (f<=8)  return "Posição II (5–8)";
+                if (f<=12) return "Posição III (9–12)";
+                if (f<=16) return "Posição IV (13–16)";
+                if (f<=20) return "Posição V (17–20)";
+                return "Posição VI (21+)";
+            };
+
+            const invBadge = v => {
+                if (v.hasRootInBass)                                               return `<span class="badge bg-success-subtle text-success fs-8 border border-success-subtle mt-1">Raiz</span>`;
+                if (chordNotes[1] && v.bassNoteIdx===noteIndex(chordNotes[1]))     return `<span class="badge bg-warning-subtle text-warning fs-8 border border-warning-subtle mt-1">1ª inv.</span>`;
+                if (chordNotes[2] && v.bassNoteIdx===noteIndex(chordNotes[2]))     return `<span class="badge bg-info-subtle text-info fs-8 border border-info-subtle mt-1">2ª inv.</span>`;
+                if (chordNotes[3] && v.bassNoteIdx===noteIndex(chordNotes[3]))     return `<span class="badge bg-secondary-subtle text-secondary fs-8 border border-secondary-subtle mt-1">3ª inv.</span>`;
+                return "";
+            };
+
+            let lastRegion = null;
+            filtered.forEach(v => {
+                const region = regionLabel(v.minFret);
+                if (region !== lastRegion) {
+                    lastRegion = region;
+                    grid.insertAdjacentHTML("beforeend",
+                        `<div style="flex-basis:100%" class="mt-2 mb-1">
+                            <span class="fs-8 fw-bold text-uppercase text-muted">${region}</span>
+                         </div>`);
+                }
+
+                const posLabel = v.minFret===0 ? "Aberta" : `Casa ${v.minFret}`;
+                const ps = v.playedStrings || v.numStrings;
+                const strLabel = ps===3 ? "Tríade" : `${ps} cordas`;
+                const svg      = buildVoicingBoxSVG(v, rootNote, openNotes);
+
+                const card = document.createElement("div");
+                card.className = "voicing-card d-flex flex-column align-items-center p-2 rounded-3 border border-secondary-subtle bg-body-secondary";
+                card.style.cssText = "cursor:pointer;transition:border-color .12s,transform .12s,box-shadow .12s";
+                card.title = `${posLabel} · ${strLabel} — clique para desenhar no braço`;
+                const diff = voicingDifficulty(v);
+                const diffBadge = diff==='easy'
+                    ? `<span class="badge bg-success-subtle text-success fs-8 border border-success-subtle mt-1">Fácil</span>`
+                    : diff==='hard'
+                    ? `<span class="badge bg-danger-subtle text-danger fs-8 border border-danger-subtle mt-1">Difícil</span>`
+                    : `<span class="badge bg-warning-subtle text-warning fs-8 border border-warning-subtle mt-1">Médio</span>`;
+                card.innerHTML = `
+                    ${svg}
+                    <div class="text-center mt-1" style="line-height:1.3">
+                        <div class="fs-8 fw-bold text-body">${posLabel}</div>
+                        <div class="fs-8 text-muted">${strLabel}</div>
+                        ${invBadge(v)}
+                        ${diffBadge}
+                    </div>`;
+                card.addEventListener("click",      () => drawVoicingOnFretboard(v, card));
+                card.addEventListener("mouseenter", () => { card.style.borderColor="var(--bs-primary)"; card.style.transform="translateY(-2px)"; card.style.boxShadow="0 6px 16px rgba(0,0,0,.2)"; });
+                card.addEventListener("mouseleave", () => { if (!card.dataset.active) { card.style.borderColor=""; card.style.transform=""; card.style.boxShadow=""; } });
+                grid.appendChild(card);
+            });
+        }
+
+        // ---- desenha voicing no braço ----
+        function drawVoicingOnFretboard(v, clickedCard) {
+            document.querySelectorAll(".voicing-card").forEach(c => {
+                c.style.outline=""; c.style.borderColor=""; c.style.transform=""; c.style.boxShadow="";
+                delete c.dataset.active;
+            });
+            if (clickedCard) { clickedCard.style.outline="2px solid var(--bs-primary)"; clickedCard.dataset.active="1"; }
+
+            fretboard.setViewMode("hide_all");
+            setTimeout(() => {
+                document.querySelectorAll("#chordFretboard .fretboard-cell").forEach(cell => {
+                    const strIdx = parseInt(cell.getAttribute("data-string")) - 1;
+                    const fret   = parseInt(cell.getAttribute("data-fret"));
+                    const badge  = cell.querySelector(".fret-note");
+                    if (!badge) return;
+
+                    const inV = strIdx >= v.startStr && strIdx < v.startStr + v.numStrings;
+                    if (inV) {
+                        const vi = strIdx - v.startStr;
+                        if (fret === v.frets[vi]) {
+                            badge.classList.add("visible"); badge.style.opacity="1"; badge.style.transform="scale(1)";
+                            if (fretboard.isNotesEqual(cell.getAttribute("data-note"), activeChordData.root)) badge.classList.add("tonica");
+                            else badge.classList.remove("tonica");
+                        } else {
+                            badge.classList.remove("visible","tonica"); badge.style.opacity="0"; badge.style.transform="scale(0.6)";
+                        }
+                    } else {
+                        badge.classList.remove("visible","tonica"); badge.style.opacity="0"; badge.style.transform="scale(0.6)";
+                    }
+                });
+                const freqs = v.combo.map(c=>c.frequency).filter(Boolean);
+                if (freqs.length) audioEngine.playChord([...freqs].reverse());
+
+                const fretsByStr = voicingToFrets(v);
+                const posLabel = v.minFret===0 ? "Voicing aberto" : `Voicing — Casa ${v.minFret} · ${v.numStrings} cordas`;
+                updateTabAndStaff(fretsByStr, posLabel);
+            }, 80);
+        }
+
+        // filtros de voicing
+        document.querySelectorAll(".voicing-filter-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                document.querySelectorAll(".voicing-filter-btn").forEach(b =>
+                    b.className = "btn btn-sm btn-outline-secondary rounded-pill voicing-filter-btn");
+                btn.className = "btn btn-sm btn-primary rounded-pill voicing-filter-btn active";
+                voicingFilterStr = btn.dataset.filter;
+                renderVoicingGrid();
+            });
+        });
+        document.getElementById("filterRootBass").addEventListener("change", e => {
+            voicingFilterRoot = e.target.checked;
+            renderVoicingGrid();
+        });
+
+        // ---- init com URL params ----
+        const p = new URLSearchParams(window.location.search);
+        if (p.get("root")) document.getElementById("chordRoot").value = p.get("root");
+        if (p.get("type")) document.getElementById("chordType").value = p.get("type");
+
+        document.getElementById("chordRoot").addEventListener("change", loadChord);
+        document.getElementById("chordType").addEventListener("change", loadChord);
+
+        await loadChord();
+    });
+</script>
+{% endblock %}

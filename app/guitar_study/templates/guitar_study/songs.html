@@ -1,0 +1,246 @@
+{% extends 'guitar_study/base.html' %}
+
+{% block title %}Cifras{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col">
+        <h1 class="fw-extrabold mb-1"><i class="bi bi-music-note-beamed text-primary"></i> Cifras</h1>
+        <p class="text-muted mb-0">Sua biblioteca de cifras para tocar. Cole a cifra de qualquer fonte e salve aqui.</p>
+    </div>
+    <div class="col-auto d-flex gap-2">
+        <a href="https://www.cifraclub.com.br/" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-box-arrow-up-right"></i> Buscar no Cifra Club
+        </a>
+        <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#modalAddSong">
+            <i class="bi bi-plus-lg"></i> Adicionar Cifra
+        </button>
+    </div>
+</div>
+
+<!-- Filtros por gênero -->
+<div class="mb-4 d-flex flex-wrap gap-2">
+    <a href="{{ url_for('guitar_study.songs') }}"
+       class="btn btn-sm {% if not genre_filter %}btn-primary{% else %}btn-outline-secondary{% endif %} rounded-pill">
+        Todas
+    </a>
+    {% for gkey, glabel in genres %}
+    <a href="{{ url_for('guitar_study.songs', genre=gkey) }}"
+       class="btn btn-sm {% if genre_filter == gkey %}btn-primary{% else %}btn-outline-secondary{% endif %} rounded-pill">
+        {{ glabel }}
+    </a>
+    {% endfor %}
+</div>
+
+<!-- Campo de busca local -->
+<div class="mb-4">
+    <div class="input-group">
+        <span class="input-group-text bg-body-tertiary border-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" id="searchInput" class="form-control bg-body-tertiary border-0"
+               placeholder="Buscar por artista ou título..." oninput="filterSongs()">
+    </div>
+</div>
+
+<!-- Lista de cifras -->
+{% if songs %}
+<div class="row g-3" id="songList">
+    {% for song in songs %}
+    <div class="col-12 col-sm-6 col-lg-4 song-item"
+         data-title="{{ song.title|lower }}" data-artist="{{ song.artist|lower }}">
+        <div class="card h-100 bg-body-tertiary border-0 shadow-sm song-card">
+            <div class="card-body d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="badge rounded-pill
+                        {% if song.genre == 'rock' %}bg-danger
+                        {% elif song.genre == 'mpb' %}bg-success
+                        {% elif song.genre == 'rock_internacional' %}bg-warning text-dark
+                        {% elif song.genre == 'metal' %}bg-dark border
+                        {% elif song.genre == 'evangelica' %}bg-info text-dark
+                        {% else %}bg-secondary{% endif %}
+                        fw-semibold fs-8">
+                        {{ {'rock':'Rock','mpb':'MPB','rock_internacional':'Rock Int.','metal':'Metal','evangelica':'Evangélica','outros':'Outros'}[song.genre] }}
+                    </span>
+                    {% if song.capo > 0 %}
+                    <span class="badge bg-body-secondary text-body border fs-8">Capotraste: {{ song.capo }}</span>
+                    {% endif %}
+                </div>
+                <h6 class="fw-bold text-body mb-1 text-truncate">{{ song.title }}</h6>
+                <p class="text-muted fs-7 mb-0 text-truncate">{{ song.artist }}</p>
+                <div class="mt-auto pt-3 d-flex gap-2">
+                    <a href="{{ url_for('guitar_study.song_view', song_id=song.id) }}"
+                       class="btn btn-sm btn-primary flex-fill fw-bold">
+                        <i class="bi bi-play-circle"></i> Ver Cifra
+                    </a>
+                    <button class="btn btn-sm btn-outline-danger"
+                            onclick="deleteSong({{ song.id }}, '{{ song.title|e }}')"
+                            title="Remover">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<p id="emptySearch" class="text-muted text-center mt-4 d-none">Nenhuma cifra encontrada para esta busca.</p>
+{% else %}
+<div class="text-center py-5 text-muted">
+    <i class="bi bi-music-note-beamed display-3 d-block mb-3 opacity-25"></i>
+    <p class="mb-1 fw-semibold">Nenhuma cifra salva ainda.</p>
+    <p class="fs-7 mb-3">Acesse o Cifra Club, copie a cifra e cole aqui para salvar.</p>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAddSong">
+        <i class="bi bi-plus-lg"></i> Adicionar Primeira Cifra
+    </button>
+</div>
+{% endif %}
+
+
+<!-- Modal: Adicionar Cifra -->
+<div class="modal fade" id="modalAddSong" tabindex="-1" aria-labelledby="modalAddSongLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content bg-body">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold" id="modalAddSongLabel">
+                    <i class="bi bi-plus-circle text-primary"></i> Adicionar Cifra
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label fw-semibold fs-7">Título da Música <span class="text-danger">*</span></label>
+                        <input type="text" id="songTitle" class="form-control" placeholder="Ex: Wonderwall">
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label fw-semibold fs-7">Artista / Banda <span class="text-danger">*</span></label>
+                        <input type="text" id="songArtist" class="form-control" placeholder="Ex: Oasis">
+                    </div>
+                    <div class="col-6 col-sm-4">
+                        <label class="form-label fw-semibold fs-7">Gênero</label>
+                        <select id="songGenre" class="form-select">
+                            <option value="rock">Rock Nacional</option>
+                            <option value="mpb">MPB</option>
+                            <option value="rock_internacional" selected>Rock Internacional</option>
+                            <option value="metal">Metal</option>
+                            <option value="evangelica">Evangélica</option>
+                            <option value="outros">Outros</option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-sm-3">
+                        <label class="form-label fw-semibold fs-7">Capotraste</label>
+                        <select id="songCapo" class="form-select">
+                            {% for i in range(13) %}
+                            <option value="{{ i }}">{% if i == 0 %}Sem capo{% else %}{{ i }}ª casa{% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12 col-sm-5">
+                        <label class="form-label fw-semibold fs-7">Link de origem (opcional)</label>
+                        <input type="url" id="songSource" class="form-control" placeholder="https://cifraclub.com.br/...">
+                    </div>
+                </div>
+                <div class="mb-1">
+                    <label class="form-label fw-semibold fs-7">
+                        Cifra <span class="text-danger">*</span>
+                        <span class="text-muted fw-normal">(cole o texto completo da cifra)</span>
+                    </label>
+                    <textarea id="songContent" class="form-control font-monospace"
+                              rows="16" placeholder="Cole aqui o texto da cifra...
+Ex:
+[Intro] Em  G  D  A
+
+[Verso]
+      Em            G
+Hoje acordei pensando em você
+      D             A
+E percebi que não podia mais..."></textarea>
+                </div>
+                <div class="form-text text-muted fs-8">
+                    Dica: acesse o <a href="https://www.cifraclub.com.br/" target="_blank">Cifra Club</a>,
+                    selecione e copie o texto da cifra, depois cole aqui.
+                </div>
+            </div>
+            <div class="modal-footer border-top">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary fw-bold px-4" onclick="saveSong()">
+                    <i class="bi bi-floppy"></i> Salvar Cifra
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+    import { showToast } from "{{ url_for('guitar_study.static', filename='js/app.js') }}";
+
+    window.filterSongs = function() {
+        const q = document.getElementById("searchInput").value.toLowerCase();
+        const items = document.querySelectorAll(".song-item");
+        let visible = 0;
+        items.forEach(el => {
+            const match = el.dataset.title.includes(q) || el.dataset.artist.includes(q);
+            el.style.display = match ? "" : "none";
+            if (match) visible++;
+        });
+        const empty = document.getElementById("emptySearch");
+        if (empty) empty.classList.toggle("d-none", visible > 0 || items.length === 0);
+    };
+
+    window.saveSong = async function() {
+        const title = document.getElementById("songTitle").value.trim();
+        const artist = document.getElementById("songArtist").value.trim();
+        const genre = document.getElementById("songGenre").value;
+        const capo = parseInt(document.getElementById("songCapo").value);
+        const content = document.getElementById("songContent").value.trim();
+        const source_url = document.getElementById("songSource").value.trim() || null;
+
+        if (!title || !artist || !content) {
+            showToast("Preencha título, artista e a cifra.", "warning");
+            return;
+        }
+
+        try {
+            const resp = await fetch("{{ url_for('guitar_study.api_create_song') }}", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, artist, genre, capo, content, source_url })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                showToast("Cifra salva com sucesso!", "success");
+                setTimeout(() => window.location.reload(), 900);
+            } else {
+                showToast(data.error?.message || "Erro ao salvar.", "danger");
+            }
+        } catch (e) {
+            showToast("Erro de conexão.", "danger");
+        }
+    };
+
+    window.deleteSong = async function(songId, title) {
+        if (!confirm(`Remover a cifra "${title}"?`)) return;
+        try {
+            const resp = await fetch(`/guitar-study/api/v1/songs/${songId}`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" }
+            });
+            const data = await resp.json();
+            if (data.success) {
+                showToast("Cifra removida.", "success");
+                setTimeout(() => window.location.reload(), 700);
+            } else {
+                showToast(data.error?.message || "Erro ao remover.", "danger");
+            }
+        } catch (e) {
+            showToast("Erro de conexão.", "danger");
+        }
+    };
+</script>
+
+<style>
+.song-card { transition: transform .15s, box-shadow .15s; }
+.song-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.15) !important; }
+</style>
+{% endblock %}

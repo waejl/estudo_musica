@@ -202,42 +202,11 @@
     // 4 trastes únicos sem barre com span=4 = impossível
     // -----------------------------------------------------------------------
     function isPlayable(v) {
-        const pressed = v.frets.filter(f => f > 0);
-        if (pressed.length === 0) return true;
-
-        const minF = Math.min(...pressed);
-        const uniqueFrets = [...new Set(pressed)];
-        const stringsAtMin = v.frets.filter(f => f === minF).length;
-        const canBarre = stringsAtMin >= 2;
-        const span = Math.max(...pressed) - minF;
-
-        // Dedos necessários: barre = 1 + demais trastes únicos; sem barre = qtd de trastes únicos
-        const fingersNeeded = canBarre
-            ? 1 + uniqueFrets.filter(f => f !== minF).length
-            : uniqueFrets.length;
-
-        if (fingersNeeded > 4) return false;
-        // 4 dedos separados (sem barre) com span de 4 casas = impossível
-        if (!canBarre && fingersNeeded === 4 && span >= 4) return false;
-        // 3 dedos separados com span de 4+ sem barre = muito difícil mas possível (manter)
-        return true;
+        return v.playable;
     }
 
     function voicingDifficulty(v) {
-        const pressed = v.frets.filter(f => f > 0);
-        if (pressed.length === 0) return 'easy';
-        const minF = Math.min(...pressed);
-        const uniqueFrets = [...new Set(pressed)];
-        const canBarre = pressed.filter(f => f === minF).length >= 2;
-        const span = Math.max(...pressed) - minF;
-        const otherU = uniqueFrets.filter(f => f !== minF).length;
-        const fingersNeeded = canBarre ? 1 + otherU : uniqueFrets.length;
-        const hasOpen = v.frets.some(f => f === 0);
-
-        if (hasOpen && fingersNeeded <= 2) return 'easy';
-        if (fingersNeeded <= 2 && span <= 2) return 'easy';
-        if (fingersNeeded === 4 || span >= 4 || (canBarre && otherU >= 3)) return 'hard';
-        return 'medium';
+        return v.difficulty || 'medium';
     }
 
     // -----------------------------------------------------------------------
@@ -245,10 +214,7 @@
     // strIdx 0=highE(1ª), 5=lowE(6ª); -1=muted
     // -----------------------------------------------------------------------
     function voicingToFrets(v) {
-        const f = new Array(6).fill(-1);
-        for (let si = v.startStr; si < v.startStr + v.numStrings; si++)
-            f[si] = v.frets[si - v.startStr];
-        return f;
+        return v.frets;
     }
 
     // -----------------------------------------------------------------------
@@ -389,123 +355,60 @@
     }
 
     // -----------------------------------------------------------------------
-    // BANCO DE DADOS REAL — tombatossals/chords-db
-    // Voicings validados por guitarristas, não gerados algoritmicamente
+    // BUSCA VOICINGS GERADOS DO BACKEND
     // -----------------------------------------------------------------------
-    async function loadChordDatabase() {
-        if (window._guitarChordsDB) return window._guitarChordsDB;
-        const resp = await fetch("{{ url_for('guitar_study.static', filename='data/guitar_chords.json') }}");
-        window._guitarChordsDB = await resp.json();
-        return window._guitarChordsDB;
-    }
+    async function fetchAndProcessVoicings(root, chordType, stringsData) {
+        const pref = "{{ settings.accidentals_preference }}";
+        const fretCount = {{ settings.fret_count }};
+        const tuningId = "{{ settings.tuning_id }}";
+        
+        try {
+            const url = `/guitar-study/api/v1/chords/voicings?root=${root}&type=${chordType}&preference=${pref}&fret_count=${fretCount}&tuning_id=${tuningId}`;
+            const response = await fetch(url);
+            const res = await response.json();
 
-    function rootToDBKey(root) {
-        const map = {
-            'C':'C','C#':'Csharp','Db':'Csharp',
-            'D':'D','D#':'Eb','Eb':'Eb',
-            'E':'E','F':'F',
-            'F#':'Fsharp','Gb':'Fsharp',
-            'G':'G','G#':'Ab','Ab':'Ab',
-            'A':'A','A#':'Bb','Bb':'Bb','B':'B'
-        };
-        return map[root] || root;
-    }
-
-    function typeToDBSuffix(chordType) {
-        const map = {
-            'major':'major','minor':'minor',
-            'dominant_7':'7','major_7':'maj7','minor_7':'m7',
-            'diminished':'dim','diminished_7':'dim7',
-            'augmented':'aug','augmented_7':'aug7',
-            'sus4':'sus4','sus2':'sus2',
-            'add9':'add9','add2':'add9',
-            'power_5':'5',
-            'major_6':'6','minor_6':'m6',
-            'half_diminished':'m7b5',
-            'dominant_9':'9','minor_9':'m9','major_9':'maj9',
-            'dominant_11':'11','major_11':'maj11',
-            'dominant_13':'13','major_13':'maj13',
-        };
-        return map[chordType] || chordType;
-    }
-
-    // Converte posição do tombatossals para o formato interno de voicing
-    // tombatossals: frets[0]=lowE(strIdx=5), frets[5]=highE(strIdx=0)
-    // interno: strIdx 0=highE, strIdx 5=lowE
-    function tombToVoicing(pos, stringsData, rootNote) {
-        const tf = pos.frets;
-        const baseFret = pos.baseFret;
-
-        // Converte para frets absolutos indexados por strIdx (0=highE, 5=lowE)
-        const myAbs = new Array(6);
-        for (let strIdx = 0; strIdx < 6; strIdx++) {
-            const rf = tf[5 - strIdx]; // tombIdx 0=lowE → strIdx 5
-            myAbs[strIdx] = rf === -1 ? -1 : (rf === 0 ? 0 : baseFret + rf - 1);
-        }
-
-        // Encontra o range [startStr, endStr] de strings não-muted
-        let startStr = -1, endStr = -1;
-        for (let si = 0; si < 6; si++) {
-            if (myAbs[si] >= 0) {
-                if (startStr === -1) startStr = si;
-                endStr = si;
+            if (!res.success) {
+                showToast(res.error.message || "Erro ao gerar voicings.", "danger");
+                return [];
             }
+            
+            // Processa os voicings para o formato que o JS do frontend espera
+            return res.data.voicings.map(serverVoicing => {
+                const frets = serverVoicing.frets;
+                
+                let startStr = -1, endStr = -1;
+                for (let si = 0; si < 6; si++) {
+                    if (frets[si] !== -1) {
+                        if (startStr === -1) startStr = si;
+                        endStr = si;
+                    }
+                }
+
+                if (startStr === -1) return null; // Voicing inválido
+
+                // Gera o combo de áudio (do grave para o agudo)
+                const combo = [];
+                for (let si = 5; si >= 0; si--) {
+                    if (frets[si] < 0 || !stringsData[si]) continue;
+                    const fd = stringsData[si].frets.find(f => f.fret === frets[si]);
+                    if (fd) combo.push({ fret: frets[si], note: fd.note, noteIdx: noteIndex(fd.note), frequency: fd.frequency });
+                }
+                
+                return {
+                    ...serverVoicing,
+                    startStr: startStr,
+                    numStrings: endStr - startStr + 1,
+                    frets: frets.slice(startStr, endStr + 1), // O frontend espera um array fatiado
+                    full_frets: frets, // Mantém o array completo para outras funções
+                    combo: combo
+                };
+            }).filter(Boolean);
+
+        } catch (e) {
+            console.error("Fetch voicings error:", e);
+            showToast("Erro de rede ao buscar voicings.", "danger");
+            return [];
         }
-        if (startStr === -1) return null;
-
-        const frets = [];
-        let playedStrings = 0;
-        for (let si = startStr; si <= endStr; si++) {
-            frets.push(myAbs[si]);
-            if (myAbs[si] >= 0) playedStrings++;
-        }
-
-        const pressed = frets.filter(f => f > 0);
-        const minFret = pressed.length ? Math.min(...pressed) : 0;
-        const maxFret = pressed.length ? Math.max(...pressed) : 0;
-
-        // Nota do baixo: strIdx mais alto (corda mais grave) não-muted
-        let bassStrIdx = endStr;
-        while (bassStrIdx >= startStr && myAbs[bassStrIdx] < 0) bassStrIdx--;
-
-        let bassNoteIdx = -1;
-        const rootIdx = noteIndex(rootNote);
-        if (bassStrIdx >= 0 && stringsData[bassStrIdx]) {
-            const sd = stringsData[bassStrIdx];
-            const fd = sd.frets.find(f => f.fret === myAbs[bassStrIdx]);
-            if (fd) bassNoteIdx = noteIndex(fd.note);
-        }
-
-        // Combo para áudio (do grave para o agudo, ordem inversa dos strIdx)
-        const combo = [];
-        for (let si = endStr; si >= startStr; si--) {
-            if (myAbs[si] < 0 || !stringsData[si]) continue;
-            const fd = stringsData[si].frets.find(f => f.fret === myAbs[si]);
-            if (fd) combo.push({ fret: myAbs[si], note: fd.note, noteIdx: noteIndex(fd.note), frequency: fd.frequency });
-        }
-
-        return {
-            startStr,
-            numStrings: endStr - startStr + 1,
-            playedStrings,
-            frets,
-            combo,
-            minFret,
-            maxFret,
-            hasRootInBass: bassNoteIdx >= 0 && bassNoteIdx === rootIdx,
-            bassNoteIdx
-        };
-    }
-
-    async function lookupChordVoicings(root, chordType, rootNote, stringsData) {
-        const db = await loadChordDatabase();
-        const dbKey = rootToDBKey(root);
-        const dbSuffix = typeToDBSuffix(chordType);
-        const noteList = db.chords[dbKey];
-        if (!noteList) return [];
-        const entry = noteList.find(c => c.suffix === dbSuffix);
-        if (!entry) return [];
-        return entry.positions.map(pos => tombToVoicing(pos, stringsData, rootNote)).filter(Boolean);
     }
 
     // -----------------------------------------------------------------------
@@ -621,10 +524,10 @@
         const GW=SX*(STR-1), GH=FH*VIS;
         const W=L+GW+28, H=T+GH+10;
 
-        const usedFrets = v.frets.filter(f=>f>0);
-        const isOpen    = usedFrets.length===0 || v.frets.some(f=>f===0);
-        const baseFret  = isOpen ? 0 : v.minFret;
-        const colorStr  = v.playedStrings || v.numStrings;
+        const usedFrets = v.full_frets.filter(f=>f>0);
+        const isOpen    = usedFrets.length===0 || v.full_frets.some(f=>f===0);
+        const baseFret  = isOpen ? 0 : v.min_fret;
+        const colorStr  = v.played_strings;
         const color     = VOICING_COLORS[colorStr-3] || '#4dabf7';
 
         let s=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`;
@@ -642,8 +545,7 @@
             const bc=[];
             for (let col=0;col<STR;col++) {
                 const si=5-col;
-                if (si<v.startStr||si>=v.startStr+v.numStrings) continue;
-                if (v.frets[si-v.startStr]===baseFret) bc.push(col);
+                if (v.full_frets[si]===baseFret) bc.push(col);
             }
             if (bc.length>=2) {
                 const cy=T+FH*0.5;
@@ -655,11 +557,9 @@
         for (let col=0;col<STR;col++) {
             const si=5-col; // strIdx
             const x=L+col*SX;
-            const inV=si>=v.startStr&&si<v.startStr+v.numStrings;
-
-            const vi = si - v.startStr;
-            const fret = inV ? v.frets[vi] : undefined;
-            if (!inV || fret === -1 || fret === undefined) { s+=`<text x="${x}" y="${T-9}" font-size="12" text-anchor="middle" fill="#e03131">✕</text>`; continue; }
+            
+            const fret = v.full_frets[si];
+            if (fret === -1 || fret === undefined) { s+=`<text x="${x}" y="${T-9}" font-size="12" text-anchor="middle" fill="#e03131">✕</text>`; continue; }
             if (fret===0) { s+=`<circle cx="${x}" cy="${T-11}" r="5" fill="none" stroke="#888" stroke-width="1.5"/>`; continue; }
 
             const dotRow=isOpen?fret:(fret-baseFret+1);
@@ -776,7 +676,7 @@
                     buildFullFretboardSVG(activeChordData.caged_shapes, activeChordData.root, fretCount, openNotes);
 
                 // ---- Aba 3: Todos os Voicings ----
-                allVoicings = await lookupChordVoicings(activeChordData.root, activeChordData.chord_type, activeChordData.root, fretboard.stringsData);
+                allVoicings = await fetchAndProcessVoicings(activeChordData.root, activeChordData.chord_type, fretboard.stringsData);
                 renderVoicingGrid();
 
                 // fretboard principal
@@ -896,60 +796,14 @@
         });
 
         // ================================================================
-        // VOICING FINDER
-        // stringsData[0]=highE(strIdx=0), [5]=lowE(strIdx=5)
+        // VOICING RENDER
         // ================================================================
-        function findAllVoicings(stringsData, chordNotes, rootNote, fretCount) {
-            const chordIdxs = chordNotes.map(n => noteIndex(n));
-            const rootIdx   = noteIndex(rootNote);
-
-            const strTones = stringsData.map(str =>
-                str.frets
-                    .filter(f => f.fret <= fretCount)
-                    .filter(f => chordIdxs.includes(noteIndex(f.note)))
-                    .map(f => ({ fret:f.fret, note:f.note, noteIdx:noteIndex(f.note), frequency:f.frequency }))
-            );
-
-            const results=[], seen=new Set();
-            for (let numStr=3; numStr<=6; numStr++) {
-                for (let start=0; start+numStr<=6; start++) {
-                    const group = strTones.slice(start, start+numStr);
-                    genCombos(group, 0, [], results, seen, chordIdxs, rootIdx, start, numStr);
-                }
-            }
-            results.sort((a,b) => (a.minFret||0)-(b.minFret||0) || b.numStrings-a.numStrings);
-            return results.filter(isPlayable);
-        }
-
-        function genCombos(group, depth, cur, results, seen, chordIdxs, rootIdx, startStr, numStr) {
-            if (depth === group.length) {
-                if (!chordIdxs.every(ni => cur.some(c=>c.noteIdx===ni))) return;
-                const frets=cur.map(c=>c.fret), key=`${startStr}-${frets.join(',')}`;
-                if (seen.has(key)) return;
-                seen.add(key);
-                const nz=frets.filter(f=>f>0);
-                results.push({
-                    startStr, numStrings:numStr, frets, combo:cur.slice(),
-                    minFret: nz.length?Math.min(...nz):0,
-                    maxFret: nz.length?Math.max(...nz):0,
-                    hasRootInBass: cur[cur.length-1].noteIdx===rootIdx,
-                    bassNoteIdx: cur[cur.length-1].noteIdx
-                });
-                return;
-            }
-            for (const tone of group[depth]) {
-                const partial=[...cur, tone];
-                const nz=partial.map(c=>c.fret).filter(f=>f>0);
-                if (nz.length>=2 && Math.max(...nz)-Math.min(...nz)>4) continue;
-                genCombos(group, depth+1, partial, results, seen, chordIdxs, rootIdx, startStr, numStr);
-            }
-        }
 
         // ---- render grade de voicings ----
         function renderVoicingGrid() {
             let filtered = allVoicings;
-            if (voicingFilterStr !== "all") filtered = filtered.filter(v=>(v.playedStrings||v.numStrings)===parseInt(voicingFilterStr));
-            if (voicingFilterRoot)          filtered = filtered.filter(v=>v.hasRootInBass);
+            if (voicingFilterStr !== "all") filtered = filtered.filter(v=> v.played_strings === parseInt(voicingFilterStr));
+            if (voicingFilterRoot)          filtered = filtered.filter(v=>v.has_root_in_bass);
 
             const grid  = document.getElementById("allVoicingsGrid");
             const empty = document.getElementById("voicingEmpty");
@@ -964,8 +818,8 @@
             empty.classList.add("d-none");
 
             const total     = allVoicings.length;
-            const rootCount = allVoicings.filter(v=>v.hasRootInBass).length;
-            stats.textContent = `${filtered.length} de ${total} voicings  ·  ${rootCount} com raiz no baixo`;
+            const rootCount = allVoicings.filter(v=>v.has_root_in_bass).length;
+            stats.textContent = `${filtered.length} de ${total} voicings encontrados  ·  ${rootCount} com raiz no baixo`;
 
             const openNotes  = fretboard.stringsData.map(sd=>sd.open_note);
             const rootNote   = activeChordData.root;
@@ -982,16 +836,16 @@
             };
 
             const invBadge = v => {
-                if (v.hasRootInBass)                                               return `<span class="badge bg-success-subtle text-success fs-8 border border-success-subtle mt-1">Raiz</span>`;
-                if (chordNotes[1] && v.bassNoteIdx===noteIndex(chordNotes[1]))     return `<span class="badge bg-warning-subtle text-warning fs-8 border border-warning-subtle mt-1">1ª inv.</span>`;
-                if (chordNotes[2] && v.bassNoteIdx===noteIndex(chordNotes[2]))     return `<span class="badge bg-info-subtle text-info fs-8 border border-info-subtle mt-1">2ª inv.</span>`;
-                if (chordNotes[3] && v.bassNoteIdx===noteIndex(chordNotes[3]))     return `<span class="badge bg-secondary-subtle text-secondary fs-8 border border-secondary-subtle mt-1">3ª inv.</span>`;
+                if (v.has_root_in_bass)                                            return `<span class="badge bg-success-subtle text-success fs-8 border border-success-subtle mt-1">Raiz</span>`;
+                if (chordNotes[1] && v.bass_note_idx===noteIndex(chordNotes[1]))   return `<span class="badge bg-warning-subtle text-warning fs-8 border border-warning-subtle mt-1">1ª inv.</span>`;
+                if (chordNotes[2] && v.bass_note_idx===noteIndex(chordNotes[2]))   return `<span class="badge bg-info-subtle text-info fs-8 border border-info-subtle mt-1">2ª inv.</span>`;
+                if (chordNotes[3] && v.bass_note_idx===noteIndex(chordNotes[3]))   return `<span class="badge bg-secondary-subtle text-secondary fs-8 border border-secondary-subtle mt-1">3ª inv.</span>`;
                 return "";
             };
 
             let lastRegion = null;
             filtered.forEach(v => {
-                const region = regionLabel(v.minFret);
+                const region = regionLabel(v.min_fret);
                 if (region !== lastRegion) {
                     lastRegion = region;
                     grid.insertAdjacentHTML("beforeend",
@@ -1000,8 +854,8 @@
                          </div>`);
                 }
 
-                const posLabel = v.minFret===0 ? "Aberta" : `Casa ${v.minFret}`;
-                const ps = v.playedStrings || v.numStrings;
+                const posLabel = v.min_fret===0 ? "Aberta" : `Casa ${v.min_fret}`;
+                const ps = v.played_strings;
                 const strLabel = ps===3 ? "Tríade" : `${ps} cordas`;
                 const svg      = buildVoicingBoxSVG(v, rootNote, openNotes);
 
@@ -1046,25 +900,20 @@
                     const badge  = cell.querySelector(".fret-note");
                     if (!badge) return;
 
-                    const inV = strIdx >= v.startStr && strIdx < v.startStr + v.numStrings;
-                    if (inV) {
-                        const vi = strIdx - v.startStr;
-                        if (fret === v.frets[vi]) {
-                            badge.classList.add("visible"); badge.style.opacity="1"; badge.style.transform="scale(1)";
-                            if (fretboard.isNotesEqual(cell.getAttribute("data-note"), activeChordData.root)) badge.classList.add("tonica");
-                            else badge.classList.remove("tonica");
-                        } else {
-                            badge.classList.remove("visible","tonica"); badge.style.opacity="0"; badge.style.transform="scale(0.6)";
-                        }
+                    const targetFret = v.full_frets[strIdx];
+                    if (fret === targetFret) {
+                        badge.classList.add("visible"); badge.style.opacity="1"; badge.style.transform="scale(1)";
+                        if (fretboard.isNotesEqual(cell.getAttribute("data-note"), activeChordData.root)) badge.classList.add("tonica");
+                        else badge.classList.remove("tonica");
                     } else {
                         badge.classList.remove("visible","tonica"); badge.style.opacity="0"; badge.style.transform="scale(0.6)";
                     }
                 });
                 const freqs = v.combo.map(c=>c.frequency).filter(Boolean);
-                if (freqs.length) audioEngine.playChord([...freqs].reverse());
+                if (freqs.length) audioEngine.playChord(freqs);
 
-                const fretsByStr = voicingToFrets(v);
-                const posLabel = v.minFret===0 ? "Voicing aberto" : `Voicing — Casa ${v.minFret} · ${v.numStrings} cordas`;
+                const fretsByStr = v.full_frets;
+                const posLabel = v.min_fret===0 ? "Voicing aberto" : `Voicing — Casa ${v.min_fret} · ${v.played_strings} cordas`;
                 updateTabAndStaff(fretsByStr, posLabel);
             }, 80);
         }

@@ -233,6 +233,60 @@ def api_get_chords():
         }), 500
 
 
+@guitar_study.route("/api/v1/chords/voicings", methods=["GET"])
+@login_required
+def api_get_chord_voicings():
+    """Gera e retorna todos os voicings humanamente possíveis de um acorde."""
+    root = request.args.get("root", "C").strip()
+    chord_type = request.args.get("type", "major").strip()
+    pref = request.args.get("preference", "sharps")
+    
+    settings = current_user.settings
+    tuning_id = request.args.get("tuning_id", settings.tuning_id if settings else "standard")
+    fret_count = int(request.args.get("fret_count", settings.fret_count if settings else 12))
+
+    try:
+        # 1. Obter as notas do acorde
+        chord_info = MusicTheoryService.get_chord_notes_and_intervals(root, chord_type, pref)
+        chord_notes = chord_info["notes"]
+        
+        # 2. Obter a afinação
+        tuning_notes = get_user_tuning_notes(current_user.id, tuning_id)
+        # O serviço espera a afinação da corda mais aguda (1) para a mais grave (6)
+        # Invertemos se estiver no formato EADGBE
+        if len(tuning_notes) == 6 and tuning_notes[0].upper() in ["E", "D", "C"] and tuning_notes[1].upper() in ["A", "G"]:
+            tuning_notes = list(reversed(tuning_notes))
+
+        # 3. Gerar os voicings
+        all_voicings = MusicTheoryService.get_all_voicings(
+            chord_notes=chord_notes,
+            root_note=root,
+            tuning_notes=tuning_notes,
+            fret_count=fret_count,
+            preference=pref
+        )
+        
+        return jsonify({
+            "success": True,
+            "data": {
+                "root": root,
+                "chord_type": chord_type,
+                "voicings": all_voicings
+            }
+        })
+    except ValueError as ve:
+        return jsonify({
+            "success": False,
+            "error": {"code": "INVALID_PARAMETER", "message": str(ve)}
+        }), 400
+    except Exception as e:
+        current_app.logger.error(f"Erro ao gerar voicings para {root} {chord_type}: {e}", exc_info=True)
+        return jsonify({
+            "success": False,
+            "error": {"code": "SERVER_ERROR", "message": f"Erro ao gerar voicings: {str(e)}"}
+        }), 500
+
+
 # =====================================================================
 # API: SESSÕES DE ESTUDO (STUDY SESSIONS)
 # =====================================================================

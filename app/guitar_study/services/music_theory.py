@@ -1,4 +1,5 @@
 from typing import List, Dict, Any, Tuple
+import itertools
 
 # Constantes de Teoria Musical
 SHARPS_SCALE = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
@@ -606,3 +607,158 @@ class MusicTheoryService:
             "scale_name": f"Campo Harmônico de {root} " + ("Maior" if scale_type == "major" else "Menor Natural"),
             "graus": graus_list
         }
+
+    @staticmethod
+    def _is_playable(frets: List[int]) -> bool:
+        """Verifica se um voicing é humanamente tocável."""
+        pressed = [f for f in frets if f is not None and f > 0]
+        if not pressed:
+            return True
+
+        min_fret = min(pressed)
+        unique_frets = sorted(list(set(pressed)))
+        
+        # Contagem de casas que precisam de um dedo
+        strings_at_min = len([f for f in pressed if f == min_fret])
+        can_barre = strings_at_min >= 2
+        
+        # Dedos necessários: 1 para o barre + 1 para cada outra casa única
+        other_unique_frets = [f for f in unique_frets if f != min_fret]
+        fingers_needed = (1 if can_barre else len(unique_frets))
+        if can_barre:
+            fingers_needed += len(other_unique_frets)
+
+        # Se precisar de mais de 4 dedos, impossível
+        if fingers_needed > 4:
+            return False
+            
+        # Calcula o "span" (alcance) da mão
+        span = max(pressed) - min_fret
+        
+        # Se não houver pestana (barre), 4 dedos e um alcance de 4 casas é impossível
+        if not can_barre and fingers_needed == 4 and span >= 4:
+            return False
+            
+        # Dedos esticados (ex: casa 1, 3, 5) são difíceis, mas possíveis
+        return True
+
+    @staticmethod
+    def _get_voicing_difficulty(frets: List[int]) -> str:
+        """Estima a dificuldade de um voicing."""
+        pressed = [f for f in frets if f is not None and f > 0]
+        if not pressed:
+            return 'easy'
+
+        min_fret = min(pressed)
+        unique_frets = sorted(list(set(pressed)))
+        
+        strings_at_min = len([f for f in pressed if f == min_fret])
+        can_barre = strings_at_min >= 2
+        
+        other_unique_frets = len([f for f in unique_frets if f != min_fret])
+        fingers_needed = (1 + other_unique_frets) if can_barre else len(unique_frets)
+        
+        span = max(pressed) - min_fret
+        has_open_strings = any(f == 0 for f in frets if f is not None)
+
+        if has_open_strings and fingers_needed <= 2:
+            return 'easy'
+        if fingers_needed <= 2 and span <= 2:
+            return 'easy'
+        if fingers_needed == 4 or span >= 4 or (can_barre and other_unique_frets >= 3):
+            return 'hard'
+        return 'medium'
+
+    @classmethod
+    def get_all_voicings(
+        cls, 
+        chord_notes: List[str], 
+        root_note: str, 
+        tuning_notes: List[str], 
+        fret_count: int = 12,
+        preference: str = "sharps"
+    ) -> List[Dict[str, Any]]:
+        """
+        Encontra todos os voicings (formas) tocáveis de um acorde na guitarra.
+        Um voicing é uma combinação de notas em diferentes cordas.
+        """
+        chord_indices = {cls.note_to_index(n) for n in chord_notes}
+        root_idx = cls.note_to_index(root_note)
+        num_strings = len(tuning_notes)
+        
+        # 1. Mapeia todas as notas do acorde no braço inteiro
+        # O formato é: [[(fret, note_idx), ...], ...] onde o índice principal é a corda
+        fretboard_chord_tones = []
+        for i in range(num_strings):
+            string_open_note = tuning_notes[i]
+            string_tones = []
+            for fret in range(fret_count + 1):
+                note = cls.get_note_by_fret(string_open_note, fret, preference)
+                note_idx = cls.note_to_index(note)
+                if note_idx in chord_indices:
+                    string_tones.append({"fret": fret, "note_idx": note_idx})
+            fretboard_chord_tones.append(string_tones)
+
+        # 2. Itera sobre todos os agrupamentos de cordas possíveis (3, 4, 5, 6 cordas)
+        all_voicings = []
+        seen_voicings = set()
+
+        for num_played_strings in range(3, num_strings + 1):
+            for start_string_idx in range(num_strings - num_played_strings + 1):
+                
+                string_group_indices = range(start_string_idx, start_string_idx + num_played_strings)
+                
+                # Gera todas as combinações de notas para este grupo de cordas
+                tone_groups = [fretboard_chord_tones[i] for i in string_group_indices]
+                
+                # itertools.product faz a mágica da combinação
+                for combo in itertools.product(*tone_groups):
+                    # combo é uma tupla de dicionários de notas, uma para cada corda
+                    
+                    # 3. Valida o voicing gerado
+                    current_frets = [tone['fret'] for tone in combo]
+                    
+                    # Filtro de alcance: um voicing com mais de 4-5 casas de distância é impossível
+                    pressed_frets = [f for f in current_frets if f > 0]
+                    if pressed_frets and (max(pressed_frets) - min(pressed_frets) > 4):
+                        continue
+                        
+                    # Verifica se todas as notas do acorde estão presentes no voicing
+                    present_note_indices = {tone['note_idx'] for tone in combo}
+                    if not chord_indices.issubset(present_note_indices):
+                        continue
+
+                    # Constrói o voicing no formato do frontend (array de 6 elementos)
+                    # -1 significa corda não tocada (muted)
+                    full_fret_pattern = [-1] * num_strings
+                    for i, string_idx in enumerate(string_group_indices):
+                        full_fret_pattern[string_idx] = current_frets[i]
+                    
+                    # Evita duplicatas
+                    voicing_key = tuple(full_fret_pattern)
+                    if voicing_key in seen_voicings:
+                        continue
+                    seen_voicings.add(voicing_key)
+
+                    # Verifica a tocabilidade com base no número de dedos e alcance
+                    if not cls._is_playable(full_fret_pattern):
+                        continue
+
+                    # 4. Adiciona o voicing válido à lista
+                    bass_note_idx = combo[-1]['note_idx'] # A última nota da combinação é a mais grave
+                    min_fret = min(pressed_frets) if pressed_frets else 0
+                    
+                    all_voicings.append({
+                        "frets": full_fret_pattern, # Array com 6 posições
+                        "played_strings": num_played_strings,
+                        "min_fret": min_fret,
+                        "max_fret": max(pressed_frets) if pressed_frets else 0,
+                        "has_root_in_bass": bass_note_idx == root_idx,
+                        "bass_note_idx": bass_note_idx,
+                        "difficulty": cls._get_voicing_difficulty(full_fret_pattern)
+                    })
+        
+        # Ordena por casa mínima, depois por número de cordas
+        all_voicings.sort(key=lambda v: (v['min_fret'], -v['played_strings']))
+        
+        return all_voicings

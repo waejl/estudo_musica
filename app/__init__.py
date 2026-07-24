@@ -33,41 +33,26 @@ def create_app(config_name=None):
     register_error_handlers(app)
     
     # Inicialização e semeadura dinâmica do banco de dados (Garante que 'demo' sempre funcione)
-    with app.app_context():
-        try:
-            db.create_all()
-            from app.guitar_study.models import User, UserSettings
-            
-            # Tenta buscar o usuário de demonstração
-            demo = User.query.filter_by(username="demo").first()
-            if not demo:
-                demo = User(
-                    name="Usuário de Demonstração",
-                    username="demo",
-                    email="demo@guitarstudy.com",
-                    is_active=True
-                )
-                demo.set_password("admin123")
-                db.session.add(demo)
-                db.session.flush() # Gera o ID
+    if config_name != "testing":
+        with app.app_context():
+            try:
+                db.create_all()
+                from app.guitar_study.models import User, UserSettings
                 
-                # Garante preferências do usuário de demonstração
-                settings = UserSettings(
-                    user_id=demo.id,
-                    tuning_id="standard",
-                    fret_count=22,
-                    accidentals_preference="sharps",
-                    theme="dark"
-                )
-                db.session.add(settings)
-                db.session.commit()
-                app.logger.info("Usuário 'demo' e preferências padrão semeados com sucesso via Python!")
-            else:
-                # Se já existe, redefinimos a senha de forma dinâmica para garantir compatibilidade de hash
-                demo.set_password("admin123")
-                
-                # Garante que as configurações dele também existam
-                if not demo.settings:
+                # Tenta buscar o usuário de demonstração
+                demo = User.query.filter_by(username="demo").first()
+                if not demo:
+                    demo = User(
+                        name="Usuário de Demonstração",
+                        username="demo",
+                        email="demo@guitarstudy.com",
+                        is_active=True
+                    )
+                    demo.set_password("admin123")
+                    db.session.add(demo)
+                    db.session.flush() # Gera o ID
+                    
+                    # Garante preferências do usuário de demonstração
                     settings = UserSettings(
                         user_id=demo.id,
                         tuning_id="standard",
@@ -76,10 +61,26 @@ def create_app(config_name=None):
                         theme="dark"
                     )
                     db.session.add(settings)
-                db.session.commit()
-                app.logger.info("Senha e hash do usuário 'demo' redefinidos e validados dinamicamente!")
-        except Exception as ex:
-            app.logger.error(f"Erro durante a semeadura dinâmica do banco de dados: {str(ex)}")
+                    db.session.commit()
+                    app.logger.info("Usuário 'demo' e preferências padrão semeados com sucesso via Python!")
+                else:
+                    # Se já existe, redefinimos a senha de forma dinâmica para garantir compatibilidade de hash
+                    demo.set_password("admin123")
+                    
+                    # Garante que as configurações dele também existam
+                    if not demo.settings:
+                        settings = UserSettings(
+                            user_id=demo.id,
+                            tuning_id="standard",
+                            fret_count=22,
+                            accidentals_preference="sharps",
+                            theme="dark"
+                        )
+                        db.session.add(settings)
+                    db.session.commit()
+                    app.logger.info("Senha e hash do usuário 'demo' redefinidos e validados dinamicamente!")
+            except Exception as ex:
+                app.logger.error(f"Erro durante a semeadura dinâmica do banco de dados: {str(ex)}")
     
     app.logger.info("Aplicação Guitar Study inicializada com sucesso!")
     return app

@@ -2,6 +2,8 @@ from datetime import datetime
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.extensions import db, login_manager
+from sqlalchemy import event
+
 
 class User(db.Model, UserMixin):
     """Modelo para representar os usuários do sistema."""
@@ -47,10 +49,9 @@ class UserSettings(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
     tuning_id = db.Column(db.String(50), default="standard", nullable=False)
     fret_count = db.Column(db.Integer, default=22, nullable=False)
-    accidentals_preference = db.Column(db.String(10), default="sharps", nullable=False)  # sharps ou flats
-    theme = db.Column(db.String(10), default="dark", nullable=False)  # dark ou light
+    accidentals_preference = db.Column(db.String(10), default="sharps", nullable=False)
+    theme = db.Column(db.String(10), default="dark", nullable=False)
 
-    # Relacionamento de volta para o usuário
     user = db.relationship("User", back_populates="settings")
 
     def __repr__(self):
@@ -64,10 +65,9 @@ class CustomTuning(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     name = db.Column(db.String(100), nullable=False)
-    notes = db.Column(db.String(100), nullable=False)  # Ex: "C G C F A D"
+    notes = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-    # Relacionamento
     user = db.relationship("User", back_populates="custom_tunings")
 
     def __repr__(self):
@@ -80,60 +80,57 @@ class Favorite(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    category = db.Column(db.String(50), nullable=False)  # scale, mode, chord
-    item_key = db.Column(db.String(100), nullable=False)  # Ex: "C_major", "A_dorian", "G_major_7"
+    category = db.Column(db.String(50), nullable=False)
+    item_key = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-    # Relacionamento
     user = db.relationship("User", back_populates="favorites")
 
     def __repr__(self):
-        return f"<Favorite {self.category}:{self.item_key} user_id={self.user_id}>"
+        return f"<Favorite {self.category}/{self.item_key}>"
 
 
 class StudySession(db.Model):
-    """Modelo para rastreamento de sessões de estudo realizadas pelo usuário."""
+    """Modelo para registrar sessões de estudo do usuário."""
     __tablename__ = "study_sessions"
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    category = db.Column(db.String(50), nullable=False)  # fretboard, scale, mode, chord, exercise
-    item_key = db.Column(db.String(100), nullable=False)  # Ex: "major_scale", "identify_note"
+    category = db.Column(db.String(50), nullable=False)
+    item_key = db.Column(db.String(100), nullable=False)
     duration_minutes = db.Column(db.Integer, nullable=False)
     notes = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-    # Relacionamento
     user = db.relationship("User", back_populates="study_sessions")
 
     def __repr__(self):
-        return f"<StudySession category={self.category} duration={self.duration_minutes}m>"
+        return f"<StudySession {self.category} by user {self.user_id}>"
 
 
 class ExerciseAttempt(db.Model):
-    """Modelo para armazenar o resultado de tentativas em exercícios interativos."""
+    """Modelo para registrar tentativas de exercícios."""
     __tablename__ = "exercise_attempts"
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    exercise_type = db.Column(db.String(50), nullable=False)  # identify_note, find_note, intervals, scales, modes
+    exercise_type = db.Column(db.String(50), nullable=False)
     questions_count = db.Column(db.Integer, nullable=False)
     correct_count = db.Column(db.Integer, nullable=False)
     incorrect_count = db.Column(db.Integer, nullable=False)
     score_percentage = db.Column(db.Float, nullable=False)
     time_spent_seconds = db.Column(db.Integer, nullable=False)
-    difficulty = db.Column(db.String(20), default="medium", nullable=False)  # easy, medium, hard
+    difficulty = db.Column(db.String(20), default="medium", nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-    # Relacionamento
     user = db.relationship("User", back_populates="exercise_attempts")
 
     def __repr__(self):
-        return f"<ExerciseAttempt type={self.exercise_type} score={self.score_percentage}%>"
+        return f"<ExerciseAttempt {self.exercise_type} score={self.score_percentage}%>"
 
 
 class StudyGoal(db.Model):
-    """Modelo para as metas de estudos do usuário."""
+    """Modelo para gerenciar metas de estudo do usuário."""
     __tablename__ = "study_goals"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -145,24 +142,22 @@ class StudyGoal(db.Model):
     deadline = db.Column(db.Date, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-    # Relacionamento
     user = db.relationship("User", back_populates="study_goals")
 
     def __repr__(self):
-        return f"<StudyGoal title={self.title} completed={self.is_completed}>"
+        return f"<StudyGoal {self.title}>"
 
 
 class RecentItem(db.Model):
-    """Modelo para rastrear acessos recentes e preencher o dashboard com facilidade."""
+    """Modelo para rastrear últimos itens acessados pelo usuário."""
     __tablename__ = "recent_items"
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    category = db.Column(db.String(50), nullable=False)  # scale, mode, chord
+    category = db.Column(db.String(50), nullable=False)
     item_key = db.Column(db.String(100), nullable=False)
-    last_accessed_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    last_accessed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-    # Relacionamento
     user = db.relationship("User", back_populates="recent_items")
 
     def __repr__(self):
@@ -189,7 +184,14 @@ class Song(db.Model):
         return f"<Song {self.artist} - {self.title}>"
 
 
-# Loader para o Flask-Login
+@event.listens_for(User, 'after_insert')
+def create_user_settings(mapper, connection, target):
+    """Cria automaticamente UserSettings quando um novo User é inserido."""
+    settings = UserSettings(user_id=target.id)
+    db.session.add(settings)
+    db.session.commit()
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))

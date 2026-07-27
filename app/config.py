@@ -13,7 +13,7 @@ class Config:
     
     # Sessão persistente
     REMEMBER_COOKIE_DURATION = timedelta(days=30)
-    PERMANENT_SESSION_LIFETIME = timedelta(days=30)
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=3)
     
     # Segurança adicional
     SESSION_COOKIE_HTTPONLY = True

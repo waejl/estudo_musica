@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import render_template, redirect, url_for, flash, request, jsonify
+from flask import render_template, redirect, url_for, flash, request, jsonify, session
 from flask_login import login_user, logout_user, login_required, current_user
 from app.extensions import db
 from app.guitar_study import guitar_study
@@ -35,6 +35,7 @@ def login():
             db.session.commit()
             
             login_user(user, remember=remember)
+            session.permanent = True
             
             # Log de sucesso
             from flask import current_app

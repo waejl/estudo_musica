@@ -1,4 +1,7 @@
 <ul class="nav nav-pills flex-column gap-1">
+    <li class="nav-item mb-2 text-center px-3">
+        <span class="text-white-50 small">Olá, <strong>{{ current_user.name }}</strong></span>
+    </li>
     <li class="nav-item">
         <a class="nav-link {% if request.endpoint == 'guitar_study.dashboard' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.dashboard') }}">
             <i class="bi bi-speedometer2 fs-5"></i>
@@ -47,9 +50,51 @@
             <span>Cifras</span>
         </a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint in ('guitar_study.lessons_list', 'guitar_study.lesson_view') %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.lessons_list') }}">
+            <i class="bi bi-book fs-5"></i>
+            <span>Aulas</span>
+        </a>
+    </li>
 
     <li class="nav-item my-2 border-top border-secondary-subtle"></li>
     
+    {% if current_user.is_super_admin %}
+    <li class="nav-item">
+        <a class="nav-link text-warning-hover" href="{{ url_for('super_admin.dashboard') }}">
+            <i class="bi bi-shield-fill-check fs-5"></i>
+            <span>Painel Superadmin</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-warning-hover" href="{{ url_for('school_admin.manage_lessons') }}">
+            <i class="bi bi-journal-bookmark-fill fs-5"></i>
+            <span>Gerenciar Aulas Base</span>
+        </a>
+    </li>
+    <li class="nav-item my-2 border-top border-secondary-subtle"></li>
+    {% endif %}
+    
+    {% if current_user.is_school_admin %}
+    <li class="nav-item">
+        <a class="nav-link text-warning-hover" href="{{ url_for('school_admin.dashboard') }}">
+            <i class="bi bi-shield-lock-fill fs-5"></i>
+            <span>Painel Admin</span>
+        </a>
+    </li>
+    <li class="nav-item my-2 border-top border-secondary-subtle"></li>
+    {% endif %}
+    
+    {% if current_user.is_teacher %}
+    <li class="nav-item">
+        <a class="nav-link text-warning-hover" href="{{ url_for('school_admin.manage_lessons') }}">
+            <i class="bi bi-journal-bookmark-fill fs-5"></i>
+            <span>Gerenciar Aulas</span>
+        </a>
+    </li>
+    <li class="nav-item my-2 border-top border-secondary-subtle"></li>
+    {% endif %}
+
     <li class="nav-item">
         <a class="nav-link {% if request.endpoint == 'guitar_study.settings' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3 text-muted-hover" href="{{ url_for('guitar_study.settings') }}">
             <i class="bi bi-gear fs-5"></i>

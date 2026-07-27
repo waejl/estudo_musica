@@ -1,0 +1,140 @@
+{# app/school_admin/templates/school_admin/lessons.html #}
+{% extends "school_admin/base_admin.html" %}
+
+{% block admin_title %}Gerenciar Aulas{% endblock %}
+
+{% block page_title %}
+    <i class="bi bi-book-half me-2"></i> Gerenciamento de Aulas
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ url_for('school_admin.export_lessons') }}" class="btn btn-outline-success fw-bold me-2 shadow-sm" title="Fazer backup de todas as aulas e etapas">
+        <i class="bi bi-file-earmark-arrow-down-fill me-1"></i> Exportar Aulas (Backup)
+    </a>
+    <button type="button" class="btn btn-outline-warning fw-bold me-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#importLessonsModal">
+        <i class="bi bi-file-earmark-arrow-up-fill me-1"></i> Importar via JSON
+    </button>
+    <a href="{{ url_for('school_admin.new_lesson') }}" class="btn btn-primary fw-bold shadow-sm">
+        <i class="bi bi-plus-circle-fill me-1"></i> Nova Aula
+    </a>
+{% endblock %}
+
+{% block admin_content %}
+<div class="card shadow-sm border border-secondary-subtle">
+    <div class="card-header bg-dark-subtle fw-bold">
+        Aulas Cadastradas
+    </div>
+    <div class="card-body p-0">
+        {% if lessons %}
+        <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col" class="ps-3">Título da Aula</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="text-end pe-3">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lesson in lessons %}
+                    <tr>
+                        <td class="align-middle ps-3">
+                            <strong class="fw-medium">{{ lesson.title }}</strong>
+                            {% if not lesson.school_id %}
+                                <span class="badge bg-info-subtle border border-info-subtle text-info-emphasis rounded-pill ms-2">Aula Base</span>
+                            {% endif %}
+                        </td>
+                        <td class="align-middle">
+                            {% if lesson.is_published %}
+                                <span class="badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill">Publicado</span>
+                            {% else %}
+                                <span class="badge bg-secondary-subtle border border-secondary-subtle text-secondary-emphasis rounded-pill">Rascunho</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end align-middle pe-3">
+                            {% if current_user.is_super_admin or lesson.school_id %}
+                                <a href="{{ url_for('school_admin.edit_lesson', lesson_id=lesson.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil-fill"></i> Editar
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ lesson.id }}">
+                                    <i class="bi bi-trash-fill"></i> Excluir
+                                </button>
+                            {% else %}
+                                <span class="text-muted small">Visualização apenas (Aulas Base não podem ser alteradas)</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    
+                    {% if current_user.is_super_admin or lesson.school_id %}
+                    <!-- Modal de Confirmação de Exclusão -->
+                    <div class="modal fade" id="deleteModal-{{ lesson.id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ lesson.id }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title fw-bold text-danger" id="deleteModalLabel-{{ lesson.id }}">Confirmar Exclusão</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body text-start">
+                                    Tem certeza de que deseja excluir a aula "<strong>{{ lesson.title }}</strong>"? Esta ação não pode ser desfeita e removerá todas as etapas e mídias associadas.
+                                </div>
+                                <div class="modal-footer">
+                                    <form method="POST" action="{{ url_for('school_admin.delete_lesson', lesson_id=lesson.id) }}">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn btn-danger">Sim, Excluir</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center p-4">
+            <p class="text-muted mb-0">
+                Nenhuma aula cadastrada ainda. Clique em "Nova Aula" ou "Importar via JSON" para começar.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de Importação de Aulas via JSON -->
+<div class="modal fade" id="importLessonsModal" tabindex="-1" aria-labelledby="importLessonsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content text-start">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold text-warning" id="importLessonsModalLabel">
+                    <i class="bi bi-file-earmark-arrow-up-fill me-2"></i>Importar Aulas via JSON
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('school_admin.import_lessons') }}" enctype="multipart/form-data" novalidate>
+                <div class="modal-body">
+                    <p class="small text-muted mb-3">Selecione um arquivo de extensão <strong>.json</strong> do seu computador. Ele deve conter a estrutura de aulas, descrição e suas etapas de forma sequencial.</p>
+                    
+                    <div class="alert alert-info py-2 px-3 rounded-3 border mb-3 small d-flex align-items-start gap-2">
+                        <i class="bi bi-info-circle-fill mt-1"></i>
+                        <div>
+                            Um exemplo estruturado chamado <code>exemplo_aulas.json</code> foi salvo na raiz do projeto para servir de gabarito para você preencher.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="jsonFileField" class="form-label fw-bold small">Arquivo de Backup JSON</label>
+                        <input class="form-control" type="file" id="jsonFileField" name="json_file" accept=".json" required>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm btn-primary fw-bold">
+                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Carregar e Importar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{# app/school_admin/templates/school_admin/_menu_admin.html #}
+<ul class="nav nav-pills flex-column gap-1">
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'school_admin.dashboard' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('school_admin.dashboard') }}">
+            <i class="bi bi-shield-shaded fs-5"></i>
+            <span>Painel da Escola</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'school_admin.manage_lessons' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('school_admin.manage_lessons') }}">
+            <i class="bi bi-book-half fs-5"></i>
+            <span>Gerenciar Aulas</span>
+        </a>
+    </li>
+
+    {% if current_user.is_school_admin %}
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint in ('school_admin.manage_users', 'school_admin.edit_user') %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('school_admin.manage_users') }}">
+            <i class="bi bi-people-fill fs-5"></i>
+            <span>Gerenciar Usuários</span>
+        </a>
+    </li>
+    {% endif %}
+
+    <li class="nav-item my-2 border-top border-secondary-subtle"></li>
+
+    <li class="nav-item">
+        <a class="nav-link d-flex align-items-center gap-3 py-2 px-3 rounded-3 text-muted-hover" href="{{ url_for('guitar_study.dashboard') }}">
+            <i class="bi bi-arrow-left-circle fs-5"></i>
+            <span>Voltar ao Site</span>
+        </a>
+    </li>
+</ul>

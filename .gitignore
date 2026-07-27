@@ -6,7 +6,9 @@ __pycache__/
 logs/
 base_mp3/
 docs/
-tests/
 *.db
 *.sqlite3
 .DS_Store
+private_media/
+tests/
+app/guitar_study/static/uploads/

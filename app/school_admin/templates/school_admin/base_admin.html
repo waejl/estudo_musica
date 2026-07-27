@@ -1,0 +1,22 @@
+{# app/admin/templates/admin/base_admin.html #}
+{% extends "guitar_study/base.html" %}
+
+{# Sobrescreve o menu lateral padrão com o menu de administração #}
+{% block menu %}
+    {% include 'school_admin/_menu_admin.html' %}
+{% endblock %}
+
+{# Adiciona um prefixo ao título da página para identificar a área de admin #}
+{% block title %}Admin - {% block admin_title %}{% endblock %}{% endblock %}
+
+{# O conteúdo principal da página admin será inserido aqui #}
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 fw-bold">{% block page_title %}{% endblock %}</h1>
+        <div class="d-flex align-items-center gap-2">
+            {% block page_actions %}{% endblock %}
+        </div>
+    </div>
+    
+    {% block admin_content %}{% endblock %}
+{% endblock %}

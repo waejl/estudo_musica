@@ -1,0 +1,301 @@
+{# app/guitar_study/templates/guitar_study/lesson_view.html #}
+{% extends "guitar_study/base.html" %}
+
+{% block title %}{{ lesson.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Estilização do Braço de Guitarra Estático para o Aluno (Exibição) */
+.fretboard-viewer-container {
+    background-color: #0f172a;
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid #334155;
+    margin-top: 10px;
+    user-select: none;
+}
+.fretboard-grid-view {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    padding-left: 20px;
+}
+.fretboard-string-row {
+    display: flex;
+    height: 35px;
+    align-items: center;
+    position: relative;
+}
+.fretboard-string-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #64748b;
+    z-index: 1;
+}
+.fretboard-string-row[data-string="1"] .fretboard-string-line { height: 1.5px; }
+.fretboard-string-row[data-string="2"] .fretboard-string-line { height: 1.8px; }
+.fretboard-string-row[data-string="3"] .fretboard-string-line { height: 2px; }
+.fretboard-string-row[data-string="4"] .fretboard-string-line { height: 2.2px; }
+.fretboard-string-row[data-string="5"] .fretboard-string-line { height: 2.5px; }
+.fretboard-string-row[data-string="6"] .fretboard-string-line { height: 3px; }
+
+.fretboard-fret-cell-view {
+    flex: 1;
+    height: 100%;
+    position: relative;
+    z-index: 2;
+    border-right: 2px solid #475569; /* Traste */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.fretboard-fret-cell-view[data-fret="0"] {
+    flex: 0.5;
+    border-right: 4px solid #94a3b8; /* Pestana */
+    background-color: rgba(255,255,255,0.03);
+}
+.note-marker-view {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: #38bdf8; /* Azul claro de destaque no visualizador */
+    border: 2px solid #ffffff;
+    display: none;
+    box-shadow: 0 0 6px rgba(56, 189, 248, 0.8);
+}
+.fretboard-fret-cell-view.active .note-marker-view {
+    display: block;
+}
+
+.string-indicator {
+    position: absolute;
+    left: -15px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #64748b;
+    width: 15px;
+    text-align: center;
+}
+
+.fret-numbers-row {
+    display: flex;
+    padding-left: 20px;
+    margin-top: 5px;
+    font-size: 10px;
+    color: #475569;
+    font-weight: bold;
+}
+.fret-number-label {
+    flex: 1;
+    text-align: center;
+}
+.fret-number-label[data-fret="0"] {
+    flex: 0.5;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('guitar_study.lessons_list') }}">Aulas</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ lesson.title }}</li>
+        </ol>
+    </nav>
+
+    {# Cabeçalho da Aula (Ficha Técnica) #}
+    <div class="mb-5 border-bottom pb-4">
+        <h1 class="display-5 fw-extrabold text-primary mb-3">{{ lesson.title }}</h1>
+        {% if lesson.description %}
+            <p class="lead text-muted"><i class="bi bi-info-circle me-2 text-warning"></i>{{ lesson.description }}</p>
+        {% endif %}
+        {% if not lesson.school_id %}
+            <span class="badge bg-info-subtle border border-info-subtle text-info-emphasis rounded-pill">
+                <i class="bi bi-shield-fill-check me-1"></i>Conteúdo Base Oficial
+            </span>
+        {% endif %}
+    </div>
+
+    {# Conteúdo Sequencial por Etapas #}
+    <div class="row">
+        <div class="col-lg-9 mx-auto">
+            <h3 class="fw-bold mb-4 border-bottom pb-2"><i class="bi bi-journal-text me-2"></i>Roteiro de Estudo por Passos</h3>
+            
+            {% if lesson.resources.all() %}
+                {% for resource in lesson.resources.order_by('order') %}
+                <div class="card shadow-sm border border-secondary-subtle mb-5">
+                    <div class="card-header bg-dark-subtle py-3 px-4">
+                        <h4 class="h5 fw-bold mb-0 d-flex align-items-center gap-2">
+                            <span class="badge bg-primary font-monospace fs-7">Passo {{ loop.index }}</span>
+                            <span>{{ resource.title }}</span>
+                        </h4>
+                    </div>
+                    
+                    <div class="card-body px-4 py-4">
+                        {# Texto Explicativo Rico (Instrução Prática vinda do Quill) #}
+                        {% if resource.content %}
+                            <div class="mb-4 lh-lg text-body-secondary border-start border-3 border-primary-subtle ps-3">
+                                {{ resource.content | safe }}
+                            </div>
+                        {% endif %}
+
+                        {# Renderização das Mídias da Etapa de forma Sequencial #}
+                        
+                        {# 1. Mídia Principal (Compatibilidade) #}
+                        {% if resource.resource_type != 'none' %}
+                            <div class="media-container bg-body-tertiary p-3 rounded-3 border mb-3">
+                                <span class="fs-8 fw-bold text-muted uppercase d-block mb-2"><i class="bi bi-paperclip me-1"></i>Mídia de Apoio Principal:</span>
+                                {% if resource.resource_type == 'pdf' %}
+                                    <div class="ratio ratio-4x3" style="min-height: 450px;">
+                                        <object data="{{ url_for('guitar_study.serve_media', filepath=resource.path if resource.path.startswith('uploads/') else 'uploads/' + resource.path) }}" type="application/pdf" class="w-100 h-100 rounded border">
+                                            <p>Visualização não suportada. <a href="{{ url_for('guitar_study.serve_media', filepath=resource.path if resource.path.startswith('uploads/') else 'uploads/' + resource.path) }}" class="btn btn-sm btn-primary fw-bold" target="_blank">Baixar PDF</a></p>
+                                        </object>
+                                    </div>
+                                {% elif resource.resource_type == 'image' %}
+                                    <div class="text-center">
+                                        <img src="{{ resource.path if resource.path.startswith('data:') else url_for('guitar_study.serve_media', filepath=resource.path if resource.path.startswith('uploads/') else 'uploads/' + resource.path) }}" class="img-fluid rounded border shadow-sm" alt="{{ resource.title }}" style="max-height: 500px;">
+                                    </div>
+                                {% elif resource.resource_type == 'youtube_url' and resource.youtube_embed_url %}
+                                    <div class="ratio ratio-16x9">
+                                        <iframe src="{{ resource.youtube_embed_url }}" title="{{ resource.title }}" frameborder="0" allowfullscreen class="rounded border"></iframe>
+                                    </div>
+                                {% elif resource.resource_type == 'video_url' %}
+                                    <div class="ratio ratio-16x9">
+                                        <video controls preload="metadata" class="w-100 rounded border">
+                                            <source src="{{ resource.path }}" type="video/mp4">
+                                        </video>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        {# 2. Múltiplas Mídias Adicionais Anexadas (StepMedia) #}
+                        {% if resource.media_items.all() %}
+                            {% for media in resource.media_items.order_by('order') %}
+                            <div class="media-container bg-body-tertiary p-3 rounded-3 border mb-3">
+                                <span class="fs-8 fw-bold text-muted uppercase d-block mb-2">
+                                    <i class="bi bi-{{ 'file-earmark-pdf-fill text-danger' if media.media_type == 'pdf' else 'image-fill text-info' if media.media_type == 'image' else 'youtube text-danger' if media.media_type == 'youtube_url' else 'guitar text-warning' if media.media_type == 'fretboard' else 'film' }} me-1"></i>
+                                    Anexo: {{ media.title if media.title else 'Arquivo de Apoio' }}
+                                </span>
+                                
+                                {% if media.media_type == 'pdf' %}
+                                    <div class="ratio ratio-4x3" style="min-height: 450px;">
+                                        <object data="{{ url_for('guitar_study.serve_media', filepath=media.path if media.path.startswith('uploads/') else 'uploads/' + media.path) }}" type="application/pdf" class="w-100 h-100 rounded border">
+                                            <p>Visualização não suportada. <a href="{{ url_for('guitar_study.serve_media', filepath=media.path if media.path.startswith('uploads/') else 'uploads/' + media.path) }}" class="btn btn-sm btn-primary fw-bold" target="_blank">Baixar PDF</a></p>
+                                        </object>
+                                    </div>
+                                {% elif media.media_type == 'image' %}
+                                    <div class="text-center">
+                                        <img src="{{ media.path if media.path.startswith('data:') else url_for('guitar_study.serve_media', filepath=media.path if media.path.startswith('uploads/') else 'uploads/' + media.path) }}" class="img-fluid rounded border shadow-sm" style="max-height: 500px;">
+                                    </div>
+                                {% elif media.media_type == 'youtube_url' %}
+                                    {# Renderização dinâmica do Youtube embed no anexo #}
+                                    {% set yt_embed = "" %}
+                                        {% if "v=" in media.path %}
+                                            {% set video_id = media.path.split("v=")[1].split("&")[0] %}
+                                            {% set yt_embed = "https://www.youtube.com/embed/" ~ video_id %}
+                                        {% elif "youtu.be/" in media.path %}
+                                            {% set video_id = media.path.split("youtu.be/")[1].split("?")[0] %}
+                                            {% set yt_embed = "https://www.youtube.com/embed/" ~ video_id %}
+                                        {% endif %}
+                                    
+                                    {% if yt_embed %}
+                                        <div class="ratio ratio-16x9">
+                                            <iframe src="{{ yt_embed }}" title="{{ media.title }}" frameborder="0" allowfullscreen class="rounded border"></iframe>
+                                        </div>
+                                    {% else %}
+                                        <a href="{{ media.path }}" target="_blank" class="btn btn-sm btn-outline-danger fw-bold"><i class="bi bi-youtube me-1"></i>Assistir no YouTube</a>
+                                    {% endif %}
+                                    
+                                {% elif media.media_type == 'video_url' %}
+                                    <div class="ratio ratio-16x9">
+                                        <video controls preload="metadata" class="w-100 rounded border">
+                                            <source src="{{ media.path }}" type="video/mp4">
+                                        </video>
+                                    </div>
+                                    
+                                {% elif media.media_type == 'fretboard' %}
+                                    {# Braço de Guitarra Interativo em modo Leitura para o Aluno #}
+                                    <div class="fretboard-viewer-container">
+                                        <div class="fretboard-grid-view fretboard-renderer" data-notes-json="{{ media.path }}">
+                                            {% for string_num in [1, 2, 3, 4, 5, 6] %}
+                                            <div class="fretboard-string-row" data-string="{{ string_num }}">
+                                                <span class="string-indicator">
+                                                    {{ 'E' if string_num == 1 else 'B' if string_num == 2 else 'G' if string_num == 3 else 'D' if string_num == 4 else 'A' if string_num == 5 else 'E' }}
+                                                </span>
+                                                <div class="fretboard-string-line"></div>
+                                                {% for fret_num in [0, 1, 2, 3, 4, 5] %}
+                                                <div class="fretboard-fret-cell-view" data-fret="{{ fret_num }}" data-string="{{ string_num }}">
+                                                    <div class="note-marker-view"></div>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                            {% endfor %}
+                                            
+                                            <div class="fret-numbers-row">
+                                                <div class="fret-number-label" data-fret="0">0</div>
+                                                <div class="fret-number-label" data-fret="1">1</div>
+                                                <div class="fret-number-label" data-fret="2">2</div>
+                                                <div class="fret-number-label" data-fret="3">3</div>
+                                                <div class="fret-number-label" data-fret="4">4</div>
+                                                <div class="fret-number-label" data-fret="5">5</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <div class="card bg-success-subtle border border-success-subtle text-success-emphasis p-4 rounded-3 text-center shadow-sm mb-5">
+                    <i class="bi bi-check-circle-fill fs-1 mb-2"></i>
+                    <h5 class="fw-bold mb-1">Parabéns por concluir os passos!</h5>
+                    <p class="mb-0 small">Mantenha a prática constante. Se precisar, revise as etapas acima quantas vezes quiser.</p>
+                </div>
+            {% else %}
+                <div class="text-center p-5 border rounded bg-body-tertiary">
+                    <h4 class="text-muted mb-2">Esta aula está em construção.</h4>
+                    <p class="text-muted mb-0">Volte em breve para conferir os passos de aprendizado!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Renderizador Automático de Marcações de Braço de Guitarra para o Aluno
+    document.querySelectorAll('.fretboard-renderer').forEach(renderer => {
+        const notesJson = renderer.getAttribute('data-notes-json');
+        if (notesJson) {
+            try {
+                const notes = JSON.parse(notesJson);
+                
+                // Itera sobre as cordas e casas salvas e marca as bolinhas na tela
+                for (const string in notes) {
+                    const frets = notes[string];
+                    if (Array.isArray(frets)) {
+                        frets.forEach(fret => {
+                            const cell = renderer.querySelector(`.fretboard-fret-cell-view[data-string="${string}"][data-fret="${fret}"]`);
+                            if (cell) {
+                                cell.classList.add('active');
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error("Erro ao fazer parse das notas do braço:", e);
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

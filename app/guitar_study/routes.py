@@ -1,5 +1,6 @@
+import os
 from datetime import datetime, timedelta
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, send_from_directory, abort, current_app
 from flask_login import login_required, current_user
 from sqlalchemy import func
 from app.extensions import db
@@ -241,3 +242,80 @@ def settings():
         tunings=tunings,
         custom_tunings=custom_tunings
     )
+
+
+# --- Rota protegida para servir mídias privadas ---
+
+@guitar_study.route("/media/<path:filepath>")
+@login_required
+def serve_media(filepath):
+    """Serve arquivos de mídia das aulas com autenticação obrigatória."""
+    private_base = os.path.dirname(current_app.config['UPLOAD_FOLDER'])
+    safe_path = os.path.normpath(filepath)
+    if safe_path.startswith('..'):
+        abort(403)
+
+    full_path = os.path.join(private_base, safe_path)
+    if not os.path.isfile(full_path):
+        abort(404)
+
+    # Detecta o MIME type pelo conteúdo real do arquivo (ignora extensão)
+    with open(full_path, 'rb') as f:
+        header = f.read(16)
+
+    if header.startswith(b'\xff\xd8'):
+        mime = 'image/jpeg'
+    elif header.startswith(b'\x89PNG\r\n\x1a\n'):
+        mime = 'image/png'
+    elif header.startswith(b'GIF8'):
+        mime = 'image/gif'
+    elif header.startswith(b'%PDF'):
+        mime = 'application/pdf'
+    elif b'<svg' in header or header.lstrip().startswith(b'<'):
+        mime = 'image/svg+xml'
+    else:
+        import mimetypes
+        mime = mimetypes.guess_type(safe_path)[0] or 'application/octet-stream'
+
+    response = send_from_directory(private_base, safe_path, mimetype=mime)
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    return response
+
+
+# --- Rotas de Aulas ---
+
+@guitar_study.route("/lessons")
+@login_required
+def lessons_list():
+    """Mostra a lista de aulas disponíveis para o aluno."""
+    from app.guitar_study.models import Lesson
+    lessons = Lesson.query.filter_by(is_published=True).order_by(Lesson.order.asc()).all()
+    return render_template("guitar_study/lessons_list.html", lessons=lessons)
+
+
+@guitar_study.route("/lessons/<int:lesson_id>")
+@login_required
+def lesson_view(lesson_id):
+    """Exibe o conteúdo de uma aula específica."""
+    from app.guitar_study.models import Lesson
+    lesson = Lesson.query.filter_by(id=lesson_id, is_published=True).first_or_404()
+    
+    # Lógica para tratar URL do YouTube
+    youtube_embed_url = None
+    for resource in lesson.resources:
+        if resource.resource_type == 'youtube_url':
+            try:
+                # Extrai o ID do vídeo de vários formatos de URL do YouTube
+                video_id = None
+                if "v=" in resource.path:
+                    video_id = resource.path.split("v=")[1].split("&")[0]
+                elif "youtu.be/" in resource.path:
+                    video_id = resource.path.split("youtu.be/")[1].split("?")[0]
+                
+                if video_id:
+                    resource.youtube_embed_url = f"https://www.youtube.com/embed/{video_id}"
+            except Exception:
+                resource.youtube_embed_url = None # Falha em extrair, não quebra a página
+
+    return render_template("guitar_study/lesson_view.html", lesson=lesson)

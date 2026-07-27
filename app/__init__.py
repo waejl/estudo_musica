@@ -17,13 +17,23 @@ def create_app(config_name=None):
     db.init_app(app)
     login_manager.init_app(app)
     
+    # Garante que a pasta privada de upload exista
+    with app.app_context():
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    
     # Configurar logs
     configure_logging(app)
     
-    # Importar e registrar o Blueprint
+    # Importar e registrar os Blueprints
     from app.guitar_study import guitar_study as guitar_study_blueprint
     app.register_blueprint(guitar_study_blueprint, url_prefix="/guitar-study")
     
+    from app.school_admin import school_admin_bp
+    app.register_blueprint(school_admin_bp, url_prefix="/school-admin")
+
+    from app.super_admin import super_admin_bp
+    app.register_blueprint(super_admin_bp, url_prefix="/super-admin")
+
     # Redirecionar a raiz da aplicação para o prefixo do Blueprint de guitarra
     @app.route("/")
     def index_redirect():
@@ -51,10 +61,10 @@ def configure_logging(app):
         "[%(asctime)s] %(levelname)s em %(module)s: %(message)s"
     )
     file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.INFO)
+    file_handler.setLevel(logging.DEBUG)
     
     app.logger.addHandler(file_handler)
-    app.logger.setLevel(logging.INFO)
+    app.logger.setLevel(logging.DEBUG)
     
     # Desativar propagação excessiva para evitar logs em duplicidade
     app.logger.propagate = False

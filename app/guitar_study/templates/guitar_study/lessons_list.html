@@ -1,0 +1,47 @@
+{# app/guitar_study/templates/guitar_study/lessons_list.html #}
+{% extends "guitar_study/base.html" %}
+
+{% block title %}Aulas de Guitarra{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 fw-bold mb-0">Aulas Disponíveis</h1>
+        {% if current_user.is_super_admin or current_user.is_school_admin or current_user.is_teacher %}
+            <a href="{{ url_for('school_admin.manage_lessons') }}" class="btn btn-outline-warning fw-bold">
+                <i class="bi bi-journal-bookmark-fill me-1"></i> Gerenciar Aulas
+            </a>
+        {% endif %}
+    </div>
+
+    {% if lessons %}
+        <div class="row g-4">
+            {% for lesson in lessons %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title fw-bold">{{ lesson.title }}</h5>
+                        <p class="card-text text-muted flex-grow-1">{{ lesson.description|truncate(120) }}</p>
+                        <a href="{{ url_for('guitar_study.lesson_view', lesson_id=lesson.id) }}" class="btn btn-primary mt-auto">
+                            Iniciar Aula <i class="bi bi-arrow-right-short"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center p-5 border rounded bg-body-tertiary">
+            <h3 class="text-muted">Nenhuma aula publicada no momento.</h3>
+            {% if current_user.is_super_admin or current_user.is_school_admin or current_user.is_teacher %}
+                <p class="text-muted mb-4">Como administrador ou professor, você pode cadastrar e publicar as aulas para que os alunos possam vê-las.</p>
+                <a href="{{ url_for('school_admin.new_lesson') }}" class="btn btn-primary fw-bold">
+                    <i class="bi bi-plus-circle-fill me-1"></i> Cadastrar Primeira Aula
+                </a>
+            {% else %}
+                <p class="text-muted">Volte em breve para conferir o novo conteúdo!</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

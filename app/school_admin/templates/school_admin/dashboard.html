@@ -1,0 +1,23 @@
+{# app/school_admin/templates/school_admin/dashboard.html #}
+{% extends "school_admin/base_admin.html" %}
+
+{% block admin_title %}Dashboard{% endblock %}
+
+{% block page_title %}
+    <i class="bi bi-shield-shaded me-2"></i> Painel de Administração
+{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Bem-vindo à Área Administrativa</h5>
+                <p class="card-text">
+                    Use o menu à esquerda para gerenciar os recursos do site, como aulas, usuários e configurações.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

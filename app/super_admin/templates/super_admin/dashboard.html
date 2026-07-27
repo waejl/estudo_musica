@@ -1,0 +1,117 @@
+{# app/super_admin/templates/super_admin/dashboard.html #}
+{% extends "guitar_study/base.html" %}
+
+{% block title %}Painel do Superadmin{% endblock %}
+
+{% block menu %}
+<ul class="nav nav-pills flex-column gap-1">
+    <li class="nav-item">
+        <a class="nav-link active d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('super_admin.dashboard') }}">
+            <i class="bi bi-shield-fill-check fs-5"></i>
+            <span>Painel Superadmin</span>
+        </a>
+    </li>
+    
+    <li class="nav-item">
+        <a class="nav-link d-flex align-items-center gap-3 py-2 px-3 rounded-3 text-warning-hover" href="{{ url_for('school_admin.manage_lessons') }}">
+            <i class="bi bi-journal-bookmark-fill fs-5"></i>
+            <span>Gerenciar Aulas Base</span>
+        </a>
+    </li>
+
+    <li class="nav-item my-2 border-top border-secondary-subtle"></li>
+
+    <li class="nav-item">
+        <a class="nav-link d-flex align-items-center gap-3 py-2 px-3 rounded-3 text-muted-hover" href="{{ url_for('guitar_study.dashboard') }}">
+            <i class="bi bi-arrow-left-circle fs-5"></i>
+            <span>Voltar ao Site</span>
+        </a>
+    </li>
+</ul>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 fw-bold"><i class="bi bi-shield-fill-check me-2"></i> Painel do Superadmin</h1>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <h3 class="h4 fw-bold mb-3"><i class="bi bi-buildings-fill me-2"></i>Escolas e Empresas Registradas</h3>
+            
+            {% if schools %}
+                {% for school in schools %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-dark-subtle fw-bold d-flex justify-content-between align-items-center py-3">
+                        <span><i class="bi bi-building me-2 text-primary"></i>{{ school.name }}</span>
+                        <span class="badge {{ 'bg-success' if school.is_active else 'bg-danger' }}">
+                            {{ 'Ativa' if school.is_active else 'Inativa' }}
+                        </span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col" class="ps-3">Usuário</th>
+                                        <th scope="col">Email</th>
+                                        <th scope="col">Perfil</th>
+                                        <th scope="col">Status</th>
+                                        <th scope="col" class="text-end pe-3">Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if school.users %}
+                                        {% for user in school.users %}
+                                        <tr>
+                                            <td class="align-middle ps-3">
+                                                <strong class="fw-medium">{{ user.name }}</strong><br>
+                                                <small class="text-muted">@{{ user.username }}</small>
+                                            </td>
+                                            <td class="align-middle">{{ user.email }}</td>
+                                            <td class="align-middle">
+                                                <span class="badge bg-primary-subtle border border-primary-subtle text-primary-emphasis rounded-pill">
+                                                    {{ user.role.name.title() }}
+                                                </span>
+                                            </td>
+                                            <td class="align-middle">
+                                                {% if user.is_active %}
+                                                    <span class="badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill">Ativo</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill">Inativo</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end align-middle pe-3">
+                                                {% if user.id != current_user.id %}
+                                                <form method="POST" action="{{ url_for('super_admin.impersonate', user_id=user.id) }}" class="d-inline">
+                                                    <button type="submit" class="btn btn-sm btn-warning fw-bold">
+                                                        <i class="bi bi-eye-fill me-1"></i> Assumir Identidade
+                                                    </button>
+                                                </form>
+                                                {% else %}
+                                                <span class="text-muted small">Você (Logado)</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted p-3">Nenhum usuário cadastrado nesta escola.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center p-5 border rounded bg-body-tertiary">
+                    <h3 class="text-muted">Nenhuma escola registrada no sistema.</h3>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

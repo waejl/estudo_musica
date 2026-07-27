@@ -1,10 +1,15 @@
 import os
 from datetime import timedelta
 
+basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
 class Config:
     """Configuração base comum a todos os ambientes."""
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev_secret_key_change_in_production_12345")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # Pasta de uploads para ser servida como estática
+    UPLOAD_FOLDER = os.path.join(basedir, 'app', 'guitar_study', 'static', 'uploads')
     
     # Sessão persistente
     REMEMBER_COOKIE_DURATION = timedelta(days=30)

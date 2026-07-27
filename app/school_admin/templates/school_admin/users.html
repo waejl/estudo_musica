@@ -1,0 +1,67 @@
+{# app/school_admin/templates/school_admin/users.html #}
+{% extends "school_admin/base_admin.html" %}
+
+{% block admin_title %}Gerenciar Usuários{% endblock %}
+
+{% block page_title %}
+    <i class="bi bi-people-fill me-2"></i> Gerenciamento de Usuários
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ url_for('school_admin.new_user') }}" class="btn btn-primary fw-bold">
+        <i class="bi bi-person-plus-fill me-1"></i> Registrar Novo Usuário
+    </a>
+{% endblock %}
+
+{% block admin_content %}
+<div class="card shadow-sm">
+    <div class="card-header fw-bold">
+        Usuários Cadastrados
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col" class="ps-3">Nome</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Perfil</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="text-end pe-3">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td class="align-middle ps-3">
+                            <strong class="fw-medium">{{ user.name }}</strong><br>
+                            <small class="text-muted">@{{ user.username }}</small>
+                        </td>
+                        <td class="align-middle">{{ user.email }}</td>
+                        <td class="align-middle">
+                            <span class="badge bg-primary-subtle border border-primary-subtle text-primary-emphasis rounded-pill">{{ user.role.name.title() }}</span>
+                        </td>
+                        <td class="align-middle">
+                            {% if user.is_active %}
+                                <span class="badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill">Ativo</span>
+                            {% else %}
+                                <span class="badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill">Inativo</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end align-middle pe-3">
+                            {% if user.id != current_user.id %}
+                                <a href="{{ url_for('school_admin.edit_user', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil-fill"></i> Editar
+                                </a>
+                            {% else %}
+                                <span class="text-muted small">Você (Logado)</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,23 +1,48 @@
+import enum
 from datetime import datetime
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.extensions import db, login_manager
+
+class School(db.Model):
+    """Modelo para representar uma escola/inquilino na plataforma."""
+    __tablename__ = "schools"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), unique=True, nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    users = db.relationship("User", back_populates="school")
+    lessons = db.relationship("Lesson", back_populates="school")
+
+    def __repr__(self):
+        return f"<School {self.name}>"
+
+class UserRole(enum.Enum):
+    STUDENT = "student"
+    TEACHER = "teacher"
+    SCHOOL_ADMIN = "school_admin"
+    SUPER_ADMIN = "super_admin"
 
 class User(db.Model, UserMixin):
     """Modelo para representar os usuários do sistema."""
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
+    school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=True, index=True)
+    
     name = db.Column(db.String(100), nullable=False)
     username = db.Column(db.String(50), unique=True, nullable=False, index=True)
     email = db.Column(db.String(100), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.Enum(UserRole), nullable=False, default=UserRole.STUDENT, index=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     last_login_at = db.Column(db.DateTime, nullable=True)
 
     # Relacionamentos
+    school = db.relationship("School", back_populates="users")
     settings = db.relationship("UserSettings", back_populates="user", uselist=False, cascade="all, delete-orphan")
     custom_tunings = db.relationship("CustomTuning", back_populates="user", cascade="all, delete-orphan")
     favorites = db.relationship("Favorite", back_populates="user", cascade="all, delete-orphan")
@@ -32,8 +57,19 @@ class User(db.Model, UserMixin):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        """Valida se a senha inserida corresponde ao hash."""
         return check_password_hash(self.password_hash, password)
+
+    @property
+    def is_super_admin(self):
+        return self.role == UserRole.SUPER_ADMIN
+
+    @property
+    def is_school_admin(self):
+        return self.role == UserRole.SCHOOL_ADMIN
+
+    @property
+    def is_teacher(self):
+        return self.role == UserRole.TEACHER
 
     def __repr__(self):
         return f"<User {self.username}>"
@@ -187,6 +223,78 @@ class Song(db.Model):
 
     def __repr__(self):
         return f"<Song {self.artist} - {self.title}>"
+
+
+class Lesson(db.Model):
+    """
+    Modelo para aulas.
+    Aulas base (do superadmin) não têm school_id.
+    Aulas customizadas (de uma escola) têm school_id.
+    """
+    __tablename__ = "lessons"
+
+    id = db.Column(db.Integer, primary_key=True)
+    school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=True, index=True)
+
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    content = db.Column(db.Text, nullable=True)
+    order = db.Column(db.Integer, nullable=False, default=0)
+    is_published = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    school = db.relationship("School", back_populates="lessons")
+    resources = db.relationship("LessonResource", back_populates="lesson", cascade="all, delete-orphan", lazy='dynamic')
+
+    def __repr__(self):
+        return f"<Lesson {self.title}>"
+
+
+class LessonResource(db.Model):
+    """Modelo para as Etapas (Passos) associadas a uma aula."""
+    __tablename__ = "lesson_resources"
+
+    id = db.Column(db.Integer, primary_key=True)
+    lesson_id = db.Column(db.Integer, db.ForeignKey("lessons.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    # Tipo do recurso principal da etapa: 'pdf', 'image', 'video_url', 'youtube_url' ou 'none' se for apenas texto
+    resource_type = db.Column(db.String(50), nullable=True, default='none')
+    
+    # Caminho para o arquivo, URL ou JSON do braço de guitarra
+    path = db.Column(db.String(500), nullable=True)
+    
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=True) # Texto explicativo rico da etapa
+    order = db.Column(db.Integer, nullable=False, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    lesson = db.relationship("Lesson", back_populates="resources")
+    
+    # Suporte a múltiplos arquivos/links adicionais para a mesma etapa
+    media_items = db.relationship("StepMedia", back_populates="resource", cascade="all, delete-orphan", lazy='dynamic')
+
+    def __repr__(self):
+        return f"<LessonResource {self.title} (type={self.resource_type})>"
+
+
+class StepMedia(db.Model):
+    """Modelo para múltiplos arquivos/mídias adicionais atrelados a uma única etapa."""
+    __tablename__ = "step_medias"
+
+    id = db.Column(db.Integer, primary_key=True)
+    resource_id = db.Column(db.Integer, db.ForeignKey("lesson_resources.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    title = db.Column(db.String(200), nullable=True) # Legenda/título do arquivo individual
+    media_type = db.Column(db.String(50), nullable=False) # 'pdf', 'image', 'youtube_url', 'video_url', 'fretboard'
+    path = db.Column(db.String(500), nullable=False) # Caminho físico, URL ou JSON das notas marcadas no braço
+    order = db.Column(db.Integer, nullable=False, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    resource = db.relationship("LessonResource", back_populates="media_items")
+
+    def __repr__(self):
+        return f"<StepMedia {self.media_type} path={self.path}>"
 
 
 # Loader para o Flask-Login

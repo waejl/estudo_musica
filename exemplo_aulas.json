@@ -1,0 +1,42 @@
+[
+  {
+    "title": "Afinando a Guitarra (Standard)",
+    "description": "Aprenda a afinar seu instrumento no padrão clássico (E A D G B E) para poder executar todas as lições iniciais.",
+    "order": 1,
+    "is_published": true,
+    "steps": [
+      {
+        "title": "Passo 1: Entendendo a Afinação Standard",
+        "content": "A afinação padrão (Standard) consiste nas seguintes notas, da 6ª corda (mais grossa) para a 1ª corda (mais fina):\n- 6ª Corda: Mi (E)\n- 5ª Corda: Lá (A)\n- 4ª Corda: Ré (D)\n- 3ª Corda: Sol (G)\n- 2ª Corda: Si (B)\n- 1ª Corda: Mi (e)",
+        "resource_type": "image",
+        "path": "img/logo.svg"
+      },
+      {
+        "title": "Passo 2: Guia de Vídeo Prático",
+        "content": "Assista a este vídeo curto para entender como girar as tarraxas corretamente e usar um afinador eletrônico ou de celular.",
+        "resource_type": "youtube_url",
+        "path": "https://www.youtube.com/watch?v=T1S_YV-gY98"
+      }
+    ]
+  },
+  {
+    "title": "Seu Primeiro Acorde: Sol Maior (G)",
+    "description": "Introdução prática à formação de acordes abertos no braço da guitarra, focando no acorde de Sol Maior.",
+    "order": 2,
+    "is_published": true,
+    "steps": [
+      {
+        "title": "Passo 1: Diagrama do Acorde",
+        "content": "Posicione seus dedos no braço da guitarra conforme a instrução:\n- Dedo 1 na 5ª corda, 2ª casa.\n- Dedo 2 na 6ª corda, 3ª casa.\n- Dedo 3 na 1ª corda, 3ª casa.",
+        "resource_type": "image",
+        "path": "img/logo.svg"
+      },
+      {
+        "title": "Passo 2: Exercício Prático em PDF",
+        "content": "Baixe esta tabela de dedilhado e pratique trocar entre o acorde de Sol Maior e o braço livre.",
+        "resource_type": "pdf",
+        "path": "uploads/exemplo_exercicio.pdf"
+      }
+    ]
+  }
+]

@@ -320,7 +320,8 @@
         fretboard = new Fretboard("harmonyFretboard", {
             tuningId: "{{ settings.tuning_id }}",
             fretCount: {{ settings.fret_count }},
-            viewMode: "highlight_set"
+            viewMode: "highlight_set",
+            handOrientation: "{{ settings.hand_orientation if settings else 'right_handed' }}"
         });
         await fretboard.init();
         

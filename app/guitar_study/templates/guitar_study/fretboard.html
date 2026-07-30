@@ -222,6 +222,7 @@
             fretCount: parseInt(document.getElementById("fretCountSelect").value),
             tonic: document.getElementById("tonicSelect").value,
             viewMode: document.getElementById("viewModeSelect").value,
+            handOrientation: "{{ settings.hand_orientation if settings else 'right_handed' }}",
             onNoteClick: (noteData) => {
                 showNoteDetails(noteData);
             }

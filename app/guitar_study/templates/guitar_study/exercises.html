@@ -410,7 +410,8 @@
         if (!techFretboard) {
             techFretboard = new Fretboard("techDrillFretboard", {
                 tuningId: "{{ settings.tuning_id if settings else 'standard' }}",
-                fretCount: 15
+                fretCount: 15,
+                handOrientation: "{{ settings.hand_orientation if settings else 'right_handed' }}"
             });
             await techFretboard.init();
         }
@@ -582,6 +583,7 @@
             fretboard = new Fretboard("gameFretboard", {
                 tuningId: "{{ settings.tuning_id if settings else 'standard' }}",
                 fretCount: 22,
+                handOrientation: "{{ settings.hand_orientation if settings else 'right_handed' }}",
                 onNoteClick: (noteData) => { if (gameType === "find_note") handleFindNoteClick(noteData); }
             });
             await fretboard.init();

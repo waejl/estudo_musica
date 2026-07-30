@@ -191,6 +191,7 @@ def update_preferences():
     fret_count = int(request.form.get("fret_count", 22))
     accidentals_preference = request.form.get("accidentals_preference", "sharps")
     theme = request.form.get("theme", "dark")
+    hand_orientation = request.form.get("hand_orientation", "right_handed")
     
     # Validações básicas
     if fret_count not in [21, 22, 24]:
@@ -199,6 +200,8 @@ def update_preferences():
         accidentals_preference = "sharps"
     if theme not in ["dark", "light"]:
         theme = "dark"
+    if hand_orientation not in ["right_handed", "left_handed"]:
+        hand_orientation = "right_handed"
         
     try:
         settings = current_user.settings
@@ -210,6 +213,7 @@ def update_preferences():
         settings.fret_count = fret_count
         settings.accidentals_preference = accidentals_preference
         settings.theme = theme
+        settings.hand_orientation = hand_orientation
         
         db.session.commit()
         flash("Preferências atualizadas com sucesso!", "success")

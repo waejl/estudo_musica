@@ -645,7 +645,8 @@ def api_get_settings():
             "tuning_id": settings.tuning_id,
             "fret_count": settings.fret_count,
             "accidentals_preference": settings.accidentals_preference,
-            "theme": settings.theme
+            "theme": settings.theme,
+            "hand_orientation": settings.hand_orientation
         }
     })
 

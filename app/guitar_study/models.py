@@ -85,6 +85,7 @@ class UserSettings(db.Model):
     fret_count = db.Column(db.Integer, default=22, nullable=False)
     accidentals_preference = db.Column(db.String(10), default="sharps", nullable=False)  # sharps ou flats
     theme = db.Column(db.String(10), default="dark", nullable=False)  # dark ou light
+    hand_orientation = db.Column(db.String(20), default="right_handed", nullable=False)  # right_handed ou left_handed
 
     # Relacionamento de volta para o usuário
     user = db.relationship("User", back_populates="settings")

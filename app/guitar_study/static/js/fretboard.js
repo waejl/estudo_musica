@@ -20,6 +20,7 @@ export class Fretboard {
             tuningId: options.tuningId || "standard",
             fretCount: options.fretCount || 22,
             preference: options.preference || "sharps",
+            handOrientation: options.handOrientation || "right_handed", // right_handed ou left_handed
             viewMode: options.viewMode || "show_all", // show_all, hide_all, natural, tonic_only, highlight_set
             displayType: options.displayType || "notes", // notes, intervals, degrees
             tonic: options.tonic || "C", // Tônica padrão de referência
@@ -117,12 +118,22 @@ export class Fretboard {
         // 2. O braço em si
         this.fretboardEl = document.createElement("div");
         this.fretboardEl.className = "fretboard";
+        if (this.options.handOrientation === "right_handed") {
+            this.fretboardEl.classList.add("right-handed");
+        }
         
         // 3. Renderizar Trastes (Linhas verticais metálicas)
         const fretsRow = document.createElement("div");
         fretsRow.className = "fretboard-frets-row";
         fretsRow.style.position = "absolute";
-        fretsRow.style.left = "85px"; // Exatamente após o indicador (60px) + Nut (25px)
+        if (this.options.handOrientation === "right_handed") {
+            fretsRow.style.right = "85px";
+            fretsRow.style.left = "auto";
+            fretsRow.style.flexDirection = "row-reverse";
+        } else {
+            fretsRow.style.left = "85px";
+            fretsRow.style.right = "auto";
+        }
         fretsRow.style.width = "calc(100% - 85px)";
         fretsRow.style.height = "100%";
         fretsRow.style.display = "flex";
@@ -133,7 +144,13 @@ export class Fretboard {
         const nut = document.createElement("div");
         nut.className = "fretboard-nut";
         nut.style.position = "absolute";
-        nut.style.left = "60px"; // Alinhado após a coluna lateral de 60px
+        if (this.options.handOrientation === "right_handed") {
+            nut.style.right = "60px";
+            nut.style.left = "auto";
+        } else {
+            nut.style.left = "60px";
+            nut.style.right = "auto";
+        }
         nut.style.width = "25px";
         nut.style.height = "100%";
         nut.style.zIndex = "2";
@@ -175,7 +192,11 @@ export class Fretboard {
         const gridEl = document.createElement("div");
         gridEl.className = "fretboard-grid";
         
-        this.stringsData.forEach((strData, strIdx) => {
+        const renderedStrings = this.options.handOrientation === "right_handed" ? [...this.stringsData].reverse() : this.stringsData;
+        
+        renderedStrings.forEach((strData, loopIdx) => {
+            const strIdx = this.options.handOrientation === "right_handed" ? (this.stringsData.length - 1 - loopIdx) : loopIdx;
+            
             const stringRow = document.createElement("div");
             stringRow.className = "fretboard-string-row";
             
@@ -270,6 +291,9 @@ export class Fretboard {
         // 6. Renderizar números das casas abaixo do braço
         const numbersRow = document.createElement("div");
         numbersRow.className = "fretboard-numbers";
+        if (this.options.handOrientation === "right_handed") {
+            numbersRow.classList.add("right-handed");
+        }
         
         // Compensação horizontal de 60px para alinhar com os rótulos laterais esquerdos de cordas
         const spacer = document.createElement("div");

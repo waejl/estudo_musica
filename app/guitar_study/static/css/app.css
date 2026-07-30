@@ -453,3 +453,52 @@ text.abcjs-text {
     fill: var(--bs-body-color) !important;
 }
 
+/* =====================================================================
+   ORIENTAÇÃO DE BRAÇO: DESTRO VS CANHOTO
+   ===================================================================== */
+
+/* Inversão Horizontal para Destros */
+.fretboard.right-handed .fretboard-string-row {
+    flex-direction: row-reverse;
+}
+.fretboard-numbers.right-handed {
+    flex-direction: row-reverse;
+}
+
+/* Inversão do Nut */
+.fretboard.right-handed .fretboard-nut {
+    left: auto;
+    right: 60px;
+    border-left: 5px solid #94a3b8;
+    border-right: none;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.3);
+}
+
+/* Inversão do Rótulo Lateral */
+.fretboard.right-handed .string-label-indicator {
+    border-left: 3px solid var(--fret-metal);
+    border-right: none;
+}
+
+/* Inversão dos Trastes Metálicos */
+.fretboard.right-handed .fretboard-frets-row {
+    left: auto;
+    right: 85px;
+    flex-direction: row-reverse;
+}
+.fretboard.right-handed .fretboard-fret {
+    border-left: 3px solid var(--fret-metal);
+    border-right: none;
+}
+.fretboard.right-handed .fretboard-fret:last-child {
+    border-left: none;
+}
+
+/* Inversão da Espessura das Cordas (Mi grave no topo, Mi agudo no fundo) */
+.fretboard.right-handed .fretboard-string-row:nth-child(1)::after { height: 4.0px; background-color: #94a3b8; }
+.fretboard.right-handed .fretboard-string-row:nth-child(2)::after { height: 3.2px; background-color: #94a3b8; }
+.fretboard.right-handed .fretboard-string-row:nth-child(3)::after { height: 2.6px; background-color: #94a3b8; }
+.fretboard.right-handed .fretboard-string-row:nth-child(4)::after { height: 2.0px; opacity: 0.95; background-color: #cbd5e1; }
+.fretboard.right-handed .fretboard-string-row:nth-child(5)::after { height: 1.6px; opacity: 0.9; background-color: #cbd5e1; }
+.fretboard.right-handed .fretboard-string-row:nth-child(6)::after { height: 1.2px; opacity: 0.9; background-color: #cbd5e1; }
+

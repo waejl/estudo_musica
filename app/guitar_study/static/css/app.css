@@ -339,43 +339,60 @@ body {
     display: flex;
     flex-direction: column;
     width: 100%;
-    background-color: var(--bs-body-secondary);
-    border: 1px solid var(--bs-border-color);
-    border-radius: 12px;
-    padding: 15px;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+    background: linear-gradient(135deg, #0d1326, #070a14); /* Fundo escuro luxuoso e texturizado */
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--accent2); /* Neon azul na borda superior */
+    border-radius: 20px;
+    padding: 26px 22px;
+    box-shadow: inset 0 4px 20px rgba(0,0,0,0.55), var(--shadow);
     overflow-x: auto;
 }
 
 .guitar-tab-row {
     display: flex;
     align-items: center;
-    height: 40px; /* Aumentado para 40px para acomodar o intervalo de forma vertical perfeita */
+    height: 38px; /* Compactado para 38px para pauta mais realista */
     position: relative;
 }
 
-/* Linha horizontal física da tablatura */
+/* Linha horizontal física da tablatura - Espessuras realistas das cordas com degradê metálico */
 .guitar-tab-row::after {
     content: "";
     position: absolute;
-    left: 60px; /* Alinhado com os rótulos de cordas */
+    left: 65px; /* Alinhado com os rótulos de cordas */
     right: 0;
     top: 50%;
     transform: translateY(-50%);
-    height: 1px;
-    background-color: var(--fret-metal);
-    opacity: 0.5;
+    background: linear-gradient(90deg, #475569, #cbd5e1 50%, #475569);
     z-index: 1;
+    pointer-events: none;
 }
+.guitar-tab-row:nth-child(1)::after { height: 1.2px; opacity: 0.75; }
+.guitar-tab-row:nth-child(2)::after { height: 1.6px; opacity: 0.75; }
+.guitar-tab-row:nth-child(3)::after { height: 2.0px; opacity: 0.8; }
+.guitar-tab-row:nth-child(4)::after { height: 2.6px; opacity: 0.85; }
+.guitar-tab-row:nth-child(5)::after { height: 3.2px; opacity: 0.85; }
+.guitar-tab-row:nth-child(6)::after { height: 4.0px; opacity: 0.9; }
 
-/* Indicador de corda na tablatura (MI, SI, etc.) */
+/* Indicador de corda na tablatura parecendo uma tarracha esculpida em ébano escuro */
 .guitar-tab-label {
-    width: 60px;
+    width: 65px;
     font-size: 11px;
     font-weight: 800;
-    color: var(--bs-secondary-color);
-    user-select: none;
+    font-family: "JetBrains Mono", monospace;
+    color: #fff;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border: 1px solid #334155;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 26px; /* Ajustado para acompanhar a pauta mais compacta */
     z-index: 2;
+    user-select: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    opacity: 0.95;
 }
 
 /* Container de notas horizontais */
@@ -384,9 +401,9 @@ body {
     flex-grow: 1;
     height: 100%;
     align-items: center;
-    padding-left: 20px;
+    padding-left: 28px;
     z-index: 2;
-    gap: 30px; /* Distância entre as notas sequenciais */
+    gap: 18px; /* Distância entre as notas sequenciais mais confortável */
 }
 
 /* Container do par número-intervalo empilhados */
@@ -398,36 +415,43 @@ body {
     z-index: 3;
     position: relative;
     height: 100%;
+    width: 36px;
 }
 
-/* O número da casa desenhado por cima da linha de tablatura */
+/* O número da casa desenhado por cima da linha de tablatura como uma bolinha circular premium */
 .guitar-tab-number {
-    font-size: 12px;
+    width: 25px; /* Compactado de 28px para 25px para encaixar perfeitamente na pauta de 38px */
+    height: 25px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
     font-weight: 800;
-    color: var(--primary-color);
-    background-color: var(--bs-body-secondary); /* Esconde a linha horizontal do fundo */
-    padding: 0 5px;
+    color: #fff !important;
+    background: linear-gradient(135deg, #10b981, #059669); /* Degradê verde brilhante */
+    border: 1.5px solid rgba(255,255,255,0.6);
+    box-shadow: 0 0 8px rgba(16,185,129,0.35), 0 3px 6px rgba(0,0,0,0.3);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     user-select: none;
     z-index: 3;
-    border-radius: 4px;
-    transition: transform 0.1s ease;
+    padding: 0;
 }
 .guitar-tab-number:hover {
-    transform: scale(1.25);
-    color: var(--tonica-color);
+    transform: scale(1.22) translateY(-1px);
+    box-shadow: 0 0 12px rgba(16,185,129,0.6), 0 5px 10px rgba(0,0,0,0.45);
+    cursor: pointer;
 }
 .guitar-tab-number.tonica {
-    color: var(--tonica-color) !important;
-    font-size: 14px;
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important; /* Degradê de fogo/vermelho vibrante */
+    border-color: #fbbf24 !important; /* Borda dourada de destaque para a tônica */
+    color: #fff !important;
+    box-shadow: 0 0 12px rgba(239,68,68,0.65), 0 3px 6px rgba(0,0,0,0.45) !important;
+    transform: scale(1.15) !important;
 }
-
-/* Símbolo do intervalo (Ex: b3, 5, T, etc.) abaixo do número na tablatura */
-.guitar-tab-interval {
-    font-size: 9px;
-    font-weight: 800;
-    margin-top: -2px;
-    user-select: none;
-    z-index: 4;
+.guitar-tab-number.tonica:hover {
+    transform: scale(1.28) translateY(-1px) !important;
+    box-shadow: 0 0 16px rgba(239,68,68,0.85), 0 6px 12px rgba(0,0,0,0.5) !important;
 }
 
 /* Ajustes de estilo do SVG de partituras da abcjs */
@@ -460,6 +484,10 @@ text.abcjs-text {
 /* Inversão Horizontal para Destros */
 .fretboard.right-handed .fretboard-string-row {
     flex-direction: row-reverse;
+}
+.fretboard.right-handed .fretboard-string-row::after {
+    left: 0;
+    right: 60px;
 }
 .fretboard-numbers.right-handed {
     flex-direction: row-reverse;
@@ -501,4 +529,141 @@ text.abcjs-text {
 .fretboard.right-handed .fretboard-string-row:nth-child(4)::after { height: 2.0px; opacity: 0.95; background-color: #cbd5e1; }
 .fretboard.right-handed .fretboard-string-row:nth-child(5)::after { height: 1.6px; opacity: 0.9; background-color: #cbd5e1; }
 .fretboard.right-handed .fretboard-string-row:nth-child(6)::after { height: 1.2px; opacity: 0.9; background-color: #cbd5e1; }
+
+/* =====================================================================
+   CÍRCULO DE QUINTAS (CIRCLE OF FIFTHS) PREMIUM
+   ===================================================================== */
+.circle-fifths-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 10px auto;
+}
+
+.circle-fifths-wrapper {
+    position: relative;
+    width: 360px;
+    height: 360px;
+    margin: 20px auto;
+    user-select: none;
+}
+
+.circle-fifths-wheel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, #101726 30%, #080d16 100%);
+    border: 3px solid var(--line);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.6), var(--shadow);
+}
+
+/* Linhas divisórias internas do relógio de quintas */
+.circle-fifths-ray {
+    position: absolute;
+    width: 1px;
+    height: 50%;
+    background-color: var(--line);
+    opacity: 0.25;
+    left: 50%;
+    top: 0;
+    transform-origin: bottom center;
+}
+
+/* Os botões / nós das tonalidades maiores (Roda externa) e menores (Roda interna) */
+.circle-fifths-node {
+    position: absolute;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--muted);
+    background-color: var(--card2);
+    border: 1.5px solid var(--line);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translate(-50%, -50%);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.circle-fifths-node small {
+    font-size: 8px;
+    opacity: 0.6;
+    margin-top: -1px;
+}
+
+/* Estados de Destaque do Campo Harmônico e Tonalidade */
+.circle-fifths-node.active-tonic {
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important; /* Tônica/Grau I - Vermelho */
+    color: #fff !important;
+    border-color: #ffd700 !important;
+    box-shadow: 0 0 14px rgba(239,68,68,0.7), 0 4px 8px rgba(0,0,0,0.45);
+    transform: translate(-50%, -50%) scale(1.18);
+    z-index: 10;
+}
+
+.circle-fifths-node.active-relative {
+    background: linear-gradient(135deg, #f5a623, #d97706) !important; /* Relativa Menor/Grau vi - Amarelo/Laranja */
+    color: #fff !important;
+    border-color: #fff !important;
+    box-shadow: 0 0 12px rgba(245,166,35,0.65), 0 4px 6px rgba(0,0,0,0.35);
+    transform: translate(-50%, -50%) scale(1.1);
+    z-index: 9;
+}
+
+.circle-fifths-node.active-neighbor-major {
+    background: linear-gradient(135deg, #45b7ff, #0284c7) !important; /* Subdominante/Dominante (IV/V) - Azul */
+    color: #fff !important;
+    border-color: rgba(255,255,255,0.4) !important;
+    box-shadow: 0 0 10px rgba(69,183,255,0.5);
+    transform: translate(-50%, -50%) scale(1.05);
+    z-index: 8;
+}
+
+.circle-fifths-node.active-neighbor-minor {
+    background: linear-gradient(135deg, #2a3e5c, #1e2d42) !important; /* Graus ii e iii - Azul escuro */
+    color: var(--text) !important;
+    border-color: var(--accent2) !important;
+    transform: translate(-50%, -50%) scale(1.02);
+    z-index: 7;
+}
+
+/* Rótulo Central do Círculo de Quintas */
+.circle-fifths-center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: #070a14;
+    border: 2px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    z-index: 5;
+    text-align: center;
+}
+.circle-fifths-center .center-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--accent2);
+    margin: 0;
+}
+.circle-fifths-center .center-sub {
+    font-size: 9px;
+    color: var(--muted);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
 

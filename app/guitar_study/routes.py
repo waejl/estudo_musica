@@ -283,6 +283,23 @@ def serve_media(filepath):
     return response
 
 
+@guitar_study.route("/circle-of-fifths")
+@login_required
+def circle_of_fifths():
+    """Página interativa do Círculo de Quintas e relacionamento de tonalidades."""
+    settings = current_user.settings
+    return render_template("guitar_study/circle_of_fifths.html", settings=settings)
+
+
+@guitar_study.route("/triads-arpeggios")
+@login_required
+def triads_arpeggios():
+    """Página interativa para visualização de Tríades e Arpejos do CAGED."""
+    settings = current_user.settings
+    from app.guitar_study.services.music_theory import SHARPS_SCALE
+    return render_template("guitar_study/triads_arpeggios.html", settings=settings, chromatic_notes=SHARPS_SCALE)
+
+
 # --- Rotas de Aulas ---
 
 @guitar_study.route("/lessons")

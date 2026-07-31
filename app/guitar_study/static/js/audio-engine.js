@@ -506,6 +506,279 @@ class AudioEngine {
     }
 
     setVolume(val) { this.volume = Math.max(0, Math.min(1, val)); }
+
+    // -----------------------------------------------------------------------
+    // SINTETIZADORES DE BATERIA E BAIXO EM TEMPO REAL (BACKING BAND)
+    // -----------------------------------------------------------------------
+
+    _synthesizeKick(time) {
+        const ctx = this.ctx;
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.frequency.setValueAtTime(150, time);
+        osc.frequency.exponentialRampToValueAtTime(0.01, time + 0.1);
+        
+        gain.gain.setValueAtTime(0.8 * this.volume, time);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.12);
+        
+        osc.start(time);
+        osc.stop(time + 0.15);
+    }
+
+    _synthesizeSnare(time) {
+        const ctx = this.ctx;
+        if (!ctx) return;
+        
+        const bufferSize = ctx.sampleRate * 0.12; // 120ms
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        
+        const filter = ctx.createBiquadFilter();
+        filter.type = "bandpass";
+        filter.frequency.value = 1000;
+        
+        const gain = ctx.createGain();
+        
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        
+        gain.gain.setValueAtTime(0.4 * this.volume, time);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.12);
+        
+        noise.start(time);
+        noise.stop(time + 0.15);
+    }
+
+    _synthesizeHiHat(time) {
+        const ctx = this.ctx;
+        if (!ctx) return;
+        
+        const bufferSize = ctx.sampleRate * 0.03; // 30ms
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        
+        const filter = ctx.createBiquadFilter();
+        filter.type = "highpass";
+        filter.frequency.value = 8000;
+        
+        const gain = ctx.createGain();
+        
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        
+        gain.gain.setValueAtTime(0.2 * this.volume, time);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.03);
+        
+        noise.start(time);
+        noise.stop(time + 0.04);
+    }
+
+    _synthesizeBass(freq, time, duration) {
+        const ctx = this.ctx;
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+        
+        osc.type = "triangle";
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(250, time);
+        
+        osc.frequency.setValueAtTime(freq, time);
+        
+        gain.gain.setValueAtTime(0, time);
+        gain.gain.linearRampToValueAtTime(0.6 * this.volume, time + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + duration - 0.02);
+        
+        osc.start(time);
+        osc.stop(time + duration);
+    }
+
+    startBackingBand(style, bpm, getActiveChordFn) {
+        this.initContext();
+        this.stopBackingBand();
+        
+        this.backingBandActive = true;
+        
+        // Frequências para o Baixo (Oitava grave)
+        const BASS_FREQS = {
+            "C": 65.41, "C#": 69.30, "Db": 69.30, "D": 73.42, "D#": 77.78, "Eb": 77.78,
+            "E": 82.41, "F": 87.31, "F#": 92.50, "Gb": 92.50, "G": 98.00, "G#": 103.83,
+            "Ab": 103.83, "A": 55.00, "A#": 58.27, "Bb": 58.27, "B": 61.74
+        };
+
+        const beatDuration = 60 / bpm; // Duração de uma batida em segundos
+        let step = 0; // Passo atual (em colcheias, loop de 8 passos)
+        const stepDuration = beatDuration / 2; // Colcheia
+
+        this.backingBandInterval = setInterval(() => {
+            const now = this.ctx.currentTime;
+            
+            // Obtém o acorde ativo via callback dinâmico
+            const activeChord = getActiveChordFn ? getActiveChordFn() : { note: "C", type: "Major" };
+            const bassFreq = BASS_FREQS[activeChord.note] || 65.41;
+            
+            // Agenda as notas com 50ms de antecipação (para evitar jitter)
+            const schedTime = now + 0.05;
+
+            if (style === "rock") {
+                // Estilo Rock 4/4 (8 passos de colcheia por compasso)
+                if (step === 0 || step === 4) {
+                    this._synthesizeKick(schedTime);
+                }
+                if (step === 2 || step === 6) {
+                    this._synthesizeSnare(schedTime);
+                }
+                this._synthesizeHiHat(schedTime);
+                
+                if (step % 2 === 0) {
+                    this._synthesizeBass(bassFreq, schedTime, beatDuration - 0.05);
+                }
+            } 
+            else if (style === "hard_rock") {
+                // Estilo Hard Rock de Arena (Guns N' Roses / AC/DC)
+                if (step === 0 || step === 4 || step === 5) {
+                    this._synthesizeKick(schedTime);
+                }
+                if (step === 2 || step === 6) {
+                    this._synthesizeSnare(schedTime);
+                }
+                this._synthesizeHiHat(schedTime);
+                
+                // Baixo pulsante e firme na tônica
+                this._synthesizeBass(bassFreq, schedTime, stepDuration - 0.02);
+            }
+            else if (style === "ballad") {
+                // Estilo Balada Lenta Romântica (Bed of Roses)
+                if (step === 0 || step === 3) {
+                    this._synthesizeKick(schedTime);
+                }
+                if (step === 4) {
+                    this._synthesizeSnare(schedTime);
+                }
+                if (step % 2 === 0) {
+                    this._synthesizeHiHat(schedTime);
+                }
+                // Baixo mais espaçado com notas longas
+                if (step % 4 === 0) {
+                    this._synthesizeBass(bassFreq, schedTime, beatDuration * 2 - 0.1);
+                }
+            }
+            else if (style === "rock_n_roll") {
+                // Estilo Rock 'n' Roll Clássico dos Anos 50 (Boogie Woogie / Chuck Berry)
+                const thirdFactor = activeChord.type === "Major" ? 1.2599 : 1.1892;
+                const fifthFactor = 1.4983;
+                const sixthFactor = 1.6818; // Sexta maior clássica do Boogie Woogie
+                
+                const boogieBassPattern = [
+                    bassFreq,
+                    bassFreq * thirdFactor,
+                    bassFreq * fifthFactor,
+                    bassFreq * sixthFactor
+                ];
+                
+                if (step % 2 === 0) {
+                    this._synthesizeKick(schedTime);
+                }
+                if (step === 2 || step === 6) {
+                    this._synthesizeSnare(schedTime);
+                }
+                this._synthesizeHiHat(schedTime);
+                
+                if (step % 2 === 0) {
+                    const walkIdx = Math.floor(step / 2) % 4;
+                    this._synthesizeBass(boogieBassPattern[walkIdx], schedTime, beatDuration - 0.05);
+                }
+            }
+            else if (style === "reggae") {
+                // Estilo Reggae
+                this._synthesizeHiHat(schedTime);
+                
+                if (step === 4) {
+                    this._synthesizeKick(schedTime);
+                    this._synthesizeSnare(schedTime);
+                }
+                if (step === 0 || step === 2 || step === 5) {
+                    this._synthesizeBass(bassFreq, schedTime, stepDuration - 0.02);
+                }
+            }
+            else if (style === "blues") {
+                // Estilo Blues Shuffle (Walking Bass dinâmico sem erros de sintaxe)
+                const thirdFactor = activeChord.type === "Major" ? 1.2599 : 1.1892;
+                const fifthFactor = 1.4983;
+                const sixthFactor = 1.6818; // Sexta maior para caminhada clássica
+                
+                const walkingBassPattern = [
+                    bassFreq,
+                    bassFreq * thirdFactor,
+                    bassFreq * fifthFactor,
+                    bassFreq * sixthFactor
+                ];
+                
+                if (step % 2 === 0) {
+                    this._synthesizeKick(schedTime);
+                }
+                if (step === 2 || step === 6) {
+                    this._synthesizeSnare(schedTime);
+                }
+                if (step % 2 === 0 || step % 4 === 1) {
+                    this._synthesizeHiHat(schedTime);
+                }
+                if (step % 2 === 0) {
+                    const walkIdx = Math.floor(step / 2) % 4;
+                    this._synthesizeBass(walkingBassPattern[walkIdx], schedTime, beatDuration - 0.05);
+                }
+            }
+            else if (style === "baiao") {
+                // Estilo Baião 2/4 (4 colcheias por compasso)
+                if (step === 0 || step === 2 || step === 3) {
+                    this._synthesizeKick(schedTime);
+                }
+                if (step === 1 || step === 3) {
+                    this._synthesizeHiHat(schedTime);
+                }
+                if (step === 0 || step === 2) {
+                    this._synthesizeBass(bassFreq, schedTime, stepDuration - 0.02);
+                }
+            }
+            
+            // Avança o passo (loop de 8 passos)
+            step = (step + 1) % 8;
+            
+        }, stepDuration * 1000);
+    }
+
+    stopBackingBand() {
+        if (this.backingBandInterval) {
+            clearInterval(this.backingBandInterval);
+            this.backingBandInterval = null;
+        }
+        this.backingBandActive = false;
+    }
 }
 
 export const audioEngine = new AudioEngine();

@@ -39,6 +39,18 @@
         </a>
     </li>
     <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'guitar_study.circle_of_fifths' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.circle_of_fifths') }}">
+            <i class="bi bi-arrow-repeat fs-5 text-warning"></i>
+            <span>Círculo de Quintas</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'guitar_study.triads_arpeggios' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.triads_arpeggios') }}">
+            <i class="bi bi-bezier2 fs-5 text-info"></i>
+            <span>Tríades & Arpejos CAGED</span>
+        </a>
+    </li>
+    <li class="nav-item">
         <a class="nav-link {% if request.endpoint == 'guitar_study.exercises' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.exercises') }}">
             <i class="bi bi-controller fs-5"></i>
             <span>Exercícios</span>

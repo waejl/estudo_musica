@@ -32,6 +32,34 @@
     </div>
 </div>
 
+<!-- Guia de Estudo: Motivo e Aplicação -->
+<div class="card mb-4 bg-body-tertiary border-0 shadow-sm border-start border-primary border-3">
+    <div class="card-body p-4">
+        <div class="d-flex align-items-start gap-3">
+            <div class="bg-primary text-white p-2.5 rounded-3 fs-5 d-inline-flex">
+                <i class="bi bi-book-half"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold mb-1 text-white">Guia de Estudo: Por que praticar Exercícios Interativos?</h5>
+                <div class="row g-3 mt-1 fs-7 text-muted">
+                    <div class="col-12 col-md-4">
+                        <strong class="text-primary-emphasis d-block mb-1"><i class="bi bi-question-circle"></i> Motivo de existir:</strong>
+                        Fornecer um ecossistema prático e dinâmico para o desenvolvimento de agilidade física e velocidade de processamento mental.
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <strong class="text-primary-emphasis d-block mb-1"><i class="bi bi-person-fill-check"></i> Por que você deve usar:</strong>
+                        Para acelerar a memorização do braço de forma gamificada e divertida, medindo seu progresso físico de forma tangível.
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <strong class="text-primary-emphasis d-block mb-1"><i class="bi bi-briefcase"></i> Para que serve na prática:</strong>
+                        Para treinar de forma guiada spider-drills, sincronizar os dedos, e testar sua agilidade para encontrar ou nomear notas sob pressão cronometrada.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Seletor de Exercícios (Tela Inicial) -->
 <div class="row g-4" id="exerciseSelectorArea">
     
@@ -107,7 +135,25 @@
         </div>
     </div>
 
-    <!-- Exercício 5: Técnica e Aquecimento -->
+    <!-- Exercício 5: Ditado Harmônico (Treino de Ouvido) -->
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card card-hover h-100 bg-body-tertiary">
+            <div class="card-body d-flex flex-column justify-content-between p-4">
+                <div>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="bg-danger text-white p-3 rounded-circle d-inline-flex">
+                            <i class="bi bi-ear fs-3"></i>
+                        </div>
+                        <h5 class="fw-bold mb-0">Ditado Harmônico</h5>
+                    </div>
+                    <p class="fs-7 text-muted">O sistema toca um acorde de forma dedilhada e você deve adivinhar qual acorde do campo harmônico foi tocado. Excelente para treinar o seu ouvido relativo!</p>
+                </div>
+                <button onclick="startExercise('harmonic_dictation')" class="btn btn-danger w-100 fw-bold mt-3 shadow-sm">Iniciar Treino</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exercício 6: Técnica e Aquecimento -->
     <div class="col-12 col-md-6 col-lg-4">
         <div class="card card-hover h-100 bg-body-tertiary">
             <div class="card-body d-flex flex-column justify-content-between p-4">
@@ -154,10 +200,83 @@
                 <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0">
                     <h5 id="gamePromptInstruction" class="fw-extrabold mb-0 text-center text-body-emphasis py-2">Qual nota está destacada abaixo?</h5>
                 </div>
+                
+                <!-- Barra de Ferramentas Exclusiva para o Treino Livre -->
+                <div id="freeTrainTools" class="d-none px-4 pb-3">
+                    <div class="row g-2 align-items-center justify-content-center bg-body-secondary p-3 rounded-3 border border-secondary-subtle">
+                        <!-- Seletor de Tônica de Vermelho -->
+                        <div class="col-12 col-md-auto d-flex align-items-center gap-2">
+                            <label for="freeTonicSelect" class="form-label mb-0 fw-bold fs-7 text-nowrap text-danger"><i class="bi bi-geo-alt-fill"></i> Tônica (Vermelho):</label>
+                            <select id="freeTonicSelect" class="form-select form-select-sm" style="width: 100px;">
+                                <option value="">Nenhuma</option>
+                                <option value="C">C</option>
+                                <option value="C#">C#</option>
+                                <option value="D">D</option>
+                                <option value="D#">D#</option>
+                                <option value="E">E</option>
+                                <option value="F">F</option>
+                                <option value="F#">F#</option>
+                                <option value="G">G</option>
+                                <option value="G#">G#</option>
+                                <option value="A">A</option>
+                                <option value="A#">A#</option>
+                                <option value="B">B</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Divisor Vertical no Desktop -->
+                        <div class="d-none d-md-block vr mx-3" style="height: 30px;"></div>
+                        
+                        <!-- Carregamento de Escala -->
+                        <div class="col-12 col-md-auto d-flex align-items-center gap-2">
+                            <label class="form-label mb-0 fw-bold fs-7 text-nowrap text-success"><i class="bi bi-music-note-beamed"></i> Carregar Escala:</label>
+                            <select id="freeScaleRoot" class="form-select form-select-sm" style="width: 80px;">
+                                <option value="C">C</option>
+                                <option value="C#">C#</option>
+                                <option value="D">D</option>
+                                <option value="D#">D#</option>
+                                <option value="E">E</option>
+                                <option value="F">F</option>
+                                <option value="F#">F#</option>
+                                <option value="G">G</option>
+                                <option value="G#">G#</option>
+                                <option value="A">A</option>
+                                <option value="A#">A#</option>
+                                <option value="B">B</option>
+                            </select>
+                            <select id="freeScaleType" class="form-select form-select-sm" style="width: 160px;">
+                                <option value="major">Maior Natural</option>
+                                <option value="minor">Menor Natural</option>
+                                <option value="pentatonic_major">Pentatônica Maior</option>
+                                <option value="pentatonic_minor">Pentatônica Menor</option>
+                                <option value="blues">Blues</option>
+                            </select>
+                            <button id="btnLoadFreeScale" class="btn btn-sm btn-success fw-bold px-3"><i class="bi bi-play-fill"></i> Carregar</button>
+                        </div>
+                        
+                        <!-- Botão Limpar -->
+                        <div class="col-12 col-md-auto ms-md-auto">
+                            <button id="btnClearFreeFretboard" class="btn btn-sm btn-outline-danger fw-bold w-100"><i class="bi bi-trash"></i> Limpar Braço</button>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="card-body p-0 overflow-hidden" id="gameFretboardContainer">
                     <div id="gameFretboard">
                         <!-- Gerado via JS -->
                     </div>
+                </div>
+                
+                <!-- Área exclusiva do Ditado Harmônico (Substitui o braço) -->
+                <div id="harmonicDictationArea" class="d-none p-5 text-center bg-dark rounded-bottom border-top border-secondary">
+                    <div class="mb-4">
+                        <div class="d-inline-flex bg-danger-subtle text-danger p-4 rounded-circle mb-3 border border-danger-subtle shadow-sm" style="animation: pulse 2s infinite;">
+                            <i class="bi bi-ear fs-1"></i>
+                        </div>
+                        <h4 class="fw-bold text-white mb-2">Treine seu Ouvido Relativo</h4>
+                        <p class="fs-7 text-muted max-width-600 mx-auto" style="max-width: 500px;">Feche os olhos, concentre-se no som do acorde e tente identificar qual o seu grau harmônico correspondente!</p>
+                    </div>
+                    <button id="btnReplayChord" class="btn btn-danger fw-bold px-4 py-2 shadow-sm"><i class="bi bi-play-fill fs-5"></i> Ouvir Acorde Novamente</button>
                 </div>
             </div>
         </div>
@@ -388,6 +507,9 @@
         clearInterval(animationInterval);
         document.getElementById("exerciseSelectorArea").classList.remove("d-none");
         document.getElementById("gamePlayArea").classList.add("d-none");
+        document.getElementById("freeTrainTools").classList.add("d-none");
+        document.getElementById("harmonicDictationArea").classList.add("d-none");
+        document.getElementById("gameFretboardContainer").classList.remove("d-none");
         document.getElementById("technicalDrillsArea").classList.add("d-none");
         document.getElementById("gameResultArea").classList.add("d-none");
         audioEngine.stop();
@@ -557,17 +679,27 @@
 
         const titles = {
             "identify_note": "Identificar a Nota no Braço", "find_note": "Encontrar a Nota no Braço",
-            "intervals": "Identificar o Intervalo", "free_train": "Treino Livre (Braço Limpo)"
+            "intervals": "Identificar o Intervalo", "free_train": "Treino Livre (Braço Limpo)",
+            "harmonic_dictation": "Ditado Harmônico (Treino de Ouvido)"
         };
         document.getElementById("gameTitleDisplay").textContent = titles[type] || "Exercício";
         
         // Controlar visibilidade dos componentes
         const fretboardCard = document.querySelector("#gameFretboardContainer .card");
         const tabSheet = fretboardCard?.querySelectorAll('.card'); // Procura por tab/sheet DENTRO do card do fretboard
-        document.getElementById("choicesArea").style.display = (type === 'identify_note' || type === 'intervals') ? '' : 'none';
+        document.getElementById("choicesArea").style.display = (type === 'identify_note' || type === 'intervals' || type === 'harmonic_dictation') ? '' : 'none';
 
         if (tabSheet) {
              tabSheet.forEach(el => el.style.display = 'none');
+        }
+        
+        if (type === "harmonic_dictation") {
+            document.getElementById("gameFretboardContainer").classList.add("d-none");
+            document.getElementById("harmonicDictationArea").classList.remove("d-none");
+            setupHarmonicDictationListeners();
+        } else {
+            document.getElementById("gameFretboardContainer").classList.remove("d-none");
+            document.getElementById("harmonicDictationArea").classList.add("d-none");
         }
         
         // ... (resto da lógica de setup do jogo interativo) ...
@@ -590,7 +722,96 @@
         }
         
         fretboard.setViewMode(type === "free_train" ? "modo_editor" : "hide_all");
+        
+        if (type === "free_train") {
+            document.getElementById("freeTrainTools").classList.remove("d-none");
+            setupFreeTrainListeners();
+        } else {
+            document.getElementById("freeTrainTools").classList.add("d-none");
+        }
+        
         generateQuestion();
+    }
+
+    let freeTrainListenersConfigured = false;
+    function setupFreeTrainListeners() {
+        if (freeTrainListenersConfigured) return;
+        
+        // 1. Evento do Seletor de Tônica (Mudar cor para Vermelho)
+        document.getElementById("freeTonicSelect").addEventListener("change", (e) => {
+            const selectedTonic = e.target.value;
+            if (fretboard) {
+                fretboard.options.tonic = selectedTonic;
+                fretboard.renderNotesContent();
+            }
+        });
+        
+        // 2. Evento de Carregar Escala via API
+        document.getElementById("btnLoadFreeScale").addEventListener("click", async () => {
+            const root = document.getElementById("freeScaleRoot").value;
+            const type = document.getElementById("freeScaleType").value;
+            const pref = "{{ settings.accidentals_preference if settings else 'sharps' }}";
+            
+            try {
+                const response = await fetch(`/guitar-study/api/v1/scales?root=${encodeURIComponent(root)}&type=${type}&preference=${pref}`);
+                const res = await response.json();
+                
+                if (res.success && res.data && res.data.notes) {
+                    const scaleNotes = res.data.notes;
+                    
+                    // Acende as notas no braço
+                    if (fretboard && fretboard.fretboardEl) {
+                        const cells = fretboard.fretboardEl.querySelectorAll(".fretboard-cell");
+                        cells.forEach(cell => {
+                            const noteName = cell.getAttribute("data-note");
+                            const noteBadge = cell.querySelector(".fret-note");
+                            if (!noteBadge) return;
+                            
+                            // Se a nota pertencer à escala, fica visível, senão apaga
+                            if (scaleNotes.includes(noteName)) {
+                                noteBadge.classList.add("visible");
+                                noteBadge.style.opacity = "1";
+                                noteBadge.style.transform = "scale(1)";
+                            } else {
+                                noteBadge.classList.remove("visible");
+                                noteBadge.style.opacity = "0";
+                                noteBadge.style.transform = "scale(0.6)";
+                            }
+                        });
+                        
+                        // Atualiza a tablatura e a partitura dinamicamente
+                        fretboard.updateTabAndSheet();
+                    }
+                    
+                    showToast("Sucesso", `Escala de ${root} ${document.getElementById("freeScaleType").options[document.getElementById("freeScaleType").selectedIndex].text} carregada no braço!`, "success");
+                } else {
+                    showToast("Erro", "Não foi possível carregar a escala.", "danger");
+                }
+            } catch (e) {
+                console.error(e);
+                showToast("Erro", "Erro ao carregar escala.", "danger");
+            }
+        });
+        
+        // 3. Evento de Limpar o Braço
+        document.getElementById("btnClearFreeFretboard").addEventListener("click", () => {
+            if (fretboard && fretboard.fretboardEl) {
+                const cells = fretboard.fretboardEl.querySelectorAll(".fretboard-cell");
+                cells.forEach(cell => {
+                    const noteBadge = cell.querySelector(".fret-note");
+                    if (!noteBadge) return;
+                    
+                    noteBadge.classList.remove("visible");
+                    noteBadge.style.opacity = "0";
+                    noteBadge.style.transform = "scale(0.6)";
+                });
+                
+                fretboard.updateTabAndSheet();
+                showToast("Limpo", "O braço da guitarra foi limpo!", "info");
+            }
+        });
+        
+        freeTrainListenersConfigured = true;
     }
     
     window.restartGame = function() {
@@ -672,11 +893,99 @@
             document.getElementById("choicesArea").style.display = 'none';
             fretboard.setViewMode("show_all");
             fretboard.fretboardEl.querySelectorAll(".fret-note.visible").forEach(b => b.textContent = "?");
-            
+
+        } else if (gameType === "harmonic_dictation") {
+            // Sorteia um tom de referência aleatório para o ditado harmônico
+            const roots = ["C", "D", "E", "F", "G", "A", "B"];
+            const randomRoot = roots[Math.floor(Math.random() * roots.length)];
+
+            const MAJORS_MAP = ["C", "G", "D", "A", "E", "B", "F#", "C#", "Ab", "Eb", "Bb", "F"];
+            const MINORS_MAP = ["Am", "Em", "Bm", "F#m", "C#m", "G#m", "D#m", "A#m", "Fm", "Cm", "Gm", "Dm"];
+
+            const baseIdx = MAJORS_MAP.indexOf(randomRoot);
+            const leftIdx = (baseIdx - 1 + 12) % 12;
+            const rightIdx = (baseIdx + 1) % 12;
+
+            const chords = [
+                { note: randomRoot, type: "Major", label: "I (Tônica)" },
+                { note: MINORS_MAP[leftIdx].replace("m", ""), type: "Minor", label: "ii" },
+                { note: MINORS_MAP[rightIdx].replace("m", ""), type: "Minor", label: "iii" },
+                { note: MAJORS_MAP[leftIdx], type: "Major", label: "IV" },
+                { note: MAJORS_MAP[rightIdx], type: "Major", label: "V" },
+                { note: MINORS_MAP[baseIdx].replace("m", ""), type: "Minor", label: "vi" }
+            ];
+
+            // Sorteia um acorde ativo do Campo Harmônico
+            const correctChord = chords[Math.floor(Math.random() * chords.length)];
+            const correctLabel = correctChord.note + (correctChord.type === "Minor" ? "m" : "");
+
+            activeQuestionData = {
+                root: correctChord.note,
+                type: correctChord.type,
+                correctLabel: correctLabel,
+                tonality: randomRoot,
+                chords: chords
+            };
+
+            document.getElementById("gamePromptInstruction").textContent = `Ouça o acorde e identifique qual grau do Tom de ${randomRoot} Maior está soando:`;
+
+            // Toca o acorde de forma automatizada e dedilhada
+            setTimeout(() => {
+                playDictationChord();
+            }, 100);
+
+            // Gera as opções de escolha baseadas nos 6 acordes do campo harmônico
+            chords.forEach(ch => {
+                const labelName = ch.note + (ch.type === "Minor" ? "m" : "");
+                choicesGrid.insertAdjacentHTML("beforeend", `
+                    <div class="col-6 col-md-4">
+                        <button onclick="submitAnswer('${labelName}')" class="btn btn-outline-danger btn-lg w-100 fw-bold py-3 fs-5">${labelName} <small class="d-block fs-9 opacity-50">${ch.label}</small></button>
+                    </div>
+                `);
+            });
+
         } else if (gameType === "intervals") {
-            // ... (lógica de intervalos)
+            // ... (lógica de intervals)
         }
-    }
+        }
+
+        let dictationListenersConfigured = false;
+        function setupHarmonicDictationListeners() {
+        if (dictationListenersConfigured) return;
+
+        document.getElementById("btnReplayChord").addEventListener("click", () => {
+            playDictationChord();
+        });
+
+        dictationListenersConfigured = true;
+        }
+
+        window.playDictationChord = function() {
+        if (!activeQuestionData || !activeQuestionData.root) return;
+
+        const root = activeQuestionData.root;
+        const type = activeQuestionData.type;
+
+        const NOTE_FREQS = {
+            "C": 261.63, "C#": 277.18, "Db": 277.18, "D": 293.66, "D#": 311.13, "Eb": 311.13,
+            "E": 329.63, "F": 349.23, "F#": 369.99, "Gb": 369.99, "G": 392.00, "G#": 415.30,
+            "Ab": 415.30, "A": 440.00, "A#": 466.16, "Bb": 466.16, "B": 493.88
+        };
+
+        const rootFreq = NOTE_FREQS[root];
+        if (!rootFreq) return;
+
+        const thirdFactor = type === "Major" ? 1.2599 : 1.1892;
+        const fifthFactor = 1.4983;
+
+        const freqs = [
+            rootFreq,
+            rootFreq * thirdFactor,
+            rootFreq * fifthFactor
+        ];
+
+        audioEngine.playChord(freqs);
+        };
     
     window.submitAnswer = function(answer) {
         if (gameType === "identify_note") {
@@ -687,6 +996,15 @@
             } else {
                 scoreIncorrect++;
                 showToast(`Errou! A resposta correta era: ${activeQuestionData.note}`, "danger");
+            }
+        } else if (gameType === "harmonic_dictation") {
+            const isCorrect = (answer === activeQuestionData.correctLabel);
+            if (isCorrect) {
+                scoreCorrect++;
+                showToast("Acertou! Seu ouvido está afiado.", "success");
+            } else {
+                scoreIncorrect++;
+                showToast(`Errou! O acorde tocado era: ${activeQuestionData.correctLabel}`, "danger");
             }
         }
         currentRound++;

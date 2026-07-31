@@ -1,0 +1,276 @@
+{% extends 'guitar_study/base.html' %}
+
+{% block title %}Tríades & Arpejos CAGED{% endblock %}
+
+{% block content %}
+<!-- Guia de Estudo: Motivo e Aplicação -->
+<div class="card mb-4 bg-body-tertiary border-0 shadow-sm border-start border-info border-3">
+    <div class="card-body p-4">
+        <div class="d-flex align-items-start gap-3">
+            <div class="bg-info text-white p-2.5 rounded-3 fs-5 d-inline-flex">
+                <i class="bi bi-book-half"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold mb-1 text-white">Guia de Estudo: Por que estudar Tríades & Arpejos?</h5>
+                <div class="row g-3 mt-1 fs-7 text-muted">
+                    <div class="col-12 col-md-4">
+                        <strong class="text-info-emphasis d-block mb-1"><i class="bi bi-question-circle"></i> Motivo de existir:</strong>
+                        Apresentar as fôrmas móveis do sistema CAGED para projetar tríades e arpejos espalhados por todo o braço da guitarra.
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <strong class="text-info-emphasis d-block mb-1"><i class="bi bi-person-fill-check"></i> Por que você deve usar:</strong>
+                        Para sair do "sabor mecânico" de solar apenas subindo e descendo escalas e aprender a solar com foco nas notas exatas de repouso harmônico do acorde de fundo.
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <strong class="text-info-emphasis d-block mb-1"><i class="bi bi-briefcase"></i> Para que serve na prática:</strong>
+                        Para visualizar o "esqueleto" do acorde de baixo em qualquer região e criar solos extremamente melódicos (como David Gilmour ou John Mayer).
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros de Busca de Tríade -->
+<div class="card mb-4 bg-body-tertiary">
+    <div class="card-body p-3">
+        <div class="row g-3 align-items-end">
+            <!-- Seletor de Tônica -->
+            <div class="col-6 col-sm-3 col-md-2">
+                <label for="arpeggioRoot" class="form-label fs-7 fw-bold text-muted">Tônica</label>
+                <select id="arpeggioRoot" class="form-select form-select-sm">
+                    {% for note in chromatic_notes %}
+                    <option value="{{ note }}" {% if note == 'C' %}selected{% endif %}>{{ note }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Seletor de Tipo (Maior/Menor) -->
+            <div class="col-6 col-sm-3 col-md-2">
+                <label for="arpeggioType" class="form-label fs-7 fw-bold text-muted">Qualidade</label>
+                <select id="arpeggioType" class="form-select form-select-sm">
+                    <option value="major" selected>Maior Natural</option>
+                    <option value="minor">Menor Natural</option>
+                </select>
+            </div>
+
+            <!-- Seletor de Fôrma CAGED -->
+            <div class="col-12 col-sm-6 col-md-3 col-lg-3">
+                <label for="cagedFormSelect" class="form-label fs-7 fw-bold text-muted">Fôrma do CAGED</label>
+                <select id="cagedFormSelect" class="form-select form-select-sm">
+                    <option value="C" selected>Formato de C (C-Shape)</option>
+                    <option value="A">Formato de A (A-Shape)</option>
+                    <option value="G">Formato de G (G-Shape)</option>
+                    <option value="E">Formato de E (E-Shape)</option>
+                    <option value="D">Formato de D (D-Shape)</option>
+                </select>
+            </div>
+            
+            <!-- Botão Treinar Ouvido -->
+            <div class="col-12 col-md-3 col-lg-2 ms-md-auto text-end">
+                <button id="btnPlayArpeggio" class="btn btn-sm btn-outline-info fw-bold w-100 py-1.5"><i class="bi bi-play-fill"></i> Ouvir Arpejo</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- O Braço da Guitarra -->
+    <div class="col-12">
+        <div class="card bg-body-tertiary">
+            <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0">
+                <h5 class="fw-bold mb-0 text-white">Visualização da Tríade no Braço</h5>
+            </div>
+            <div class="card-body p-0 overflow-hidden" id="triadFretboardContainer">
+                <div id="arpeggioFretboard">
+                    <!-- Gerado via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tablatura correspondente -->
+    <div class="col-12">
+        <div class="card bg-body-tertiary">
+            <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0">
+                <h5 class="fw-bold mb-0 text-white">Pauta da Tríade no Braço (Fôrma CAGED)</h5>
+            </div>
+            <div class="card-body" id="triadTabContainer">
+                <!-- Gerado via JS -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+    import { Fretboard } from "{{ url_for('guitar_study.static', filename='js/fretboard.js') }}";
+    import { audioEngine } from "{{ url_for('guitar_study.static', filename='js/audio-engine.js') }}";
+
+    document.addEventListener("DOMContentLoaded", () => {
+        let fretboard = null;
+
+        // Tabela que define a região de trastes inicial para cada fôrma do CAGED (Tônica Dó como referência)
+        // O Círculo preserva as distâncias harmônicas de transposição para qualquer tônica!
+        const CAGED_REGIONS = {
+            // Seletor de região base de acordo com a tônica e a fôrma
+            "C": { "C": [0, 4],  "A": [2, 6],  "G": [4, 9],  "E": [7, 10], "D": [9, 13]  },
+            "C#": { "C": [0, 5],  "A": [3, 7],  "G": [5, 10], "E": [8, 11], "D": [10, 14] },
+            "Db": { "C": [0, 5],  "A": [3, 7],  "G": [5, 10], "E": [8, 11], "D": [10, 14] },
+            "D": { "C": [1, 5],  "A": [4, 8],  "G": [6, 11], "E": [9, 12], "D": [11, 15] },
+            "D#": { "C": [2, 6],  "A": [5, 9],  "G": [7, 12], "E": [10, 13], "D": [0, 4]  },
+            "Eb": { "C": [2, 6],  "A": [5, 9],  "G": [7, 12], "E": [10, 13], "D": [0, 4]  },
+            "E": { "C": [3, 7],  "A": [6, 10], "G": [8, 13], "E": [0, 3],   "D": [1, 5]  },
+            "F": { "C": [4, 8],  "A": [7, 11], "G": [9, 14], "E": [1, 4],   "D": [2, 6]  },
+            "F#": { "C": [5, 9],  "A": [8, 12], "G": [10, 15], "E": [2, 5],  "D": [3, 7]  },
+            "Gb": { "C": [5, 9],  "A": [8, 12], "G": [10, 15], "E": [2, 5],  "D": [3, 7]  },
+            "G": { "C": [6, 10], "A": [9, 13], "G": [0, 4],   "E": [3, 6],   "D": [4, 8]  },
+            "G#": { "C": [7, 11], "A": [10, 14], "G": [1, 5],  "E": [4, 7],   "D": [5, 9]  },
+            "Ab": { "C": [7, 11], "A": [10, 14], "G": [1, 5],  "E": [4, 7],   "D": [5, 9]  },
+            "A": { "C": [8, 12], "A": [0, 3],   "G": [2, 6],  "E": [5, 8],   "D": [6, 10] },
+            "A#": { "C": [9, 13], "A": [1, 4],   "G": [3, 7],  "E": [6, 9],   "D": [7, 11] },
+            "Bb": { "C": [9, 13], "A": [1, 4],   "G": [3, 7],  "E": [6, 9],   "D": [7, 11] },
+            "B": { "C": [10, 14], "A": [2, 5],   "G": [4, 8],  "E": [7, 10],  "D": [8, 12] }
+        };
+
+        async function initArpeggioFretboard() {
+            if (fretboard) {
+                document.getElementById("arpeggioFretboard").innerHTML = "";
+            }
+
+            fretboard = new Fretboard("arpeggioFretboard", {
+                tuningId: "{{ settings.tuning_id if settings else 'standard' }}",
+                fretCount: 22,
+                handOrientation: "{{ settings.hand_orientation if settings else 'right_handed' }}",
+                viewMode: "highlight_set"
+            });
+            await fretboard.init();
+            
+            // Conecta listeners de busca
+            document.getElementById("arpeggioRoot").addEventListener("change", updateArpeggio);
+            document.getElementById("arpeggioType").addEventListener("change", updateArpeggio);
+            document.getElementById("cagedFormSelect").addEventListener("change", updateArpeggio);
+            document.getElementById("btnPlayArpeggio").addEventListener("click", playCurrentArpeggio);
+
+            updateArpeggio();
+        }
+
+        // Calcula as notas da tríade
+        function getTriadNotes(root, type) {
+            const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+            const rootIdx = notes.indexOf(root);
+            if (rootIdx === -1) return [];
+
+            const thirdDiff = type === "major" ? 4 : 3;
+            const fifthDiff = 7;
+
+            const third = notes[(rootIdx + thirdDiff) % 12];
+            const fifth = notes[(rootIdx + fifthDiff) % 12];
+
+            return [root, third, fifth];
+        }
+
+        // Atualiza a visualização do arpejo na tela
+        async function updateArpeggio() {
+            const root = document.getElementById("arpeggioRoot").value;
+            const type = document.getElementById("arpeggioType").value;
+            const form = document.getElementById("cagedFormSelect").value;
+
+            const triadNotes = getTriadNotes(root, type);
+            if (triadNotes.length === 0) return;
+
+            // Encontra a região de trastes do CAGED para esta tônica e fôrma
+            const region = CAGED_REGIONS[root][form] || [0, 4];
+            const startFret = region[0];
+            const endFret = region[1];
+
+            // 1. Apaga todas as notas
+            const cells = fretboard.fretboardEl.querySelectorAll(".fretboard-cell");
+            cells.forEach(cell => {
+                const badge = cell.querySelector(".fret-note");
+                if (badge) {
+                    badge.classList.remove("visible", "tonica", "active-note");
+                    badge.style.opacity = "0";
+                    badge.style.transform = "scale(0.6)";
+                }
+            });
+
+            // 2. Acende apenas as notas da tríade que estão dentro do escopo da fôrma do CAGED (startFret a endFret)
+            const activeCells = [];
+            cells.forEach(cell => {
+                const noteName = cell.getAttribute("data-note");
+                const fretNum = parseInt(cell.getAttribute("data-fret"));
+                const badge = cell.querySelector(".fret-note");
+                if (!badge) return;
+
+                // Verifica se a nota pertence à tríade e está na região da fôrma do CAGED
+                if (triadNotes.includes(noteName) && fretNum >= startFret && fretNum <= endFret) {
+                    badge.classList.add("visible");
+                    badge.style.opacity = "1";
+                    badge.style.transform = "scale(1)";
+
+                    // Diferencia Tônica, Terça e Quinta graficamente
+                    const isTonic = fretboard.isNotesEqual(noteName, root);
+                    const isThird = fretboard.isNotesEqual(noteName, triadNotes[1]);
+                    
+                    if (isTonic) {
+                        badge.classList.add("tonica");
+                        badge.textContent = "T";
+                    } else if (isThird) {
+                        badge.classList.add("active-note");
+                        badge.textContent = type === "major" ? "3" : "b3";
+                        badge.style.backgroundColor = "var(--accent2)"; // Azul claro para terça
+                    } else {
+                        badge.classList.add("active-note");
+                        badge.textContent = "5";
+                        badge.style.backgroundColor = "var(--ok)"; // Verde esmeralda para quinta
+                    }
+                    
+                    activeCells.push({
+                        string: parseInt(cell.getAttribute("data-string")),
+                        fret: fretNum,
+                        note: noteName
+                    });
+                }
+            });
+
+            // Atualiza a Tablatura
+            fretboard.updateTabAndSheet();
+        }
+
+        // Toca o arpejo de forma sequencial melódica
+        function playCurrentArpeggio() {
+            audioEngine.stop();
+            
+            const root = document.getElementById("arpeggioRoot").value;
+            const type = document.getElementById("arpeggioType").value;
+
+            const NOTE_FREQS = {
+                "C": 261.63, "C#": 277.18, "Db": 277.18, "D": 293.66, "D#": 311.13, "Eb": 311.13,
+                "E": 329.63, "F": 349.23, "F#": 369.99, "Gb": 369.99, "G": 392.00, "G#": 415.30,
+                "Ab": 415.30, "A": 440.00, "A#": 466.16, "Bb": 466.16, "B": 493.88
+            };
+
+            const rootFreq = NOTE_FREQS[root];
+            if (!rootFreq) return;
+
+            const thirdFactor = type === "major" ? 1.2599 : 1.1892;
+            const fifthFactor = 1.4983;
+
+            // Cria o arpejo ascendente e descendente (1 -> 3 -> 5 -> 3 -> 1)
+            const freqs = [
+                rootFreq,
+                rootFreq * thirdFactor,
+                rootFreq * fifthFactor,
+                rootFreq * thirdFactor,
+                rootFreq
+            ];
+
+            audioEngine.playScale(freqs, 400, true); // Toca sequencialmente em velocidade moderada!
+        }
+
+        initArpeggioFretboard();
+    });
+</script>
+{% endblock %}

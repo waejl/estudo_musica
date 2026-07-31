@@ -557,7 +557,7 @@ export class Fretboard {
                 const stringNotes = activeCells.filter(c => c.string === s);
                 if (stringNotes.length > 0) {
                     stringNotes.forEach(c => {
-                        // Cria o container empilhado vertical do par número-intervalo
+                        // Cria o container do número da casa
                         const wrapper = document.createElement("div");
                         wrapper.className = "guitar-tab-number-wrapper";
                         
@@ -569,14 +569,6 @@ export class Fretboard {
                         }
                         num.textContent = c.fret === 0 ? "0" : c.fret;
                         wrapper.appendChild(num);
-                        
-                        // Calcula e cria o sub-texto com o grau / símbolo de intervalo (T, b3, 5, etc.)
-                        const intervalSymbol = this.calculateIntervalSymbol(this.options.tonic, c.note);
-                        const intervalLabel = document.createElement("span");
-                        intervalLabel.className = `guitar-tab-interval fw-extrabold ${isTonic ? 'text-danger' : 'text-primary'}`;
-                        // Se for a tônica fundamental, mostra "T" de tônica em Português do Brasil!
-                        intervalLabel.textContent = intervalSymbol === "1" ? "T" : intervalSymbol;
-                        wrapper.appendChild(intervalLabel);
                         
                         notesContainer.appendChild(wrapper);
                     });

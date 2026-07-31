@@ -689,30 +689,36 @@ class AudioEngine {
                 }
             }
             else if (style === "rock_n_roll") {
-                // Estilo Rock 'n' Roll Clássico dos Anos 50 (Boogie Woogie / Chuck Berry)
+                // Base Exata e Fiel de Johnny B. Goode (Chuck Berry Boogie Woogie rápido)
                 const thirdFactor = activeChord.type === "Major" ? 1.2599 : 1.1892;
                 const fifthFactor = 1.4983;
-                const sixthFactor = 1.6818; // Sexta maior clássica do Boogie Woogie
+                const sixthFactor = 1.6818; // Sexta maior clássica do boogie
                 
+                // Padrão de 8 colcheias dobradas por compasso (alma do Johnny B. Goode!)
                 const boogieBassPattern = [
-                    bassFreq,
-                    bassFreq * thirdFactor,
-                    bassFreq * fifthFactor,
-                    bassFreq * sixthFactor
+                    bassFreq,                  // Tempo 1 (colcheia 1)
+                    bassFreq,                  // Tempo 1 (colcheia 2)
+                    bassFreq * thirdFactor,    // Tempo 2 (colcheia 3)
+                    bassFreq * thirdFactor,    // Tempo 2 (colcheia 4)
+                    bassFreq * fifthFactor,    // Tempo 3 (colcheia 5)
+                    bassFreq * fifthFactor,    // Tempo 3 (colcheia 6)
+                    bassFreq * sixthFactor,    // Tempo 4 (colcheia 7)
+                    bassFreq * sixthFactor     // Tempo 4 (colcheia 8)
                 ];
                 
-                if (step % 2 === 0) {
+                // Bumbo com a síncope clássica (passos 0, 3 e 4) que empurra o rockabilly!
+                if (step === 0 || step === 3 || step === 4) {
                     this._synthesizeKick(schedTime);
                 }
+                // Caixa estalada e firme no tempo 2 e 4 (passos 2 e 6)
                 if (step === 2 || step === 6) {
                     this._synthesizeSnare(schedTime);
                 }
+                // Chimbal em colcheias rápidas constantes
                 this._synthesizeHiHat(schedTime);
                 
-                if (step % 2 === 0) {
-                    const walkIdx = Math.floor(step / 2) % 4;
-                    this._synthesizeBass(boogieBassPattern[walkIdx], schedTime, beatDuration - 0.05);
-                }
+                // Baixo tocando em colcheias rápidas constantes (Johnny B. Goode Bassline!)
+                this._synthesizeBass(boogieBassPattern[step], schedTime, stepDuration - 0.02);
             }
             else if (style === "reggae") {
                 // Estilo Reggae

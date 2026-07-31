@@ -16,6 +16,42 @@ class LessonForm(FlaskForm):
         validators=[Length(max=500)],
         render_kw={"rows": 3, "placeholder": "Uma breve descrição do que o aluno irá aprender nesta aula."}
     )
+    module = StringField(
+        "Módulo",
+        validators=[Optional(), Length(max=120)],
+        render_kw={"placeholder": "Ex: Fundamentos para Iniciantes"}
+    )
+    level = SelectField(
+        "Nível",
+        choices=[
+            ("", "Não informado"),
+            ("iniciante", "Iniciante"),
+            ("basico", "Básico"),
+            ("intermediario", "Intermediário"),
+            ("avancado", "Avançado")
+        ],
+        validators=[Optional()]
+    )
+    estimated_minutes = IntegerField(
+        "Duração estimada (min)",
+        validators=[Optional()],
+        render_kw={"placeholder": "Ex: 15"}
+    )
+    objectives = TextAreaField(
+        "Objetivos",
+        validators=[Optional()],
+        render_kw={"rows": 4, "placeholder": "Um objetivo por linha."}
+    )
+    prerequisites = TextAreaField(
+        "Pré-requisitos",
+        validators=[Optional()],
+        render_kw={"rows": 3, "placeholder": "Um pré-requisito por linha. Use 'Nenhum' para aulas iniciais."}
+    )
+    practice_focus = TextAreaField(
+        "Foco da prática",
+        validators=[Optional()],
+        render_kw={"rows": 3, "placeholder": "Ex: Tocar notas limpas sem tensão por 5 minutos."}
+    )
     order = IntegerField(
         "Ordem de Exibição",
         default=0,
@@ -60,6 +96,29 @@ class ResourceForm(FlaskForm):
     url = StringField(
         "Link/URL do Vídeo",
         validators=[Optional()]
+    )
+    exercise_type = SelectField(
+        "Exercício vinculado",
+        choices=[
+            ("", "Nenhum"),
+            ("identify_note", "Identificar a Nota"),
+            ("find_note", "Encontrar a Nota"),
+            ("intervals", "Identificar Intervalo"),
+            ("free_train", "Treino Livre"),
+            ("harmonic_dictation", "Ditado Harmônico"),
+            ("technical_drills", "Técnica e Aquecimento")
+        ],
+        validators=[Optional()]
+    )
+    exercise_params = TextAreaField(
+        "Parâmetros do exercício (JSON)",
+        validators=[Optional()],
+        render_kw={"rows": 2, "placeholder": "{\"strings\":\"6,5\",\"frets\":\"0-12\"}"}
+    )
+    checklist_items = TextAreaField(
+        "Checklist de conclusão",
+        validators=[Optional()],
+        render_kw={"rows": 3, "placeholder": "Um item por linha."}
     )
     submit = SubmitField("Adicionar Etapa")
 
@@ -108,4 +167,3 @@ class UserCreateForm(FlaskForm):
         render_kw={"placeholder": "Mínimo de 6 caracteres"}
     )
     submit = SubmitField("Registrar Usuário")
-

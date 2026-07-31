@@ -14,22 +14,66 @@
         {% endif %}
     </div>
 
-    {% if lessons %}
-        <div class="row g-4">
-            {% for lesson in lessons %}
-            <div class="col-md-6 col-lg-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title fw-bold">{{ lesson.title }}</h5>
-                        <p class="card-text text-muted flex-grow-1">{{ lesson.description|truncate(120) }}</p>
-                        <a href="{{ url_for('guitar_study.lesson_view', lesson_id=lesson.id) }}" class="btn btn-primary mt-auto">
-                            Iniciar Aula <i class="bi bi-arrow-right-short"></i>
-                        </a>
+    {% if lesson_recommendation %}
+        {% set rec_lesson = lesson_recommendation.lesson %}
+        <div class="card bg-primary-subtle border-primary-subtle mb-4">
+            <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div>
+                    <span class="badge bg-primary mb-2">{{ lesson_recommendation.title }}</span>
+                    <h2 class="h4 fw-bold mb-1">{{ rec_lesson.title }}</h2>
+                    <p class="text-muted mb-0">{{ lesson_recommendation.description }}</p>
+                </div>
+                <a href="{{ url_for('guitar_study.lesson_view', lesson_id=rec_lesson.id) }}" class="btn btn-primary fw-bold">
+                    Continuar trilha <i class="bi bi-arrow-right-short"></i>
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if lesson_groups %}
+        {% for group in lesson_groups %}
+        <section class="mb-5">
+            <h2 class="h4 fw-bold mb-3">{{ group.title }}</h2>
+            <div class="row g-4">
+                {% for item in group.lessons %}
+                {% set lesson = item.lesson %}
+                {% set progress = item.progress %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm {% if progress and progress.status == 'completed' %}border-success-subtle{% elif progress and progress.status == 'in_progress' %}border-primary{% endif %}">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex flex-wrap gap-2 mb-2">
+                                {% if progress and progress.status == 'completed' %}
+                                    <span class="badge bg-success">Concluída</span>
+                                {% elif progress and progress.status == 'in_progress' %}
+                                    <span class="badge bg-primary">Em andamento</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Não iniciada</span>
+                                {% endif %}
+                                {% if lesson.level %}
+                                    <span class="badge bg-info-subtle text-info-emphasis">{{ lesson.level|title }}</span>
+                                {% endif %}
+                                {% if lesson.estimated_minutes %}
+                                    <span class="badge bg-warning-subtle text-warning-emphasis">{{ lesson.estimated_minutes }} min</span>
+                                {% endif %}
+                            </div>
+                            <h5 class="card-title fw-bold">{{ lesson.title }}</h5>
+                            <p class="card-text text-muted flex-grow-1">{{ lesson.description|truncate(120) }}</p>
+                            {% if lesson.practice_focus %}
+                                <p class="small text-body-secondary border-start border-3 border-primary-subtle ps-2 mb-3">
+                                    <strong>Prática:</strong> {{ lesson.practice_focus|truncate(100) }}
+                                </p>
+                            {% endif %}
+                            <a href="{{ url_for('guitar_study.lesson_view', lesson_id=lesson.id) }}" class="btn {% if progress and progress.status == 'in_progress' %}btn-primary{% else %}btn-outline-primary{% endif %} mt-auto">
+                                {% if progress and progress.status == 'completed' %}Revisar Aula{% elif progress and progress.status == 'in_progress' %}Continuar Aula{% else %}Iniciar Aula{% endif %}
+                                <i class="bi bi-arrow-right-short"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
-        </div>
+        </section>
+        {% endfor %}
     {% else %}
         <div class="text-center p-5 border rounded bg-body-tertiary">
             <h3 class="text-muted">Nenhuma aula publicada no momento.</h3>

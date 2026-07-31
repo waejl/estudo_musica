@@ -5,8 +5,9 @@ from app.extensions import db
 from app.guitar_study import guitar_study
 from app.guitar_study.models import (
     UserSettings, CustomTuning, Favorite, StudySession,
-    ExerciseAttempt, StudyGoal, RecentItem, Song
+    ExerciseAttempt, StudyGoal, RecentItem, Song, Lesson, LessonResource, LessonProgress
 )
+from app.guitar_study.services.lesson_flow import complete_progress_if_ready, get_or_create_progress
 from app.guitar_study.services.music_theory import MusicTheoryService, TUNINGS
 
 def get_user_tuning_notes(user_id: int, tuning_id: str) -> list:
@@ -300,6 +301,8 @@ def api_study_sessions():
         item_key = data.get("item_key", "").strip()
         duration = data.get("duration_minutes")
         notes = data.get("notes", "").strip()
+        lesson_id = data.get("lesson_id")
+        resource_id = data.get("resource_id")
         
         if not category or not item_key or duration is None:
             return jsonify({
@@ -330,7 +333,9 @@ def api_study_sessions():
                 category=category,
                 item_key=item_key,
                 duration_minutes=duration,
-                notes=notes
+                notes=notes,
+                lesson_id=lesson_id,
+                resource_id=resource_id
             )
             db.session.add(session)
             
@@ -348,6 +353,8 @@ def api_study_sessions():
                     "category": session.category,
                     "item_key": session.item_key,
                     "duration_minutes": session.duration_minutes,
+                    "lesson_id": session.lesson_id,
+                    "resource_id": session.resource_id,
                     "created_at": session.created_at.isoformat()
                 }
             }), 201
@@ -374,6 +381,8 @@ def api_study_sessions():
                 "item_key": s.item_key,
                 "duration_minutes": s.duration_minutes,
                 "notes": s.notes,
+                "lesson_id": s.lesson_id,
+                "resource_id": s.resource_id,
                 "created_at": s.created_at.isoformat()
             })
             
@@ -391,6 +400,67 @@ def api_study_sessions():
                 "message": f"Erro ao carregar sessões de estudo: {str(e)}"
             }
         }), 500
+
+
+# =====================================================================
+# API: PROGRESSO DE AULAS
+# =====================================================================
+@guitar_study.route("/api/v1/lessons/<int:lesson_id>/progress", methods=["GET", "POST"])
+@login_required
+def api_lesson_progress(lesson_id):
+    lesson = Lesson.query.filter_by(id=lesson_id, is_published=True).first_or_404()
+    progress = get_or_create_progress(current_user.id, lesson)
+
+    if request.method == "POST":
+        data = request.get_json() or {}
+        resource_id = data.get("resource_id")
+        completed = data.get("completed")
+        checklist = data.get("checklist")
+        complete_lesson = bool(data.get("complete_lesson"))
+
+        resource_ids = {r.id for r in lesson.resources.all()}
+        completed_ids = progress.completed_ids()
+
+        if resource_id:
+            try:
+                resource_id = int(resource_id)
+            except (TypeError, ValueError):
+                return jsonify({"success": False, "error": {"code": "INVALID_RESOURCE", "message": "Etapa inválida."}}), 400
+
+            if resource_id not in resource_ids:
+                return jsonify({"success": False, "error": {"code": "RESOURCE_NOT_FOUND", "message": "Etapa não pertence a esta aula."}}), 404
+
+            progress.current_resource_id = resource_id
+            if completed is True:
+                completed_ids.add(resource_id)
+            elif completed is False:
+                completed_ids.discard(resource_id)
+            progress.set_completed_ids(completed_ids)
+            progress.status = "in_progress"
+            progress.completed_at = None
+
+        if isinstance(checklist, dict):
+            state = progress.checklist_state()
+            for key, value in checklist.items():
+                state[str(key)] = bool(value)
+            progress.set_checklist_state(state)
+
+        if complete_lesson:
+            complete_progress_if_ready(progress, lesson)
+
+        db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "lesson_id": lesson.id,
+            "status": progress.status,
+            "current_resource_id": progress.current_resource_id,
+            "completed_resource_ids": sorted(progress.completed_ids()),
+            "checklist": progress.checklist_state(),
+            "completed_at": progress.completed_at.isoformat() if progress.completed_at else None
+        }
+    })
 
 
 # =====================================================================
@@ -646,7 +716,8 @@ def api_get_settings():
             "fret_count": settings.fret_count,
             "accidentals_preference": settings.accidentals_preference,
             "theme": settings.theme,
-            "hand_orientation": settings.hand_orientation
+            "hand_orientation": settings.hand_orientation,
+            "learning_mode": settings.learning_mode
         }
     })
 

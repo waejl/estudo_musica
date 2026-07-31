@@ -7,9 +7,9 @@ from functools import wraps
 from werkzeug.utils import secure_filename
 from flask import render_template, abort, request, redirect, url_for, flash, current_app
 from flask_login import login_required, current_user
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 from app.extensions import db
-from app.guitar_study.models import User, Lesson, LessonResource, UserRole, StepMedia
+from app.guitar_study.models import User, Lesson, LessonResource, UserRole, StepMedia, LessonProgress, StudySession
 from . import school_admin_bp
 from .forms import LessonForm, ResourceForm, UserAdminForm, UserCreateForm
 
@@ -53,6 +53,43 @@ def process_media_input(data, lesson_id, school_id, resource_type):
             
     return data
 
+
+def normalize_lesson_text(value):
+    """Aceita lista ou texto no JSON e armazena em linhas simples."""
+    if isinstance(value, list):
+        return "\n".join(str(item).strip() for item in value if str(item).strip())
+    if value is None:
+        return None
+    return str(value).strip() or None
+
+
+def normalize_json_text(value):
+    """Armazena dict/list como JSON; strings passam sem alteracao."""
+    import json
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False)
+    if value is None:
+        return None
+    return str(value).strip() or None
+
+
+def split_lesson_text(value):
+    """Exporta campos multiline como lista para facilitar manutencao do JSON."""
+    if not value:
+        return []
+    return [line.strip() for line in value.splitlines() if line.strip()]
+
+
+def normalize_export_json(value):
+    """Exporta JSON armazenado como objeto quando possivel."""
+    import json
+    if not value:
+        return {}
+    try:
+        return json.loads(value)
+    except (TypeError, ValueError):
+        return value
+
 # --- Decorators de Permissão ---
 
 def school_admin_required(f):
@@ -82,7 +119,28 @@ def teacher_or_school_admin_required(f):
 @teacher_or_school_admin_required
 def dashboard():
     """Página inicial do painel da escola."""
-    return render_template("school_admin/dashboard.html")
+    if current_user.is_super_admin:
+        users_query = User.query
+        lessons_query = Lesson.query.filter_by(school_id=None)
+    else:
+        users_query = User.query.filter_by(school_id=current_user.school_id)
+        lessons_query = Lesson.query.filter(
+            or_(Lesson.school_id == current_user.school_id, Lesson.school_id == None)
+        )
+
+    student_ids = [u.id for u in users_query.filter_by(role=UserRole.STUDENT).all()]
+    progress_query = LessonProgress.query.filter(LessonProgress.user_id.in_(student_ids)) if student_ids else LessonProgress.query.filter(False)
+    recent_progress = progress_query.order_by(LessonProgress.updated_at.desc()).limit(8).all()
+    total_minutes = db.session.query(func.sum(StudySession.duration_minutes)).filter(StudySession.user_id.in_(student_ids)).scalar() if student_ids else 0
+
+    stats = {
+        "students_count": len(student_ids),
+        "published_lessons_count": lessons_query.filter_by(is_published=True).count(),
+        "in_progress_count": progress_query.filter_by(status="in_progress").count(),
+        "completed_count": progress_query.filter_by(status="completed").count(),
+        "total_minutes": total_minutes or 0,
+    }
+    return render_template("school_admin/dashboard.html", stats=stats, recent_progress=recent_progress)
 
 # --- CRUD de Aulas ---
 
@@ -113,6 +171,12 @@ def new_lesson():
         new_lesson = Lesson(
             title=form.title.data,
             description=form.description.data,
+            module=form.module.data,
+            level=form.level.data or None,
+            estimated_minutes=form.estimated_minutes.data,
+            objectives=form.objectives.data,
+            prerequisites=form.prerequisites.data,
+            practice_focus=form.practice_focus.data,
             order=form.order.data,
             is_published=form.is_published.data,
             school_id=school_id
@@ -145,6 +209,12 @@ def edit_lesson(lesson_id):
     if form.validate_on_submit() and 'title' in request.form:
         lesson.title = form.title.data
         lesson.description = form.description.data
+        lesson.module = form.module.data
+        lesson.level = form.level.data or None
+        lesson.estimated_minutes = form.estimated_minutes.data
+        lesson.objectives = form.objectives.data
+        lesson.prerequisites = form.prerequisites.data
+        lesson.practice_focus = form.practice_focus.data
         lesson.order = form.order.data
         lesson.is_published = form.is_published.data
         db.session.commit()
@@ -233,7 +303,10 @@ def add_resource(lesson_id):
             title=form.title.data, 
             content=form.content.data, 
             resource_type=resource_type, 
-            path=path
+            path=path,
+            exercise_type=form.exercise_type.data or None,
+            exercise_params=normalize_json_text(form.exercise_params.data),
+            checklist_items=normalize_lesson_text(form.checklist_items.data)
         )
         db.session.add(new_resource)
         db.session.commit()
@@ -422,6 +495,12 @@ def import_lessons():
         for l_data in lessons_data:
             title = l_data.get('title')
             description = l_data.get('description', '')
+            module = l_data.get('module')
+            level = l_data.get('level')
+            estimated_minutes = l_data.get('estimated_minutes')
+            objectives = normalize_lesson_text(l_data.get('objectives'))
+            prerequisites = normalize_lesson_text(l_data.get('prerequisites'))
+            practice_focus = normalize_lesson_text(l_data.get('practice_focus'))
             order = l_data.get('order', 0)
             is_published = l_data.get('is_published', True)
             
@@ -432,6 +511,12 @@ def import_lessons():
             new_lesson = Lesson(
                 title=title,
                 description=description,
+                module=module,
+                level=level,
+                estimated_minutes=estimated_minutes,
+                objectives=objectives,
+                prerequisites=prerequisites,
+                practice_focus=practice_focus,
                 order=order,
                 is_published=is_published,
                 school_id=school_id
@@ -468,6 +553,9 @@ def import_lessons():
                         content=s_content,
                         resource_type=s_type,
                         path=process_media_input(s_path, new_lesson.id, school_id, s_type),
+                        exercise_type=s_data.get('exercise_type') or None,
+                        exercise_params=normalize_json_text(s_data.get('exercise_params')),
+                        checklist_items=normalize_lesson_text(s_data.get('checklist_items')),
                         order=s_data.get('order', idx + 1)
                     )
                     db.session.add(new_step)
@@ -531,6 +619,12 @@ def export_lessons():
         lesson_dict = {
             "title": lesson.title,
             "description": lesson.description,
+            "module": lesson.module,
+            "level": lesson.level,
+            "estimated_minutes": lesson.estimated_minutes,
+            "objectives": split_lesson_text(lesson.objectives),
+            "prerequisites": split_lesson_text(lesson.prerequisites),
+            "practice_focus": lesson.practice_focus,
             "order": lesson.order,
             "is_published": lesson.is_published,
             "steps": []
@@ -542,6 +636,9 @@ def export_lessons():
                 "content": resource.content,
                 "resource_type": resource.resource_type,
                 "path": resource.path,
+                "exercise_type": resource.exercise_type,
+                "exercise_params": normalize_export_json(resource.exercise_params),
+                "checklist_items": split_lesson_text(resource.checklist_items),
                 "order": resource.order,
                 "media_items": []
             }
@@ -662,7 +759,3 @@ def delete_media(media_id):
     db.session.commit()
     flash("Mídia adicional removida com sucesso.", "success")
     return redirect(url_for('school_admin.edit_lesson', lesson_id=lesson.id))
-
-
-
-

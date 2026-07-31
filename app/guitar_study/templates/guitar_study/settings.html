@@ -67,6 +67,14 @@
                             <option value="left_handed" {% if settings.hand_orientation == 'left_handed' %}selected{% endif %}>Canhoto (MI grave no fundo esquerdo, escala corre para direita)</option>
                         </select>
                     </div>
+
+                    <div class="mb-3">
+                        <label for="prefLearningMode" class="form-label fw-bold fs-7">Modo de Aprendizado</label>
+                        <select id="prefLearningMode" name="learning_mode" class="form-select">
+                            <option value="beginner" {% if settings.learning_mode == 'beginner' %}selected{% endif %}>Iniciante</option>
+                            <option value="complete" {% if settings.learning_mode == 'complete' %}selected{% endif %}>Completo</option>
+                        </select>
+                    </div>
                     
                     <div class="mb-4">
                         <label for="prefTimbre" class="form-label fw-bold fs-7">Timbre do Som (Instrumento)</label>

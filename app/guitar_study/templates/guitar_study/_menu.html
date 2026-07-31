@@ -8,6 +8,18 @@
             <span>Dashboard</span>
         </a>
     </li>
+    <li class="nav-item mt-2 px-3">
+        <span class="text-white-50 text-uppercase small fw-bold" style="font-size: 10px;">Começar</span>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint in ('guitar_study.lessons_list', 'guitar_study.lesson_view') %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.lessons_list') }}">
+            <i class="bi bi-book fs-5"></i>
+            <span>Curso</span>
+        </a>
+    </li>
+    <li class="nav-item mt-2 px-3">
+        <span class="text-white-50 text-uppercase small fw-bold" style="font-size: 10px;">Praticar</span>
+    </li>
     <li class="nav-item">
         <a class="nav-link {% if request.endpoint == 'guitar_study.fretboard' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.fretboard') }}">
             <i class="bi bi-music-note-list fs-5"></i>
@@ -33,6 +45,24 @@
         </a>
     </li>
     <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'guitar_study.exercises' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.exercises') }}">
+            <i class="bi bi-controller fs-5"></i>
+            <span>Exercícios</span>
+        </a>
+    </li>
+    <li class="nav-item mt-2 px-3">
+        <span class="text-white-50 text-uppercase small fw-bold" style="font-size: 10px;">Repertório</span>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint in ('guitar_study.songs', 'guitar_study.song_view') %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.songs') }}">
+            <i class="bi bi-music-note-beamed fs-5"></i>
+            <span>Cifras</span>
+        </a>
+    </li>
+    <li class="nav-item mt-2 px-3">
+        <span class="text-white-50 text-uppercase small fw-bold" style="font-size: 10px;">Teoria</span>
+    </li>
+    <li class="nav-item">
         <a class="nav-link {% if request.endpoint == 'guitar_study.harmony' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.harmony') }}">
             <i class="bi bi-music-player-fill fs-5"></i>
             <span>Harmonia Funcional</span>
@@ -48,24 +78,6 @@
         <a class="nav-link {% if request.endpoint == 'guitar_study.triads_arpeggios' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.triads_arpeggios') }}">
             <i class="bi bi-bezier2 fs-5 text-info"></i>
             <span>Tríades & Arpejos CAGED</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link {% if request.endpoint == 'guitar_study.exercises' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.exercises') }}">
-            <i class="bi bi-controller fs-5"></i>
-            <span>Exercícios</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link {% if request.endpoint in ('guitar_study.songs', 'guitar_study.song_view') %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.songs') }}">
-            <i class="bi bi-music-note-beamed fs-5"></i>
-            <span>Cifras</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link {% if request.endpoint in ('guitar_study.lessons_list', 'guitar_study.lesson_view') %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.lessons_list') }}">
-            <i class="bi bi-book fs-5"></i>
-            <span>Aulas</span>
         </a>
     </li>
 

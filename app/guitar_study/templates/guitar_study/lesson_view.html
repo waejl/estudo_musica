@@ -112,11 +112,72 @@
         {% if lesson.description %}
             <p class="lead text-muted"><i class="bi bi-info-circle me-2 text-warning"></i>{{ lesson.description }}</p>
         {% endif %}
-        {% if not lesson.school_id %}
-            <span class="badge bg-info-subtle border border-info-subtle text-info-emphasis rounded-pill">
+        <div class="d-flex flex-wrap gap-2 mb-4">
+            {% if lesson.module %}
+                <span class="badge bg-primary-subtle border border-primary-subtle text-primary-emphasis rounded-pill">{{ lesson.module }}</span>
+            {% endif %}
+            {% if lesson.level %}
+                <span class="badge bg-warning-subtle border border-warning-subtle text-warning-emphasis rounded-pill">{{ lesson.level|title }}</span>
+            {% endif %}
+            {% if lesson.estimated_minutes %}
+                <span class="badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill">{{ lesson.estimated_minutes }} min</span>
+            {% endif %}
+            {% if not lesson.school_id %}
+                <span class="badge bg-info-subtle border border-info-subtle text-info-emphasis rounded-pill">
                 <i class="bi bi-shield-fill-check me-1"></i>Conteúdo Base Oficial
-            </span>
+                </span>
+            {% endif %}
+        </div>
+
+        {% if lesson.objectives or lesson.prerequisites or lesson.practice_focus %}
+            <div class="row g-3 mt-3">
+                {% if lesson.objectives %}
+                <div class="col-md-4">
+                    <div class="h-100 p-3 bg-body-tertiary rounded-3 border border-secondary-subtle">
+                        <h6 class="fw-bold text-primary mb-2"><i class="bi bi-bullseye me-1"></i>Objetivos</h6>
+                        <ul class="small text-muted mb-0 ps-3">
+                            {% for item in lesson.objectives.splitlines() if item.strip() %}
+                                <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+                {% if lesson.prerequisites %}
+                <div class="col-md-4">
+                    <div class="h-100 p-3 bg-body-tertiary rounded-3 border border-secondary-subtle">
+                        <h6 class="fw-bold text-warning mb-2"><i class="bi bi-check2-circle me-1"></i>Antes de começar</h6>
+                        <ul class="small text-muted mb-0 ps-3">
+                            {% for item in lesson.prerequisites.splitlines() if item.strip() %}
+                                <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+                {% if lesson.practice_focus %}
+                <div class="col-md-4">
+                    <div class="h-100 p-3 bg-body-tertiary rounded-3 border border-secondary-subtle">
+                        <h6 class="fw-bold text-success mb-2"><i class="bi bi-activity me-1"></i>Foco da prática</h6>
+                        <p class="small text-muted mb-0">{{ lesson.practice_focus }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
         {% endif %}
+        <div class="mt-4 p-3 bg-body-tertiary rounded-3 border border-secondary-subtle">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div>
+                    <span class="small text-muted d-block mb-1">Progresso da aula</span>
+                    <strong class="{% if progress.status == 'completed' %}text-success{% else %}text-primary{% endif %}">
+                        {% if progress.status == 'completed' %}Concluída{% else %}Em andamento{% endif %}
+                    </strong>
+                </div>
+                <a href="{{ url_for('guitar_study.lessons_list') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-list-check me-1"></i>Ver trilha
+                </a>
+            </div>
+        </div>
     </div>
 
     {# Conteúdo Sequencial por Etapas #}
@@ -128,10 +189,16 @@
                 {% for resource in lesson.resources.order_by('order') %}
                 <div class="card shadow-sm border border-secondary-subtle mb-5">
                     <div class="card-header bg-dark-subtle py-3 px-4">
-                        <h4 class="h5 fw-bold mb-0 d-flex align-items-center gap-2">
-                            <span class="badge bg-primary font-monospace fs-7">Passo {{ loop.index }}</span>
-                            <span>{{ resource.title }}</span>
-                        </h4>
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <h4 class="h5 fw-bold mb-0 d-flex align-items-center gap-2">
+                                <span class="badge bg-primary font-monospace fs-7">Passo {{ loop.index }}</span>
+                                <span>{{ resource.title }}</span>
+                            </h4>
+                            <label class="form-check form-switch mb-0">
+                                <input class="form-check-input lesson-step-toggle" type="checkbox" data-resource-id="{{ resource.id }}" {% if resource.id in completed_resource_ids %}checked{% endif %}>
+                                <span class="form-check-label small fw-semibold">Etapa concluída</span>
+                            </label>
+                        </div>
                     </div>
                     
                     <div class="card-body px-4 py-4">
@@ -249,14 +316,45 @@
                             </div>
                             {% endfor %}
                         {% endif %}
+
+                        {% if resource.exercise_type %}
+                            {% set exercise_query = resource.exercise_query_string() %}
+                            <div class="mt-4 p-3 bg-primary-subtle border border-primary-subtle rounded-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+                                <div>
+                                    <h6 class="fw-bold text-primary mb-1"><i class="bi bi-controller me-1"></i>Pratique na ferramenta</h6>
+                                    <p class="small text-muted mb-0">Abra o exercício vinculado a esta etapa e registre a etapa como concluída quando terminar.</p>
+                                </div>
+                                <a href="{{ url_for('guitar_study.exercises') }}{% if exercise_query %}?{{ exercise_query }}{% endif %}" class="btn btn-primary btn-sm fw-bold">
+                                    Abrir Exercício <i class="bi bi-arrow-right-short"></i>
+                                </a>
+                            </div>
+                        {% endif %}
+
+                        {% if resource.checklist_lines() %}
+                            <div class="mt-4 p-3 bg-body-tertiary border border-secondary-subtle rounded-3">
+                                <h6 class="fw-bold mb-3"><i class="bi bi-check2-square me-1"></i>Teste se aprendeu</h6>
+                                <div class="d-flex flex-column gap-2">
+                                    {% for checklist_item in resource.checklist_lines() %}
+                                        {% set checklist_key = resource.id ~ ':' ~ checklist_item %}
+                                        <label class="form-check small mb-0">
+                                            <input class="form-check-input lesson-checklist-toggle" type="checkbox" data-checklist-key="{{ checklist_key }}" {% if checklist_state.get(checklist_key) %}checked{% endif %}>
+                                            <span class="form-check-label">{{ checklist_item }}</span>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
                 
                 <div class="card bg-success-subtle border border-success-subtle text-success-emphasis p-4 rounded-3 text-center shadow-sm mb-5">
                     <i class="bi bi-check-circle-fill fs-1 mb-2"></i>
-                    <h5 class="fw-bold mb-1">Parabéns por concluir os passos!</h5>
-                    <p class="mb-0 small">Mantenha a prática constante. Se precisar, revise as etapas acima quantas vezes quiser.</p>
+                    <h5 class="fw-bold mb-1">Finalize quando cumprir todos os passos</h5>
+                    <p class="small mb-3">A conclusão só fica registrada quando todas as etapas e checklists desta aula estiverem marcados.</p>
+                    <button type="button" id="btnCompleteLesson" class="btn btn-success fw-bold align-self-center">
+                        Marcar aula como concluída
+                    </button>
                 </div>
             {% else %}
                 <div class="text-center p-5 border rounded bg-body-tertiary">
@@ -272,6 +370,74 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const progressUrl = "{{ url_for('guitar_study.api_lesson_progress', lesson_id=lesson.id) }}";
+
+    async function saveLessonProgress(payload) {
+        const response = await fetch(progressUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            const message = data.error?.message || 'Não foi possível atualizar o progresso.';
+            throw new Error(message);
+        }
+        return data.data;
+    }
+
+    document.querySelectorAll('.lesson-step-toggle').forEach(input => {
+        input.addEventListener('change', async () => {
+            input.disabled = true;
+            try {
+                await saveLessonProgress({
+                    resource_id: Number(input.dataset.resourceId),
+                    completed: input.checked
+                });
+            } catch (error) {
+                input.checked = !input.checked;
+                alert(error.message);
+            } finally {
+                input.disabled = false;
+            }
+        });
+    });
+
+    document.querySelectorAll('.lesson-checklist-toggle').forEach(input => {
+        input.addEventListener('change', async () => {
+            input.disabled = true;
+            try {
+                await saveLessonProgress({
+                    checklist: { [input.dataset.checklistKey]: input.checked }
+                });
+            } catch (error) {
+                input.checked = !input.checked;
+                alert(error.message);
+            } finally {
+                input.disabled = false;
+            }
+        });
+    });
+
+    const completeButton = document.getElementById('btnCompleteLesson');
+    if (completeButton) {
+        completeButton.addEventListener('click', async () => {
+            completeButton.disabled = true;
+            try {
+                const result = await saveLessonProgress({ complete_lesson: true });
+                if (result.status === 'completed') {
+                    window.location.reload();
+                } else {
+                    alert('Conclua todas as etapas e checklists antes de finalizar a aula.');
+                }
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                completeButton.disabled = false;
+            }
+        });
+    }
+
     // Renderizador Automático de Marcações de Braço de Guitarra para o Aluno
     document.querySelectorAll('.fretboard-renderer').forEach(renderer => {
         const notesJson = renderer.getAttribute('data-notes-json');

@@ -6,7 +6,10 @@ from sqlalchemy import func
 from app.extensions import db
 from app.guitar_study import guitar_study
 from app.guitar_study.models import (
-    UserSettings, Favorite, StudySession, ExerciseAttempt, StudyGoal, RecentItem, Song
+    UserSettings, Favorite, StudySession, ExerciseAttempt, StudyGoal, RecentItem, Song, Lesson
+)
+from app.guitar_study.services.lesson_flow import (
+    get_or_create_progress, grouped_lessons_for_user, recommendation_for_user
 )
 from app.guitar_study.services.music_theory import TUNINGS, SHARPS_SCALE
 
@@ -75,6 +78,8 @@ def dashboard():
     
     # 7. Metas de estudos
     goals = StudyGoal.query.filter_by(user_id=user_id).order_by(StudyGoal.is_completed.asc(), StudyGoal.deadline.asc()).limit(3).all()
+
+    lesson_recommendation = recommendation_for_user(user_id)
     
     # 8. Recomendações (Dinâmicas simplificadas baseadas no que já foi estudado)
     recommendations = []
@@ -112,7 +117,8 @@ def dashboard():
         favorites=favorites,
         weekly_sessions_count=weekly_sessions_count,
         goals=goals,
-        recommendations=recommendations
+        recommendations=recommendations,
+        lesson_recommendation=lesson_recommendation
     )
 
 
@@ -306,17 +312,23 @@ def triads_arpeggios():
 @login_required
 def lessons_list():
     """Mostra a lista de aulas disponíveis para o aluno."""
-    from app.guitar_study.models import Lesson
-    lessons = Lesson.query.filter_by(is_published=True).order_by(Lesson.order.asc()).all()
-    return render_template("guitar_study/lessons_list.html", lessons=lessons)
+    lesson_groups = grouped_lessons_for_user(current_user.id)
+    lesson_recommendation = recommendation_for_user(current_user.id)
+    return render_template(
+        "guitar_study/lessons_list.html",
+        lesson_groups=lesson_groups,
+        lesson_recommendation=lesson_recommendation
+    )
 
 
 @guitar_study.route("/lessons/<int:lesson_id>")
 @login_required
 def lesson_view(lesson_id):
     """Exibe o conteúdo de uma aula específica."""
-    from app.guitar_study.models import Lesson
     lesson = Lesson.query.filter_by(id=lesson_id, is_published=True).first_or_404()
+    progress = get_or_create_progress(current_user.id, lesson)
+    completed_resource_ids = progress.completed_ids()
+    checklist_state = progress.checklist_state()
     
     # Lógica para tratar URL do YouTube
     youtube_embed_url = None
@@ -335,4 +347,10 @@ def lesson_view(lesson_id):
             except Exception:
                 resource.youtube_embed_url = None # Falha em extrair, não quebra a página
 
-    return render_template("guitar_study/lesson_view.html", lesson=lesson)
+    return render_template(
+        "guitar_study/lesson_view.html",
+        lesson=lesson,
+        progress=progress,
+        completed_resource_ids=completed_resource_ids,
+        checklist_state=checklist_state
+    )

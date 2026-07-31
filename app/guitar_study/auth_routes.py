@@ -100,7 +100,8 @@ def register():
                 tuning_id="standard",
                 fret_count=22,
                 accidentals_preference="sharps",
-                theme="dark"
+                theme="dark",
+                learning_mode="beginner"
             )
             db.session.add(default_settings)
             db.session.commit()
@@ -192,6 +193,7 @@ def update_preferences():
     accidentals_preference = request.form.get("accidentals_preference", "sharps")
     theme = request.form.get("theme", "dark")
     hand_orientation = request.form.get("hand_orientation", "right_handed")
+    learning_mode = request.form.get("learning_mode", "beginner")
     
     # Validações básicas
     if fret_count not in [21, 22, 24]:
@@ -202,6 +204,8 @@ def update_preferences():
         theme = "dark"
     if hand_orientation not in ["right_handed", "left_handed"]:
         hand_orientation = "right_handed"
+    if learning_mode not in ["beginner", "complete"]:
+        learning_mode = "beginner"
         
     try:
         settings = current_user.settings
@@ -214,6 +218,7 @@ def update_preferences():
         settings.accidentals_preference = accidentals_preference
         settings.theme = theme
         settings.hand_orientation = hand_orientation
+        settings.learning_mode = learning_mode
         
         db.session.commit()
         flash("Preferências atualizadas com sucesso!", "success")
@@ -252,4 +257,3 @@ def create_custom_tuning():
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": f"Erro interno do servidor: {str(e)}"}), 500
-

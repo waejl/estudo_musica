@@ -29,6 +29,14 @@
                     {{ render_field(form.title, extra_class="form-control") }}
                     {{ render_field(form.description, extra_class="form-control") }}
                     <div class="row g-2">
+                        <div class="col-md-7">{{ render_field(form.module, extra_class="form-control") }}</div>
+                        <div class="col-md-5">{{ render_field(form.level, extra_class="form-select") }}</div>
+                    </div>
+                    {{ render_field(form.estimated_minutes, extra_class="form-control") }}
+                    {{ render_field(form.objectives, extra_class="form-control") }}
+                    {{ render_field(form.prerequisites, extra_class="form-control") }}
+                    {{ render_field(form.practice_focus, extra_class="form-control") }}
+                    <div class="row g-2">
                         <div class="col-md-6">{{ render_field(form.order, extra_class="form-control") }}</div>
                         <div class="col-md-6 d-flex align-items-center mt-4">{{ render_field(form.is_published, extra_class="form-check-input") }}</div>
                     </div>
@@ -102,6 +110,12 @@
                                 <input type="file" name="file" id="file" class="form-control form-control-sm" accept=".pdf,image/*">
                             </div>
                         </div>
+                        <div class="bg-body p-3 rounded-3 border mb-3">
+                            <h6 class="fw-bold small text-body-secondary mb-3">Prática e conclusão</h6>
+                            {{ render_field(resource_form.exercise_type, extra_class="form-select-sm") }}
+                            {{ render_field(resource_form.exercise_params, extra_class="form-control-sm") }}
+                            {{ render_field(resource_form.checklist_items, extra_class="form-control-sm") }}
+                        </div>
                         <div class="d-grid">{{ resource_form.submit(class="btn btn-primary fw-bold shadow-sm") }}</div>
                     </form>
                 </div>
@@ -121,6 +135,11 @@
         <div class="card-body bg-dark text-light">
             <h3 class="fw-bold text-white">{{ lesson.title }}</h3>
             <p class="text-secondary">{{ lesson.description }}</p>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                {% if lesson.module %}<span class="badge bg-primary-subtle text-primary-emphasis">{{ lesson.module }}</span>{% endif %}
+                {% if lesson.level %}<span class="badge bg-info-subtle text-info-emphasis">{{ lesson.level|title }}</span>{% endif %}
+                {% if lesson.estimated_minutes %}<span class="badge bg-warning-subtle text-warning-emphasis">{{ lesson.estimated_minutes }} min</span>{% endif %}
+            </div>
             <hr class="border-secondary">
             {% for resource in lesson.resources.order_by('order') %}
                 <div class="mb-5 p-3 bg-secondary bg-opacity-10 rounded border border-secondary">

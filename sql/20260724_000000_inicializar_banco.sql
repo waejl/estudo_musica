@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS user_settings (
     tuning_id VARCHAR(50) NOT NULL DEFAULT 'standard',
     fret_count INTEGER NOT NULL DEFAULT 22,
     accidentals_preference VARCHAR(10) NOT NULL DEFAULT 'sharps',
-    theme VARCHAR(10) NOT NULL DEFAULT 'dark'
+    theme VARCHAR(10) NOT NULL DEFAULT 'dark',
+    learning_mode VARCHAR(20) NOT NULL DEFAULT 'beginner'
 );
 
 CREATE TABLE IF NOT EXISTS custom_tunings (
@@ -60,6 +61,8 @@ CREATE TABLE IF NOT EXISTS study_sessions (
     item_key VARCHAR(100) NOT NULL,
     duration_minutes INTEGER NOT NULL,
     notes TEXT,
+    lesson_id INTEGER,
+    resource_id INTEGER,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -113,6 +116,12 @@ CREATE TABLE IF NOT EXISTS lessons (
     title VARCHAR(200) NOT NULL,
     description TEXT,
     content TEXT,
+    module VARCHAR(120),
+    level VARCHAR(30),
+    estimated_minutes INTEGER,
+    objectives TEXT,
+    prerequisites TEXT,
+    practice_focus TEXT,
     "order" INTEGER NOT NULL DEFAULT 0,
     is_published BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -126,8 +135,25 @@ CREATE TABLE IF NOT EXISTS lesson_resources (
     path VARCHAR(500),
     title VARCHAR(200) NOT NULL,
     content TEXT,
+    exercise_type VARCHAR(80),
+    exercise_params TEXT,
+    checklist_items TEXT,
     "order" INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS lesson_progress (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    lesson_id INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+    current_resource_id INTEGER REFERENCES lesson_resources(id) ON DELETE SET NULL,
+    completed_resource_ids TEXT,
+    checklist_data TEXT,
+    status VARCHAR(30) NOT NULL DEFAULT 'in_progress',
+    started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_lesson_progress_user_lesson UNIQUE (user_id, lesson_id)
 );
 
 CREATE TABLE IF NOT EXISTS step_medias (
@@ -140,9 +166,29 @@ CREATE TABLE IF NOT EXISTS step_medias (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+DO $$ BEGIN
+    ALTER TABLE study_sessions
+        ADD CONSTRAINT fk_study_sessions_lesson_id
+        FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE SET NULL;
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    ALTER TABLE study_sessions
+        ADD CONSTRAINT fk_study_sessions_resource_id
+        FOREIGN KEY (resource_id) REFERENCES lesson_resources(id) ON DELETE SET NULL;
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
 -- Indices
 CREATE INDEX IF NOT EXISTS idx_users_school_id ON users(school_id);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 CREATE INDEX IF NOT EXISTS idx_lessons_school_id ON lessons(school_id);
+CREATE INDEX IF NOT EXISTS idx_study_sessions_lesson_id ON study_sessions(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_study_sessions_resource_id ON study_sessions(resource_id);
 CREATE INDEX IF NOT EXISTS idx_lesson_resources_lesson_id ON lesson_resources(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_lesson_progress_user_id ON lesson_progress(user_id);
+CREATE INDEX IF NOT EXISTS idx_lesson_progress_lesson_id ON lesson_progress(lesson_id);
 CREATE INDEX IF NOT EXISTS idx_step_medias_resource_id ON step_medias(resource_id);

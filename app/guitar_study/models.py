@@ -1,5 +1,7 @@
 import enum
+import json
 from datetime import datetime
+from urllib.parse import urlencode
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.extensions import db, login_manager
@@ -51,6 +53,7 @@ class User(db.Model, UserMixin):
     study_goals = db.relationship("StudyGoal", back_populates="user", cascade="all, delete-orphan")
     recent_items = db.relationship("RecentItem", back_populates="user", cascade="all, delete-orphan")
     songs = db.relationship("Song", back_populates="user", cascade="all, delete-orphan")
+    lesson_progress = db.relationship("LessonProgress", back_populates="user", cascade="all, delete-orphan")
 
     def set_password(self, password):
         """Gera e define o hash seguro da senha."""
@@ -86,6 +89,7 @@ class UserSettings(db.Model):
     accidentals_preference = db.Column(db.String(10), default="sharps", nullable=False)  # sharps ou flats
     theme = db.Column(db.String(10), default="dark", nullable=False)  # dark ou light
     hand_orientation = db.Column(db.String(20), default="right_handed", nullable=False)  # right_handed ou left_handed
+    learning_mode = db.Column(db.String(20), default="beginner", nullable=False)  # beginner ou complete
 
     # Relacionamento de volta para o usuário
     user = db.relationship("User", back_populates="settings")
@@ -138,10 +142,14 @@ class StudySession(db.Model):
     item_key = db.Column(db.String(100), nullable=False)  # Ex: "major_scale", "identify_note"
     duration_minutes = db.Column(db.Integer, nullable=False)
     notes = db.Column(db.Text, nullable=True)
+    lesson_id = db.Column(db.Integer, db.ForeignKey("lessons.id", ondelete="SET NULL"), nullable=True, index=True)
+    resource_id = db.Column(db.Integer, db.ForeignKey("lesson_resources.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     # Relacionamento
     user = db.relationship("User", back_populates="study_sessions")
+    lesson = db.relationship("Lesson")
+    resource = db.relationship("LessonResource")
 
     def __repr__(self):
         return f"<StudySession category={self.category} duration={self.duration_minutes}m>"
@@ -240,6 +248,12 @@ class Lesson(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
     content = db.Column(db.Text, nullable=True)
+    module = db.Column(db.String(120), nullable=True)
+    level = db.Column(db.String(30), nullable=True)
+    estimated_minutes = db.Column(db.Integer, nullable=True)
+    objectives = db.Column(db.Text, nullable=True)
+    prerequisites = db.Column(db.Text, nullable=True)
+    practice_focus = db.Column(db.Text, nullable=True)
     order = db.Column(db.Integer, nullable=False, default=0)
     is_published = db.Column(db.Boolean, default=False, nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -247,6 +261,7 @@ class Lesson(db.Model):
 
     school = db.relationship("School", back_populates="lessons")
     resources = db.relationship("LessonResource", back_populates="lesson", cascade="all, delete-orphan", lazy='dynamic')
+    progress_entries = db.relationship("LessonProgress", back_populates="lesson", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Lesson {self.title}>"
@@ -267,6 +282,9 @@ class LessonResource(db.Model):
     
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=True) # Texto explicativo rico da etapa
+    exercise_type = db.Column(db.String(80), nullable=True)
+    exercise_params = db.Column(db.Text, nullable=True)
+    checklist_items = db.Column(db.Text, nullable=True)
     order = db.Column(db.Integer, nullable=False, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
@@ -274,6 +292,25 @@ class LessonResource(db.Model):
     
     # Suporte a múltiplos arquivos/links adicionais para a mesma etapa
     media_items = db.relationship("StepMedia", back_populates="resource", cascade="all, delete-orphan", lazy='dynamic')
+
+    def exercise_query_string(self):
+        """Retorna parametros de exercicio em query string simples para CTA da aula."""
+        params = {}
+        if self.exercise_type:
+            params["type"] = self.exercise_type
+        if self.exercise_params:
+            try:
+                data = json.loads(self.exercise_params)
+                if isinstance(data, dict):
+                    params.update({k: v for k, v in data.items() if v is not None and v != ""})
+            except (TypeError, ValueError):
+                pass
+        return urlencode(params)
+
+    def checklist_lines(self):
+        if not self.checklist_items:
+            return []
+        return [line.strip() for line in self.checklist_items.splitlines() if line.strip()]
 
     def __repr__(self):
         return f"<LessonResource {self.title} (type={self.resource_type})>"
@@ -296,6 +333,56 @@ class StepMedia(db.Model):
 
     def __repr__(self):
         return f"<StepMedia {self.media_type} path={self.path}>"
+
+
+class LessonProgress(db.Model):
+    """Progresso individual do aluno em uma aula publicada."""
+    __tablename__ = "lesson_progress"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    lesson_id = db.Column(db.Integer, db.ForeignKey("lessons.id", ondelete="CASCADE"), nullable=False, index=True)
+    current_resource_id = db.Column(db.Integer, db.ForeignKey("lesson_resources.id", ondelete="SET NULL"), nullable=True)
+    completed_resource_ids = db.Column(db.Text, nullable=True)
+    checklist_data = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(30), default="in_progress", nullable=False, index=True)
+    started_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "lesson_id", name="uq_lesson_progress_user_lesson"),
+    )
+
+    user = db.relationship("User", back_populates="lesson_progress")
+    lesson = db.relationship("Lesson", back_populates="progress_entries")
+    current_resource = db.relationship("LessonResource")
+
+    def completed_ids(self):
+        if not self.completed_resource_ids:
+            return set()
+        try:
+            return {int(item) for item in json.loads(self.completed_resource_ids)}
+        except (TypeError, ValueError):
+            return set()
+
+    def set_completed_ids(self, ids):
+        self.completed_resource_ids = json.dumps(sorted({int(item) for item in ids}))
+
+    def checklist_state(self):
+        if not self.checklist_data:
+            return {}
+        try:
+            data = json.loads(self.checklist_data)
+            return data if isinstance(data, dict) else {}
+        except (TypeError, ValueError):
+            return {}
+
+    def set_checklist_state(self, state):
+        self.checklist_data = json.dumps(state or {}, ensure_ascii=False)
+
+    def __repr__(self):
+        return f"<LessonProgress user_id={self.user_id} lesson_id={self.lesson_id} status={self.status}>"
 
 
 # Loader para o Flask-Login

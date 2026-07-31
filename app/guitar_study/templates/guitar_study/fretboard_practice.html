@@ -1,0 +1,389 @@
+{% extends 'guitar_study/base.html' %}
+
+{% block title %}Prática Livre do Braço{% endblock %}
+
+{% block extra_css %}
+<style>
+    .practice-toolbar {
+        border: 1px solid var(--bs-border-color-translucent);
+        background: var(--bs-secondary-bg);
+    }
+    .saved-map-list {
+        max-height: 180px;
+        overflow-y: auto;
+    }
+    .saved-map-item {
+        border: 1px solid var(--bs-border-color-translucent);
+        background: var(--bs-tertiary-bg);
+    }
+    .saved-map-item.active {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 1px var(--bs-primary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-12 col-lg-8">
+        <h1 class="fw-extrabold mb-1"><i class="bi bi-brush text-primary"></i> Prática Livre do Braço</h1>
+        <p class="text-muted mb-0">Monte mapas de notas, escalas ou regiões do braço e salve para revisar depois.</p>
+    </div>
+    <div class="col-12 col-lg-4 text-lg-end mt-3 mt-lg-0">
+        <button id="btnNewMap" class="btn btn-outline-secondary fw-bold me-2"><i class="bi bi-file-earmark-plus"></i> Novo</button>
+        <button id="btnSaveMap" class="btn btn-primary fw-bold"><i class="bi bi-save"></i> Salvar</button>
+    </div>
+</div>
+
+<fieldset class="card bg-body-tertiary">
+    <div class="card-body">
+        <div class="mb-4">
+            <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-collection text-primary"></i> Braços Salvos</h5>
+                <div class="d-flex gap-2">
+                    <button id="btnUpdateMap" class="btn btn-sm btn-outline-primary fw-bold" disabled><i class="bi bi-pencil-square"></i> Atualizar selecionado</button>
+                    <button id="btnDeleteMap" class="btn btn-sm btn-outline-danger fw-bold" disabled><i class="bi bi-trash"></i> Excluir selecionado</button>
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-12 col-lg-4">
+                    <input id="mapTitle" type="text" class="form-control form-control-sm" maxlength="150" placeholder="Nome do estudo">
+                </div>
+                <div class="col-12 col-lg-8">
+                    <input id="mapDescription" type="text" class="form-control form-control-sm" placeholder="Observação opcional">
+                </div>
+            </div>
+            <div id="savedMapsList" class="saved-map-list d-grid gap-2 mt-3">
+                <div class="text-muted fs-7">Nenhum braço salvo ainda.</div>
+            </div>
+        </div>
+
+        <div class="row g-3 align-items-end practice-toolbar rounded-3 p-3 mb-4">
+            <div class="col-12 col-md-3 col-lg-2">
+                <label for="tonicSelect" class="form-label fw-bold fs-7 text-danger"><i class="bi bi-geo-alt-fill"></i> Tônica</label>
+                <select id="tonicSelect" class="form-select form-select-sm">
+                    <option value="">Nenhuma</option>
+                    {% for note in chromatic_notes %}
+                    <option value="{{ note }}">{{ note }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <label for="scaleRoot" class="form-label fw-bold fs-7 text-success">Nota</label>
+                <select id="scaleRoot" class="form-select form-select-sm">
+                    {% for note in chromatic_notes %}
+                    <option value="{{ note }}">{{ note }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-6 col-md-3 col-lg-3">
+                <label for="scaleType" class="form-label fw-bold fs-7 text-success">Escala</label>
+                <select id="scaleType" class="form-select form-select-sm">
+                    <option value="major">Maior Natural</option>
+                    <option value="minor">Menor Natural</option>
+                    <option value="pentatonic_major">Pentatônica Maior</option>
+                    <option value="pentatonic_minor">Pentatônica Menor</option>
+                    <option value="blues">Blues</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-3 col-lg-auto">
+                <button id="btnLoadScale" class="btn btn-sm btn-success fw-bold w-100"><i class="bi bi-play-fill"></i> Carregar Escala</button>
+            </div>
+            <div class="col-12 col-lg-auto ms-lg-auto">
+                <button id="btnClearFretboard" class="btn btn-sm btn-outline-danger fw-bold w-100"><i class="bi bi-trash"></i> Limpar Braço</button>
+            </div>
+        </div>
+
+        <div>
+            <h5 class="fw-extrabold mb-3 text-center text-body-emphasis">Clique nas notas para acender ou apagar e montar seu estudo.</h5>
+            <div class="overflow-hidden rounded-3 border border-secondary-subtle">
+                <div id="practiceFretboard"></div>
+            </div>
+        </div>
+    </div>
+</fieldset>
+                </div>
+
+                <div id="savedMapsList" class="saved-map-list d-grid gap-2">
+                    <div class="text-muted fs-7">Nenhum braço salvo ainda.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+    import { Fretboard } from "{{ url_for('guitar_study.static', filename='js/fretboard.js') }}";
+    import { showToast } from "{{ url_for('guitar_study.static', filename='js/app.js') }}";
+
+    const settings = {
+        tuningId: "{{ settings.tuning_id if settings else 'standard' }}",
+        fretCount: {{ settings.fret_count if settings else 22 }},
+        accidentalsPreference: "{{ settings.accidentals_preference if settings else 'sharps' }}",
+        handOrientation: "{{ settings.hand_orientation if settings else 'right_handed' }}"
+    };
+
+    let fretboard = null;
+    let activeMapId = null;
+    let savedMaps = [];
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        fretboard = new Fretboard("practiceFretboard", {
+            tuningId: settings.tuningId,
+            fretCount: settings.fretCount,
+            tonic: document.getElementById("tonicSelect").value,
+            viewMode: "modo_editor",
+            displayType: "notes",
+            handOrientation: settings.handOrientation
+        });
+        await fretboard.init();
+        fretboard.setViewMode("modo_editor");
+
+        bindEvents();
+        await loadSavedMaps();
+    });
+
+    function bindEvents() {
+        document.getElementById("tonicSelect").addEventListener("change", (event) => {
+            fretboard.options.tonic = event.target.value;
+            fretboard.renderNotesContent();
+        });
+
+        document.getElementById("btnLoadScale").addEventListener("click", loadScaleIntoFretboard);
+        document.getElementById("btnClearFretboard").addEventListener("click", clearFretboard);
+        document.getElementById("btnNewMap").addEventListener("click", resetEditor);
+        document.getElementById("btnSaveMap").addEventListener("click", createSavedMap);
+        document.getElementById("btnUpdateMap").addEventListener("click", updateSavedMap);
+        document.getElementById("btnDeleteMap").addEventListener("click", deleteSavedMap);
+    }
+
+    async function loadScaleIntoFretboard() {
+        const root = document.getElementById("scaleRoot").value;
+        const type = document.getElementById("scaleType").value;
+
+        try {
+            const response = await fetch(`/guitar-study/api/v1/scales?root=${encodeURIComponent(root)}&type=${type}&preference=${settings.accidentalsPreference}`);
+            const result = await response.json();
+            if (!result.success || !result.data?.notes) {
+                showToast("Erro ao carregar escala.", "danger");
+                return;
+            }
+
+            applyNotesByName(result.data.notes);
+            document.getElementById("tonicSelect").value = root;
+            fretboard.options.tonic = root;
+            fretboard.renderNotesContent();
+            showToast(`Escala de ${root} carregada no braço.`, "success");
+        } catch (error) {
+            console.error(error);
+            showToast("Erro de conexão ao carregar escala.", "danger");
+        }
+    }
+
+    function applyNotesByName(noteNames) {
+        const cells = fretboard.fretboardEl.querySelectorAll(".fretboard-cell");
+        cells.forEach((cell) => {
+            const badge = cell.querySelector(".fret-note");
+            const visible = noteNames.includes(cell.getAttribute("data-note"));
+            setBadgeVisible(badge, visible);
+        });
+        fretboard.updateTabAndSheet();
+    }
+
+    function clearFretboard() {
+        const cells = fretboard.fretboardEl.querySelectorAll(".fretboard-cell");
+        cells.forEach((cell) => setBadgeVisible(cell.querySelector(".fret-note"), false));
+        fretboard.updateTabAndSheet();
+        showToast("Braço limpo.", "info");
+    }
+
+    function setBadgeVisible(badge, visible) {
+        if (!badge) return;
+        badge.classList.toggle("visible", visible);
+        badge.style.opacity = visible ? "1" : "0";
+        badge.style.transform = visible ? "scale(1)" : "scale(0.6)";
+    }
+
+    function collectVisibleNotes() {
+        const notes = [];
+        const cells = fretboard.fretboardEl.querySelectorAll(".fretboard-cell");
+        cells.forEach((cell) => {
+            const badge = cell.querySelector(".fret-note");
+            if (badge?.classList.contains("visible")) {
+                notes.push({
+                    string: Number(cell.getAttribute("data-string")),
+                    fret: Number(cell.getAttribute("data-fret")),
+                    note: cell.getAttribute("data-note")
+                });
+            }
+        });
+        return notes;
+    }
+
+    function buildPayload() {
+        return {
+            title: document.getElementById("mapTitle").value.trim(),
+            description: document.getElementById("mapDescription").value.trim(),
+            tuning_id: settings.tuningId,
+            fret_count: settings.fretCount,
+            tonic: document.getElementById("tonicSelect").value,
+            display_type: "notes",
+            notes: collectVisibleNotes()
+        };
+    }
+
+    async function createSavedMap() {
+        const payload = buildPayload();
+        if (!payload.title) {
+            showToast("Informe um nome para salvar.", "warning");
+            return;
+        }
+
+        const result = await sendJson("/guitar-study/api/v1/fretboard-maps", "POST", payload);
+        if (!result) return;
+        activeMapId = result.data.id;
+        showToast("Braço salvo para estudar depois.", "success");
+        await loadSavedMaps();
+    }
+
+    async function updateSavedMap() {
+        if (!activeMapId) return;
+        const payload = buildPayload();
+        if (!payload.title) {
+            showToast("Informe um nome para atualizar.", "warning");
+            return;
+        }
+
+        const result = await sendJson(`/guitar-study/api/v1/fretboard-maps/${activeMapId}`, "PUT", payload);
+        if (!result) return;
+        showToast("Braço atualizado.", "success");
+        await loadSavedMaps();
+    }
+
+    async function deleteSavedMap() {
+        if (!activeMapId) return;
+        const current = savedMaps.find((item) => item.id === activeMapId);
+        if (!confirm(`Excluir "${current?.title || "braço salvo"}"?`)) return;
+
+        const response = await fetch(`/guitar-study/api/v1/fretboard-maps/${activeMapId}`, { method: "DELETE" });
+        const result = await response.json();
+        if (!result.success) {
+            showToast(result.error?.message || "Erro ao excluir.", "danger");
+            return;
+        }
+
+        resetEditor();
+        showToast("Braço excluído.", "success");
+        await loadSavedMaps();
+    }
+
+    async function sendJson(url, method, payload) {
+        try {
+            const response = await fetch(url, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            if (!result.success) {
+                showToast(result.error?.message || "Erro ao salvar.", "danger");
+                return null;
+            }
+            return result;
+        } catch (error) {
+            console.error(error);
+            showToast("Erro de conexão.", "danger");
+            return null;
+        }
+    }
+
+    async function loadSavedMaps() {
+        const response = await fetch("/guitar-study/api/v1/fretboard-maps");
+        const result = await response.json();
+        savedMaps = result.success ? result.data.maps : [];
+        renderSavedMapsList();
+    }
+
+    function renderSavedMapsList() {
+        const list = document.getElementById("savedMapsList");
+        list.innerHTML = "";
+
+        if (!savedMaps.length) {
+            list.innerHTML = '<div class="text-muted fs-7">Nenhum braço salvo ainda.</div>';
+            setEditorState();
+            return;
+        }
+
+        savedMaps.forEach((item) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = `saved-map-item text-start rounded-3 p-3 ${item.id === activeMapId ? "active" : ""}`;
+            button.innerHTML = `
+                <strong class="d-block text-body">${escapeHtml(item.title)}</strong>
+                <span class="d-block text-muted fs-7">${item.notes.length} notas selecionadas</span>
+                ${item.description ? `<span class="d-block text-muted fs-7 mt-1">${escapeHtml(item.description)}</span>` : ""}
+            `;
+            button.addEventListener("click", () => selectSavedMap(item.id));
+            list.appendChild(button);
+        });
+        setEditorState();
+    }
+
+    function selectSavedMap(mapId) {
+        const item = savedMaps.find((map) => map.id === mapId);
+        if (!item) return;
+
+        activeMapId = item.id;
+        document.getElementById("mapTitle").value = item.title;
+        document.getElementById("mapDescription").value = item.description || "";
+        document.getElementById("tonicSelect").value = item.tonic || "";
+        fretboard.options.tonic = item.tonic || "";
+        applySavedNotes(item.notes);
+        fretboard.renderNotesContent();
+        renderSavedMapsList();
+    }
+
+    function applySavedNotes(notes) {
+        clearFretboardSilently();
+        notes.forEach((note) => {
+            const selector = `.fretboard-cell[data-string="${note.string}"][data-fret="${note.fret}"]`;
+            const cell = fretboard.fretboardEl.querySelector(selector);
+            setBadgeVisible(cell?.querySelector(".fret-note"), true);
+        });
+        fretboard.updateTabAndSheet();
+    }
+
+    function clearFretboardSilently() {
+        const cells = fretboard.fretboardEl.querySelectorAll(".fretboard-cell");
+        cells.forEach((cell) => setBadgeVisible(cell.querySelector(".fret-note"), false));
+    }
+
+    function resetEditor() {
+        activeMapId = null;
+        document.getElementById("mapTitle").value = "";
+        document.getElementById("mapDescription").value = "";
+        document.getElementById("tonicSelect").value = "";
+        fretboard.options.tonic = "";
+        fretboard.renderNotesContent();
+        clearFretboard();
+        renderSavedMapsList();
+    }
+
+    function setEditorState() {
+        const hasActiveMap = Boolean(activeMapId);
+        document.getElementById("btnUpdateMap").disabled = !hasActiveMap;
+        document.getElementById("btnDeleteMap").disabled = !hasActiveMap;
+    }
+
+    function escapeHtml(value) {
+        return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+</script>
+{% endblock %}

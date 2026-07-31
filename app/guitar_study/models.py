@@ -54,6 +54,7 @@ class User(db.Model, UserMixin):
     recent_items = db.relationship("RecentItem", back_populates="user", cascade="all, delete-orphan")
     songs = db.relationship("Song", back_populates="user", cascade="all, delete-orphan")
     lesson_progress = db.relationship("LessonProgress", back_populates="user", cascade="all, delete-orphan")
+    saved_fretboard_maps = db.relationship("SavedFretboardMap", back_populates="user", cascade="all, delete-orphan")
 
     def set_password(self, password):
         """Gera e define o hash seguro da senha."""
@@ -212,6 +213,51 @@ class RecentItem(db.Model):
 
     def __repr__(self):
         return f"<RecentItem category={self.category} item={self.item_key}>"
+
+
+class SavedFretboardMap(db.Model):
+    """Mapa de notas do braço salvo pelo usuário para revisão posterior."""
+    __tablename__ = "saved_fretboard_maps"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    tuning_id = db.Column(db.String(50), nullable=True)
+    fret_count = db.Column(db.Integer, nullable=True)
+    tonic = db.Column(db.String(10), nullable=True)
+    display_type = db.Column(db.String(30), default="notes", nullable=False)
+    notes_data = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    user = db.relationship("User", back_populates="saved_fretboard_maps")
+
+    def notes(self):
+        try:
+            return json.loads(self.notes_data or "[]")
+        except (TypeError, json.JSONDecodeError):
+            return []
+
+    def set_notes(self, notes):
+        self.notes_data = json.dumps(notes or [], ensure_ascii=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description or "",
+            "tuning_id": self.tuning_id,
+            "fret_count": self.fret_count,
+            "tonic": self.tonic,
+            "display_type": self.display_type,
+            "notes": self.notes(),
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def __repr__(self):
+        return f"<SavedFretboardMap title={self.title} user_id={self.user_id}>"
 
 
 class Song(db.Model):

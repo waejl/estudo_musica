@@ -142,6 +142,18 @@ def fretboard():
     )
 
 
+@guitar_study.route("/fretboard-practice")
+@login_required
+def fretboard_practice():
+    """Área de prática livre com mapas de braço salvos."""
+    settings = current_user.settings
+    return render_template(
+        "guitar_study/fretboard_practice.html",
+        settings=settings,
+        chromatic_notes=SHARPS_SCALE
+    )
+
+
 @guitar_study.route("/scales")
 @login_required
 def scales():

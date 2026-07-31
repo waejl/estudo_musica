@@ -27,6 +27,12 @@
         </a>
     </li>
     <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'guitar_study.fretboard_practice' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.fretboard_practice') }}">
+            <i class="bi bi-brush fs-5"></i>
+            <span>Prática Livre</span>
+        </a>
+    </li>
+    <li class="nav-item">
         <a class="nav-link {% if request.endpoint == 'guitar_study.scales' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.scales') }}">
             <i class="bi bi-hash fs-5"></i>
             <span>Escalas</span>

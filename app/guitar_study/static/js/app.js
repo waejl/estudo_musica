@@ -46,7 +46,7 @@ export async function toggleFavorite(buttonEl, category, itemKey) {
     try {
         if (isFavorited) {
             // Remove dos favoritos
-            const response = await fetch("/guitar-study/api/v1/favorites", {
+            const response = await fetch(`${window.APP_PREFIX || ""}/guitar-study/api/v1/favorites`, {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ category, item_key: itemKey })
@@ -62,7 +62,7 @@ export async function toggleFavorite(buttonEl, category, itemKey) {
             }
         } else {
             // Adiciona aos favoritos
-            const response = await fetch("/guitar-study/api/v1/favorites", {
+            const response = await fetch(`${window.APP_PREFIX || ""}/guitar-study/api/v1/favorites`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ category, item_key: itemKey })
@@ -92,7 +92,7 @@ export async function toggleFavorite(buttonEl, category, itemKey) {
  */
 export async function registerStudySession(category, itemKey, durationMinutes, notes = "") {
     try {
-        const response = await fetch("/guitar-study/api/v1/study-sessions", {
+        const response = await fetch(`${window.APP_PREFIX || ""}/guitar-study/api/v1/study-sessions`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

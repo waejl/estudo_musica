@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR" data-bs-theme="{{ current_user.settings.theme if current_user.is_authenticated and current_user.settings else 'dark' }}">
 <head>
+    <script>window.APP_PREFIX = "{{ request.script_root }}";</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Guitar Study{% endblock %} - Estudo Moderno de Guitarra</title>

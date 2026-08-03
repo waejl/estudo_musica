@@ -40,7 +40,7 @@ export class Fretboard {
         this.container.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Afinando guitarra e montando o braço...</p></div>`;
         
         try {
-            const url = `/guitar-study/api/v1/fretboard?tuning_id=${this.options.tuningId}&fret_count=${this.options.fretCount}&preference=${this.options.preference}`;
+            const url = `${window.APP_PREFIX || ""}/guitar-study/api/v1/fretboard?tuning_id=${this.options.tuningId}&fret_count=${this.options.fretCount}&preference=${this.options.preference}`;
             const response = await fetch(url);
             const resData = await response.json();
             

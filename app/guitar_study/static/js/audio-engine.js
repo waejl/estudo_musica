@@ -26,12 +26,12 @@ class AudioEngine {
         this._cabinetReady = {};
 
         this.sampleUrls = {
-            1: "/guitar-study/static/audio/E4.mp3",
-            2: "/guitar-study/static/audio/B3.mp3",
-            3: "/guitar-study/static/audio/G3.mp3",
-            4: "/guitar-study/static/audio/D3.mp3",
-            5: "/guitar-study/static/audio/A2.mp3",
-            6: "/guitar-study/static/audio/E2.mp3"
+            1: `${window.APP_PREFIX || ""}/guitar-study/static/audio/E4.mp3`,
+            2: `${window.APP_PREFIX || ""}/guitar-study/static/audio/B3.mp3`,
+            3: `${window.APP_PREFIX || ""}/guitar-study/static/audio/G3.mp3`,
+            4: `${window.APP_PREFIX || ""}/guitar-study/static/audio/D3.mp3`,
+            5: `${window.APP_PREFIX || ""}/guitar-study/static/audio/A2.mp3`,
+            6: `${window.APP_PREFIX || ""}/guitar-study/static/audio/E2.mp3`
         };
 
         this.stringBaseFreqs = [

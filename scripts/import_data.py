@@ -25,7 +25,8 @@ def import_data():
     app = create_app()
     with app.app_context():
         # Caminho do arquivo JSON
-        file_path = '/workspace/bases/aulas_guitarra_iniciante_com_imagens_base64.json'
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        file_path = os.path.join(base_dir, 'bases', 'aulas_guitarra_iniciante_com_imagens_base64.json')
         with open(file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
             

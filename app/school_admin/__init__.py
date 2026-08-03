@@ -6,7 +6,7 @@ school_admin_bp = Blueprint(
     __name__,
     template_folder="templates",
     static_folder="static",
-    static_url_path="/school-admin/static"
+    static_url_path="/guitar-study/school-admin/static"
 )
 
 from . import routes

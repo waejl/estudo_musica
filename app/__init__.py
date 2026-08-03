@@ -55,10 +55,10 @@ def create_app(config_name=None):
     app.register_blueprint(guitar_study_blueprint, url_prefix="/guitar-study")
     
     from app.school_admin import school_admin_bp
-    app.register_blueprint(school_admin_bp, url_prefix="/school-admin")
+    app.register_blueprint(school_admin_bp, url_prefix="/guitar-study/school-admin")
 
     from app.super_admin import super_admin_bp
-    app.register_blueprint(super_admin_bp, url_prefix="/super-admin")
+    app.register_blueprint(super_admin_bp, url_prefix="/guitar-study/super-admin")
 
     # Redirecionar a raiz da aplicação para o prefixo do Blueprint de guitarra
     @app.route("/")

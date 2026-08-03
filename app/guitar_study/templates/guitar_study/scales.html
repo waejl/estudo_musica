@@ -18,6 +18,34 @@
     </div>
 </div>
 
+<!-- Guia de Estudo: Motivo e Aplicação -->
+<div class="card mb-4 bg-body-tertiary border-0 shadow-sm border-start border-success border-3">
+    <div class="card-body p-4">
+        <div class="d-flex align-items-start gap-3">
+            <div class="bg-success text-white p-2.5 rounded-3 fs-5 d-inline-flex">
+                <i class="bi bi-book-half"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold mb-1 text-white">Guia de Estudo: Por que estudar Escalas?</h5>
+                <div class="row g-3 mt-1 fs-7 text-muted">
+                    <div class="col-12 col-md-4">
+                        <strong class="text-success-emphasis d-block mb-1"><i class="bi bi-question-circle"></i> Motivo de existir:</strong>
+                        Dar um guia anatômico prático para as fôrmas geométricas das escalas mais importantes usadas na música popular.
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <strong class="text-success-emphasis d-block mb-1"><i class="bi bi-person-fill-check"></i> Por que você deve usar:</strong>
+                        Para parar de dedilhar notas aleatórias sem rumo e começar a construir as fôrmas geométricas certas sob seus dedos, garantindo agilidade e precisão.
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <strong class="text-success-emphasis d-block mb-1"><i class="bi bi-briefcase"></i> Para que serve na prática:</strong>
+                        Para aprender os desenhos de escalas (como a Pentatônica Maior/Menor, Maior Natural e Blues) em qualquer tom, visualizar as tônicas e usá-las para solar.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Filtros de Busca de Escala -->
 <div class="card mb-4 bg-body-tertiary">
     <div class="card-body p-3">
@@ -161,7 +189,8 @@
         fretboard = new Fretboard("scaleFretboard", {
             tuningId: "{{ settings.tuning_id }}",
             fretCount: {{ settings.fret_count }},
-            viewMode: "highlight_set"
+            viewMode: "highlight_set",
+            handOrientation: "{{ settings.hand_orientation if settings else 'right_handed' }}"
         });
         await fretboard.init();
         

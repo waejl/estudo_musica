@@ -1,0 +1,679 @@
+{% extends 'guitar_study/base.html' %}
+
+{% block title %}Círculo de Quintas{% endblock %}
+
+{% block content %}
+<!-- Guia de Estudo: Motivo e Aplicação -->
+<div class="card mb-4 bg-body-tertiary border-0 shadow-sm border-start border-warning border-3">
+    <div class="card-body p-4">
+        <div class="d-flex align-items-start gap-3">
+            <div class="bg-warning text-dark p-2.5 rounded-3 fs-5 d-inline-flex">
+                <i class="bi bi-book-half"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold mb-1 text-white">Guia de Estudo: Por que usar o Círculo de Quintas?</h5>
+                <div class="row g-3 mt-1 fs-7 text-muted">
+                    <div class="col-12 col-md-4">
+                        <strong class="text-warning-emphasis d-block mb-1"><i class="bi bi-question-circle"></i> Motivo de existir:</strong>
+                        Mapear visualmente as relações geométricas das 12 tonalidades musicais e as conexões naturais dos seus campos harmônicos.
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <strong class="text-warning-emphasis d-block mb-1"><i class="bi bi-person-fill-check"></i> Por que você deve usar:</strong>
+                        Para libertar a sua audição. O círculo revela o "esqueleto" que 95% de todas as músicas pop/rock compartilham em cada tom.
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <strong class="text-warning-emphasis d-block mb-1"><i class="bi bi-briefcase"></i> Para que serve na prática:</strong>
+                        Tirar músicas de ouvido em segundos (sabendo quais acordes vizinhos "podem" aparecer), transpor tons instantaneamente e compor progressões.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Coluna Esquerda: O Círculo Interativo -->
+    <div class="col-12 col-lg-5">
+        <div class="card h-100 bg-body-tertiary border-0 shadow-sm">
+            <div class="card-body p-4 text-center">
+                <h5 class="fw-bold mb-1 text-white">Roda de Relações Harmônicas</h5>
+                <p class="fs-7 text-muted mb-3">Clique em qualquer nota (Maior na roda externa ou Menor na roda interna) para carregar o seu campo harmônico correspondente e os acordes vizinhos.</p>
+                
+                <div class="circle-fifths-container">
+                    <div class="circle-fifths-wrapper" id="fifthsWheelWrapper">
+                        <div class="circle-fifths-wheel" id="fifthsWheel" style="transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);">
+                            <!-- Linhas divisórias geradas via JS -->
+                            <!-- Nós (Tons Maiores e Menores) gerados via JS -->
+                        </div>
+                        <div class="circle-fifths-center">
+                            <h4 class="center-title" id="centerKey">C</h4>
+                            <span class="center-sub" id="centerType">Maior</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Checkbox para Rotação da Roda -->
+                <div class="mt-2 border-top pt-3 d-flex align-items-center justify-content-center gap-2 fs-7 text-muted">
+                    <div class="form-check form-switch bg-body-secondary px-4 py-2 rounded-3 border border-secondary-subtle">
+                        <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="chkRotateWheel">
+                        <label class="form-check-label fw-bold text-white" for="chkRotateWheel">
+                            <i class="bi bi-arrow-repeat text-warning"></i> Girar tom ativo para o topo
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Legendas do Círculo -->
+                <div class="d-flex flex-wrap gap-2 justify-content-center mt-3 text-start fs-8">
+                    <span class="d-flex align-items-center gap-1.5 px-2 py-1 bg-body-secondary rounded-2 border border-secondary-subtle">
+                        <span class="d-inline-block rounded-circle" style="width:10px; height:100%; background: linear-gradient(135deg, #ef4444, #dc2626); aspect-ratio: 1/1;"></span>
+                        <strong>Tônica (I / i)</strong>
+                    </span>
+                    <span class="d-flex align-items-center gap-1.5 px-2 py-1 bg-body-secondary rounded-2 border border-secondary-subtle">
+                        <span class="d-inline-block rounded-circle" style="width:10px; height:100%; background: linear-gradient(135deg, #f5a623, #d97706); aspect-ratio: 1/1;"></span>
+                        <strong>Relativo (vi / III)</strong>
+                    </span>
+                    <span class="d-flex align-items-center gap-1.5 px-2 py-1 bg-body-secondary rounded-2 border border-secondary-subtle">
+                        <span class="d-inline-block rounded-circle" style="width:10px; height:100%; background: linear-gradient(135deg, #45b7ff, #0284c7); aspect-ratio: 1/1;"></span>
+                        <strong>Maiores Vizinhos (IV / V)</strong>
+                    </span>
+                    <span class="d-flex align-items-center gap-1.5 px-2 py-1 bg-body-secondary rounded-2 border border-secondary-subtle">
+                        <span class="d-inline-block rounded-circle" style="width:10px; height:100%; background: linear-gradient(135deg, #2a3e5c, #1e2d42); aspect-ratio: 1/1;"></span>
+                        <strong>Menores Vizinhos (ii / iii)</strong>
+                    </span>
+                </div>
+
+                <!-- Painel da Banda de Apoio Integrado -->
+                <div class="mt-4 border-top pt-3 text-start">
+                    <h6 class="fw-bold text-white mb-2 fs-7"><i class="bi bi-play-circle-fill text-success"></i> Banda de Apoio Virtual (Jam Track)</h6>
+                    <p class="fs-8 text-muted mb-3" style="text-align: justify;">Gere bateria e baixo sintetizados em tempo real para treinar solos sobre o tom selecionado! O baixo acompanha os acordes dinamicamente.</p>
+                    
+                    <div class="bg-body-secondary p-3 rounded-3 border border-secondary-subtle">
+                        <div class="row g-2 align-items-center mb-2">
+                            <!-- Ritmo -->
+                            <div class="col-6">
+                                <label for="backingRhythm" class="form-label mb-1 fs-9 fw-bold text-muted">Ritmo / Estilo</label>
+                                <select id="backingRhythm" class="form-select form-select-sm">
+                                    <option value="rock" selected>Rock Beat Clássico</option>
+                                    <option value="hard_rock">Arena Hard Rock (GNR/ACDC)</option>
+                                    <option value="rock_n_roll">Rock 'n' Roll 50s (Chuck Berry)</option>
+                                    <option value="ballad">Balada Romântica (Bed Of Roses)</option>
+                                    <option value="reggae">Reggae One Drop</option>
+                                    <option value="blues">Blues Shuffle (Walking Bass)</option>
+                                    <option value="baiao">Baião Nordestino</option>
+                                </select>
+                            </div>
+                            <!-- BPM -->
+                            <div class="col-6">
+                                <label for="backingBpm" class="form-label mb-1 fs-9 fw-bold text-muted">Andamento (BPM): <span id="backingBpmVal" class="text-white font-monospace fw-bold">90</span></label>
+                                <input type="range" class="form-range" id="backingBpm" min="60" max="150" step="1" value="90">
+                            </div>
+                        </div>
+                        
+                        <!-- Controles -->
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <button id="btnToggleBackingBand" class="btn btn-sm btn-success fw-bold w-100 py-1.5 shadow-sm"><i class="bi bi-play-fill"></i> Iniciar Banda de Apoio</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coluna Direita: Detalhes, Acordes e Aplicação Didática -->
+    <div class="col-12 col-lg-7 d-flex flex-column gap-4">
+        <!-- Campo Harmônico -->
+        <div class="card bg-body-tertiary border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                    <h5 class="fw-bold mb-0 text-white"><i class="bi bi-music-player text-primary me-2"></i> Campo Harmônico Correspondente</h5>
+                    <span class="badge bg-primary text-uppercase px-2.5 py-1" id="activeKeyBadge">Tom: C Maior</span>
+                </div>
+
+                <p class="fs-7 text-muted mb-3">Tocar de ouvido é perceber movimentos de blocos. Estes 6 acordes vizinhos são as ferramentas principais de qualquer música no tom selecionado:</p>
+                <div class="row g-2 mb-2" id="chordsGrid">
+                    <!-- Gerado via JS de acordo com a seleção -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Progressões e Cadências Famosas -->
+        <div class="card bg-body-tertiary border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-1 text-white"><i class="bi bi-music-note-list text-warning me-2"></i> Progressões Harmônicas Famosas & Cadências</h5>
+                <p class="fs-7 text-muted mb-3">Estes são os "climas" mais famosos da história da música. Escolha uma cadência e clique em <strong>Ouvir Sequência</strong> para que o app toque os acordes em ordem para você treinar o ouvido!</p>
+                
+                <div class="row g-3" id="progressionsGrid">
+                    <!-- Gerado via JS de acordo com a seleção -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Segredos Didáticos -->
+        <div class="card bg-body-tertiary border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3 text-white"><i class="bi bi-lightning-charge-fill text-warning me-2"></i> Segredos de Treinamento</h5>
+                
+                <h6 class="fw-bold text-primary mb-1.5"><i class="bi bi-question-circle me-1"></i> Como usar o círculo para tirar músicas de ouvido?</h6>
+                <p class="fs-7 text-muted lh-lg mb-3" style="text-align: justify;">
+                    Quando uma música começa, por exemplo, no tom de <strong>Dó Maior (C)</strong>, as chances de os próximos acordes serem <strong>G, F, Am, Dm ou Em</strong> são de quase <strong>95%</strong>! No Círculo de Quintas, esses acordes estão literalmente colados uns nos outros. Ao tirar músicas de ouvido, limite a sua busca apenas a esse bloco vizinho em vez de chutar acordes aleatórios!
+                </p>
+
+                <h6 class="fw-bold text-primary mb-1.5"><i class="bi bi-arrow-left-right me-1"></i> Como Transpor de Tom Instantaneamente?</h6>
+                <p class="fs-7 text-muted lh-lg mb-0" style="text-align: justify;">
+                    Precisa cantar uma música em outro tom? É simples! Escolha um acorde da cifra original (ex: C). No círculo, ele aponta para uma direção. Veja qual acorde ocupa exatamente a mesma direção no tom novo (ex: se o tom novo for G, o C vira G, o Am vira Em, etc.). O círculo preserva as distâncias geométricas de transposição perfeitamente!
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+    import { audioEngine } from "{{ url_for('guitar_study.static', filename='js/audio-engine.js') }}";
+    import { showToast } from "{{ url_for('guitar_study.static', filename='js/app.js') }}";
+
+    document.addEventListener("DOMContentLoaded", () => {
+        // Tonalidades e relações geométricas do Círculo de Quintas
+        // Organizadas no sentido horário (quintas justas)
+        const MAJORS = ["C", "G", "D", "A", "E", "B", "F#", "C#", "Ab", "Eb", "Bb", "F"];
+        const MINORS = ["Am", "Em", "Bm", "F#m", "C#m", "G#m", "D#m", "A#m", "Fm", "Cm", "Gm", "Dm"];
+
+        let activeKey = "C";
+        let isMajor = true;
+        let activeProgressionTimeout = null;
+        let currentProgressiveChord = null; // Armazena o acorde ativo da progressão para a backing band
+
+        // Controles de áudio da Banda de Apoio
+        const sliderBpm = document.getElementById("backingBpm");
+        const btnToggleBand = document.getElementById("btnToggleBackingBand");
+
+        sliderBpm.addEventListener("input", (e) => {
+            const val = e.target.value;
+            document.getElementById("backingBpmVal").textContent = val;
+            
+            // Se a banda estiver rodando, reinicia com o novo BPM na hora!
+            if (audioEngine.backingBandActive) {
+                startBackingBandWrapper();
+            }
+        });
+
+        document.getElementById("backingRhythm").addEventListener("change", () => {
+            if (audioEngine.backingBandActive) {
+                startBackingBandWrapper();
+            }
+        });
+
+        btnToggleBand.addEventListener("click", () => {
+            if (audioEngine.backingBandActive) {
+                stopBackingBandWrapper();
+            } else {
+                startBackingBandWrapper();
+            }
+        });
+
+        function startBackingBandWrapper() {
+            stopAllAudio();
+            
+            const style = document.getElementById("backingRhythm").value;
+            const bpm = parseInt(sliderBpm.value);
+            
+            audioEngine.startBackingBand(style, bpm, getActiveChord);
+            
+            btnToggleBand.innerHTML = `<i class="bi bi-stop-fill"></i> Parar Banda`;
+            btnToggleBand.className = "btn btn-sm btn-danger fw-bold w-100 py-1.5 shadow-sm";
+            showToast("Banda de apoio iniciada!", "success");
+        }
+
+        function stopBackingBandWrapper() {
+            audioEngine.stopBackingBand();
+            btnToggleBand.innerHTML = `<i class="bi bi-play-fill"></i> Iniciar Banda de Apoio`;
+            btnToggleBand.className = "btn btn-sm btn-success fw-bold w-100 py-1.5 shadow-sm";
+            showToast("Banda de apoio silenciada.", "info");
+        }
+
+        function getActiveChord() {
+            if (currentProgressiveChord) {
+                return currentProgressiveChord;
+            }
+            return { note: activeKey, type: isMajor ? "Major" : "Minor" };
+        }
+
+        // Desenha as fatias divisórias de 30 graus no relógio
+        const wheel = document.getElementById("fifthsWheel");
+        for (let i = 0; i < 12; i++) {
+            const ray = document.createElement("div");
+            ray.className = "circle-fifths-ray";
+            ray.style.transform = `rotate(${i * 30}deg)`;
+            wheel.appendChild(ray);
+        }
+
+        // Renderiza os nós das tonalidades maiores (Roda externa)
+        const R_MAJOR = 135; // Raio da roda externa
+        MAJORS.forEach((note, idx) => {
+            const node = document.createElement("div");
+            node.className = "circle-fifths-node";
+            node.setAttribute("data-note", note);
+            node.setAttribute("data-index", idx);
+            node.setAttribute("data-is-major", "true");
+            
+            // Ângulo inicial correspondente (C fica no topo, que é -90 graus, ou seja, -pi/2 radianos)
+            const angle = (idx * 30 - 90) * (Math.PI / 180);
+            const x = 180 + R_MAJOR * Math.cos(angle);
+            const y = 180 + R_MAJOR * Math.sin(angle);
+            
+            node.style.left = `${x}px`;
+            node.style.top = `${y}px`;
+            node.innerHTML = `<strong>${note}</strong>`;
+            
+            node.addEventListener("click", () => selectKey(note, true));
+            wheel.appendChild(node);
+        });
+
+        // Renderiza os nós das tonalidades menores relativas (Roda interna)
+        const R_MINOR = 85; // Raio da roda interna
+        MINORS.forEach((note, idx) => {
+            const node = document.createElement("div");
+            node.className = "circle-fifths-node";
+            node.setAttribute("data-note", note);
+            node.setAttribute("data-index", idx);
+            node.setAttribute("data-is-major", "false");
+            node.style.width = "35px";
+            node.style.height = "35px";
+            node.style.fontSize = "10px";
+            
+            const angle = (idx * 30 - 90) * (Math.PI / 180);
+            const x = 180 + R_MINOR * Math.cos(angle);
+            const y = 180 + R_MINOR * Math.sin(angle);
+            
+            node.style.left = `${x}px`;
+            node.style.top = `${y}px`;
+            node.innerHTML = `<span>${note}</span>`;
+            
+            node.addEventListener("click", () => selectKey(note, false));
+            wheel.appendChild(node);
+        });
+
+        // Listener de Checkbox de rotação
+        document.getElementById("chkRotateWheel").addEventListener("change", () => {
+            updateWheelHighlights();
+        });
+
+        // Lógica de seleção de tonalidade
+        function selectKey(key, majorSelection) {
+            activeKey = key;
+            isMajor = majorSelection;
+            
+            document.getElementById("centerKey").textContent = key;
+            document.getElementById("centerType").textContent = majorSelection ? "Maior" : "Menor";
+            document.getElementById("activeKeyBadge").textContent = `Tom: ${key} ${majorSelection ? 'Maior' : 'Menor'}`;
+            
+            updateWheelHighlights();
+            renderHarmonicField();
+            renderProgressions();
+            
+            stopAllAudio();
+        }
+
+        // Atualiza as cores e brilhos com base nas relações geométricas de quintas e aplica rotação
+        function updateWheelHighlights() {
+            // Remove destaques anteriores
+            const nodes = document.querySelectorAll(".circle-fifths-node");
+            nodes.forEach(n => {
+                n.className = "circle-fifths-node";
+                if (n.getAttribute("data-is-major") === "false") {
+                    n.style.width = "35px";
+                    n.style.height = "35px";
+                }
+            });
+
+            // Descobre o índice base na roda correspondente
+            let baseIdx = -1;
+            if (isMajor) {
+                baseIdx = MAJORS.indexOf(activeKey);
+            } else {
+                baseIdx = MINORS.indexOf(activeKey);
+            }
+            if (baseIdx === -1) return;
+
+            // Relações geométricas:
+            const leftIdx = (baseIdx - 1 + 12) % 12;
+            const rightIdx = (baseIdx + 1) % 12;
+
+            if (isMajor) {
+                // Tônica Maior (I)
+                const tNode = document.querySelector(`.circle-fifths-node[data-note="${MAJORS[baseIdx]}"][data-is-major="true"]`);
+                if (tNode) tNode.classList.add("active-tonic");
+
+                // Relativo Menor (vi)
+                const rNode = document.querySelector(`.circle-fifths-node[data-note="${MINORS[baseIdx]}"][data-is-major="false"]`);
+                if (rNode) rNode.classList.add("active-relative");
+
+                // Subdominante (IV) e Dominante (V)
+                const lNode = document.querySelector(`.circle-fifths-node[data-note="${MAJORS[leftIdx]}"][data-is-major="true"]`);
+                const riNode = document.querySelector(`.circle-fifths-node[data-note="${MAJORS[rightIdx]}"][data-is-major="true"]`);
+                if (lNode) lNode.classList.add("active-neighbor-major");
+                if (riNode) riNode.classList.add("active-neighbor-major");
+
+                // Graus ii e iii
+                const iiNode = document.querySelector(`.circle-fifths-node[data-note="${MINORS[leftIdx]}"][data-is-major="false"]`);
+                const iiiNode = document.querySelector(`.circle-fifths-node[data-note="${MINORS[rightIdx]}"][data-is-major="false"]`);
+                if (iiNode) iiNode.classList.add("active-neighbor-minor");
+                if (iiiNode) iiiNode.classList.add("active-neighbor-minor");
+            } else {
+                // Tônica Menor (i)
+                const tNode = document.querySelector(`.circle-fifths-node[data-note="${MINORS[baseIdx]}"][data-is-major="false"]`);
+                if (tNode) tNode.classList.add("active-tonic");
+
+                // Relativa Maior (III)
+                const rNode = document.querySelector(`.circle-fifths-node[data-note="${MAJORS[baseIdx]}"][data-is-major="true"]`);
+                if (rNode) rNode.classList.add("active-relative");
+
+                // Vizinhos menores esquerda e direita (iv / v)
+                const lNode = document.querySelector(`.circle-fifths-node[data-note="${MINORS[leftIdx]}"][data-is-major="false"]`);
+                const riNode = document.querySelector(`.circle-fifths-node[data-note="${MINORS[rightIdx]}"][data-is-major="false"]`);
+                if (lNode) lNode.classList.add("active-neighbor-major");
+                if (riNode) riNode.classList.add("active-neighbor-major");
+
+                // Vizinhos maiores esquerda e direita (VI / VII)
+                const iiNode = document.querySelector(`.circle-fifths-node[data-note="${MAJORS[leftIdx]}"][data-is-major="true"]`);
+                const iiiNode = document.querySelector(`.circle-fifths-node[data-note="${MAJORS[rightIdx]}"][data-is-major="true"]`);
+                if (iiNode) iiNode.classList.add("active-neighbor-minor");
+                if (iiiNode) iiiNode.classList.add("active-neighbor-minor");
+            }
+
+            // APLICA ROTAÇÃO SE O CHECKBOX ESTIVER SELECIONADO
+            const chkRotate = document.getElementById("chkRotateWheel");
+            const wheel = document.getElementById("fifthsWheel");
+            if (chkRotate && chkRotate.checked) {
+                const rotationAngle = -baseIdx * 30; // Rotação no sentido anti-horário
+                wheel.style.transform = `rotate(${rotationAngle}deg)`;
+                
+                // Contra-rotaciona os nós individuais para mantê-los alinhados na horizontal
+                const allNodes = document.querySelectorAll(".circle-fifths-node");
+                allNodes.forEach(n => {
+                    n.style.transform = `translate(-50%, -50%) rotate(${-rotationAngle}deg)`;
+                });
+            } else {
+                wheel.style.transform = `rotate(0deg)`;
+                const allNodes = document.querySelectorAll(".circle-fifths-node");
+                allNodes.forEach(n => {
+                    n.style.transform = `translate(-50%, -50%) rotate(0deg)`;
+                });
+            }
+        }
+
+        // Frequências das notas de fundamentais
+        const NOTE_FREQS = {
+            "C": 261.63, "C#": 277.18, "Db": 277.18, "D": 293.66, "D#": 311.13, "Eb": 311.13,
+            "E": 329.63, "F": 349.23, "F#": 369.99, "Gb": 369.99, "G": 392.00, "G#": 415.30,
+            "Ab": 415.30, "A": 440.00, "A#": 466.16, "Bb": 466.16, "B": 493.88
+        };
+
+        // Retorna a lista de 6 acordes com notas limpas sem 'm' para poder tocar corretamente
+        function getChordsList() {
+            let baseIdx = isMajor ? MAJORS.indexOf(activeKey) : MINORS.indexOf(activeKey);
+            if (baseIdx === -1) return [];
+
+            const leftIdx = (baseIdx - 1 + 12) % 12;
+            const rightIdx = (baseIdx + 1) % 12;
+
+            // Retorna notas sem o "m" no atributo 'note' para a frequência bater com o dicionário
+            const tonicMajor = MAJORS[baseIdx];
+            const leftMajor = MAJORS[leftIdx];
+            const rightMajor = MAJORS[rightIdx];
+
+            const tonicMinor = MINORS[baseIdx].replace("m", "");
+            const leftMinor = MINORS[leftIdx].replace("m", "");
+            const rightMinor = MINORS[rightIdx].replace("m", "");
+
+            if (isMajor) {
+                return [
+                    { label: "I (Tônica)", note: tonicMajor, type: "Major" },
+                    { label: "ii (Superf.)", note: leftMinor, type: "Minor" },
+                    { label: "iii (Med.)", note: rightMinor, type: "Minor" },
+                    { label: "IV (Subdom.)", note: leftMajor, type: "Major" },
+                    { label: "V (Domin.)", note: rightMajor, type: "Major" },
+                    { label: "vi (Relat.)", note: tonicMinor, type: "Minor" }
+                ];
+            } else {
+                return [
+                    { label: "i (Tônica)", note: tonicMinor, type: "Minor" },
+                    { label: "III (Relat.)", note: tonicMajor, type: "Major" },
+                    { label: "iv (Subdom.)", note: leftMinor, type: "Minor" },
+                    { label: "v (Domin.)", note: rightMinor, type: "Minor" },
+                    { label: "VI (Med.)", note: leftMajor, type: "Major" },
+                    { label: "VII (Superf.)", note: rightMajor, type: "Major" }
+                ];
+            }
+        }
+
+        // Gera o HTML do Campo Harmônico dinamicamente
+        function renderHarmonicField() {
+            const chords = getChordsList();
+            const grid = document.getElementById("chordsGrid");
+            grid.innerHTML = "";
+
+            chords.forEach(ch => {
+                const col = document.createElement("div");
+                col.className = "col-6 col-md-4";
+                
+                const isTonic = ch.label.includes("Tônica");
+                const isRelative = ch.label.includes("Relat.");
+                let borderClass = "border-secondary";
+                if (isTonic) {
+                    borderClass = "border-danger border-start border-3";
+                } else if (isRelative) {
+                    borderClass = "border-warning border-start border-3";
+                }
+
+                col.innerHTML = `
+                    <div class="card h-100 bg-body-secondary ${borderClass} border-1 shadow-sm card-chord-box" data-chord-id="${ch.note}-${ch.type}">
+                        <div class="card-body p-3 d-flex flex-column justify-content-between align-items-stretch">
+                            <div class="text-center mb-2">
+                                <span class="badge bg-body-tertiary border text-muted fs-9 px-2 mb-1 d-inline-block">${ch.label}</span>
+                                <h5 class="fw-bold mb-0 text-white">${ch.note}${ch.type === 'Minor' ? 'm' : ''}</h5>
+                            </div>
+                            <button class="btn btn-sm btn-outline-light py-1 fw-bold fs-8 d-flex align-items-center justify-content-center gap-1 btn-play-chord" data-note="${ch.note}" data-type="${ch.type}">
+                                <i class="bi bi-play-fill"></i> Ouvir Acorde
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(col);
+            });
+
+            // Eventos de clique para os botões de áudio de cada acorde
+            document.querySelectorAll(".btn-play-chord").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const note = btn.getAttribute("data-note");
+                    const type = btn.getAttribute("data-type");
+                    playChord(note, type);
+                });
+            });
+        }
+
+        // Gera o HTML do painel de Progressões Harmônicas dinamicamente de acordo com o tom ativo
+        function renderProgressions() {
+            const chords = getChordsList();
+            if (chords.length === 0) return;
+
+            const grid = document.getElementById("progressionsGrid");
+            grid.innerHTML = "";
+
+            let progressions = [];
+
+            if (isMajor) {
+                // Progressões clássicas do tom maior
+                progressions = [
+                    {
+                        name: "Progressão Pop Clássica",
+                        description: "Usada em milhares de sucessos. Romântica, motivadora, hino.",
+                        sequence: [chords[0], chords[4], chords[5], chords[3]], // I - V - vi - IV
+                        clima: "Alegre / Hino"
+                    },
+                    {
+                        name: "Preparação ii - V - I",
+                        description: "A cadência mais sofisticada da música, base do Jazz e da Bossa Nova.",
+                        sequence: [chords[1], chords[4], chords[0]], // ii - V - I
+                        clima: "Jazz / Bossa"
+                    },
+                    {
+                        name: "Cadência Flamenca / Épica",
+                        description: "Mistura o tom maior com a descida dramática flamenca do relativo menor.",
+                        sequence: [chords[5], chords[4], chords[3], { note: chords[2].note, type: "Major", label: "III Maior" }], // vi - V - IV - III_Maior (Am - G - F - E)
+                        clima: "Flamenco / Épico"
+                    }
+                ];
+            } else {
+                // Progressões clássicas do tom menor
+                progressions = [
+                    {
+                        name: "Progressão Pop Menor",
+                        description: "Inicia melancólica e resolve com brilho no tom relativo maior.",
+                        sequence: [chords[0], chords[4], chords[1], chords[5]], // i - VI - III - VII
+                        clima: "Melancólico / Épico"
+                    },
+                    {
+                        name: "Cadência Andaluza (Menor)",
+                        description: "A descida folclórica clássica que esbanja drama e atitude.",
+                        sequence: [chords[0], chords[5], chords[4], { note: chords[3].note, type: "Major", label: "V Maior" }], // i - VII - VI - V_Maior (Am - G - F - E)
+                        clima: "Sombrio / Espanhol"
+                    },
+                    {
+                        name: "Cadência ii - V - i (Bossa Menor)",
+                        description: "Uma tensão sofisticada menor resolvendo com extrema classe.",
+                        sequence: [{ note: "B", type: "Minor", label: "ii" }, { note: chords[3].note, type: "Major", label: "V" }, chords[0]], // Bm - E - Am (ii - V - i simplificado)
+                        clima: "Jazz / Misterioso"
+                    }
+                ];
+            }
+
+            progressions.forEach((prog, progIdx) => {
+                const col = document.createElement("div");
+                col.className = "col-12 col-md-4";
+
+                const seqString = prog.sequence.map(s => `<strong>${s.note}${s.type === 'Minor' ? 'm' : ''}</strong>`).join(" → ");
+
+                col.innerHTML = `
+                    <div class="card h-100 bg-body-secondary border-secondary border-1 shadow-sm">
+                        <div class="card-body p-3 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <h6 class="fw-bold mb-0 text-white fs-7">${prog.name}</h6>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-9 px-1.5">${prog.clima}</span>
+                                </div>
+                                <p class="fs-8 text-muted mb-2">${prog.description}</p>
+                                <div class="p-2 bg-body-tertiary rounded border text-center fs-7 text-white-50 mb-3">
+                                    ${seqString}
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-success fw-bold d-flex align-items-center justify-content-center gap-1 btn-play-prog" data-index="${progIdx}">
+                                <i class="bi bi-play-circle-fill"></i> Ouvir Sequência
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(col);
+            });
+
+            // Adiciona evento de clique para os botões de tocar progressão
+            document.querySelectorAll(".btn-play-prog").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const idx = parseInt(btn.getAttribute("data-index"));
+                    playProgression(progressions[idx].sequence);
+                });
+            });
+        }
+
+        // Toca o acorde sintetizando tríades harmônicas de forma dedilhada
+        function playChord(root, type) {
+            audioEngine.stop();
+            
+            const rootFreq = NOTE_FREQS[root];
+            if (!rootFreq) return;
+
+            // Tríades:
+            // Maior: Fundamental (1), Terça Maior (1.2599), Quinta Justa (1.4983)
+            // Menor: Fundamental (1), Terça Menor (1.1892), Quinta Justa (1.4983)
+            const thirdFactor = type === "Major" ? 1.2599 : 1.1892;
+            const fifthFactor = 1.4983; // Quinta justa temperada
+
+            const freqs = [
+                rootFreq,
+                rootFreq * thirdFactor,
+                rootFreq * fifthFactor
+            ];
+
+            // Feedback visual no card do acorde correspondente se estiver visível
+            highlightChordCard(root, type);
+
+            audioEngine.playChord(freqs); // Usa a API nativa do app de dedilhar acordes!
+        }
+
+        // Toca a progressão inteira de forma automatizada e sequencial com feedback visual
+        function playProgression(sequence) {
+            stopAllAudio();
+            showToast("Tocando progressão...", "info");
+
+            let delay = 0;
+            sequence.forEach((ch, idx) => {
+                activeProgressionTimeout = setTimeout(() => {
+                    // Atualiza o acorde ativo da progressão para o baixo do backing band saber qual tocar
+                    currentProgressiveChord = ch;
+                    
+                    playChord(ch.note, ch.type);
+                }, delay);
+                delay += 2400; // 2.4 segundos (um compasso inteiro) por acorde
+            });
+
+            // Reseta o acorde ativo da progressão no final
+            activeProgressionTimeout = setTimeout(() => {
+                currentProgressiveChord = null;
+            }, delay);
+        }
+
+        // Destaca temporariamente o card do acorde que está sendo tocado para feedback do ouvido
+        function highlightChordCard(note, type) {
+            // Remove destaques de outros cards primeiro
+            document.querySelectorAll(".card-chord-box").forEach(c => {
+                c.classList.remove("bg-primary-subtle", "border-primary", "border-3");
+                c.style.transform = "scale(1)";
+            });
+
+            // Encontra e destaca o card ativo
+            const card = document.querySelector(`.card-chord-box[data-chord-id="${note}-${type}"]`);
+            if (card) {
+                card.classList.add("bg-primary-subtle", "border-primary", "border-3");
+                card.style.transform = "scale(1.05)";
+                
+                // Remove o destaque após 2.2 segundos
+                setTimeout(() => {
+                    card.classList.remove("bg-primary-subtle", "border-primary", "border-3");
+                    card.style.transform = "scale(1)";
+                }, 2200);
+            }
+        }
+
+        function stopAllAudio() {
+            audioEngine.stop();
+            if (activeProgressionTimeout) {
+                clearTimeout(activeProgressionTimeout);
+                activeProgressionTimeout = null;
+            }
+            currentProgressiveChord = null;
+            
+            // Limpa qualquer highlight residual
+            document.querySelectorAll(".card-chord-box").forEach(c => {
+                c.classList.remove("bg-primary-subtle", "border-primary", "border-3");
+                c.style.transform = "scale(1)";
+            });
+        }
+
+        // Inicializa com Dó Maior por padrão
+        selectKey("C", true);
+    });
+</script>
+{% endblock %}

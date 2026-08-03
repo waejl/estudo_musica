@@ -1,0 +1,84 @@
+{# app/school_admin/templates/school_admin/dashboard.html #}
+{% extends "school_admin/base_admin.html" %}
+
+{% block admin_title %}Dashboard{% endblock %}
+
+{% block page_title %}
+    <i class="bi bi-shield-shaded me-2"></i> Painel de Administração
+{% endblock %}
+
+{% block admin_content %}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <span class="text-muted small">Alunos</span>
+                <h2 class="fw-bold mb-0">{{ stats.students_count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <span class="text-muted small">Aulas publicadas</span>
+                <h2 class="fw-bold mb-0">{{ stats.published_lessons_count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <span class="text-muted small">Em andamento</span>
+                <h2 class="fw-bold mb-0 text-primary">{{ stats.in_progress_count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <span class="text-muted small">Aulas concluídas</span>
+                <h2 class="fw-bold mb-0 text-success">{{ stats.completed_count }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-12 col-xl-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-transparent">
+                <h5 class="fw-bold mb-0"><i class="bi bi-graph-up-arrow me-2 text-primary"></i>Progresso recente dos alunos</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_progress %}
+                    <div class="list-group list-group-flush">
+                        {% for progress in recent_progress %}
+                        <div class="list-group-item px-0 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                            <div>
+                                <strong>{{ progress.user.name }}</strong>
+                                <span class="text-muted">em</span>
+                                <span>{{ progress.lesson.title }}</span>
+                            </div>
+                            <span class="badge {% if progress.status == 'completed' %}bg-success{% else %}bg-primary{% endif %}">
+                                {% if progress.status == 'completed' %}Concluída{% else %}Em andamento{% endif %}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">Ainda não há progresso registrado pelos alunos.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-xl-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="fw-bold mb-2"><i class="bi bi-clock-history me-2 text-success"></i>Tempo total registrado</h5>
+                <h2 class="fw-bold text-success mb-1">{{ stats.total_minutes }} min</h2>
+                <p class="text-muted small mb-0">Soma das sessões de estudo dos alunos vinculados ao painel.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

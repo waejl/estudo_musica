@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Curso completo de guitarra para iniciantes, adaptado para mãos pequenas e dedos largos.">
+  <title>Curso Completo de Guitarra — Wesley</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --bg2:#111827;
+      --card:#182235;
+      --card2:#202c42;
+      --text:#f4f7fb;
+      --muted:#bdc8d8;
+      --accent:#f5a623;
+      --accent2:#45b7ff;
+      --ok:#35c46a;
+      --warn:#ffcf5c;
+      --danger:#ff6b6b;
+      --line:#34425a;
+      --code:#070b13;
+      --shadow:0 18px 45px rgba(0,0,0,.30);
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      color:var(--text);
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      line-height:1.67;
+      background:
+        radial-gradient(circle at 10% 0%,rgba(69,183,255,.12),transparent 28%),
+        radial-gradient(circle at 90% 0%,rgba(245,166,35,.12),transparent 30%),
+        linear-gradient(180deg,var(--bg),var(--bg2));
+    }
+    a{color:var(--accent2)}
+    header{
+      padding:74px 22px 52px;
+      text-align:center;
+      border-bottom:1px solid var(--line);
+    }
+    header h1{
+      margin:0 0 16px;
+      font-size:clamp(2.1rem,5vw,4.6rem);
+      line-height:1.04;
+      letter-spacing:-.04em;
+    }
+    header p{
+      max-width:900px;
+      margin:0 auto;
+      color:var(--muted);
+      font-size:1.08rem;
+    }
+    .badge{
+      display:inline-block;
+      margin-bottom:18px;
+      border:1px solid rgba(245,166,35,.55);
+      border-radius:999px;
+      padding:8px 13px;
+      color:#ffe4a3;
+      background:rgba(245,166,35,.10);
+      font-weight:700;
+      font-size:.9rem;
+    }
+    .hero-grid{
+      max-width:980px;
+      margin:30px auto 0;
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:12px;
+    }
+    .hero-grid div{
+      padding:16px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:rgba(24,34,53,.75);
+    }
+    .hero-grid strong{display:block;font-size:1.25rem;color:#fff}
+    .hero-grid span{color:var(--muted);font-size:.9rem}
+    .layout{
+      max-width:1360px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns:300px minmax(0,1fr);
+      gap:30px;
+      padding:30px 20px 90px;
+    }
+    nav{
+      position:sticky;
+      top:16px;
+      align-self:start;
+      max-height:calc(100vh - 32px);
+      overflow:auto;
+      border:1px solid var(--line);
+      background:rgba(17,24,39,.92);
+      border-radius:18px;
+      padding:18px;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(10px);
+    }
+    nav h2{font-size:1rem;margin:0 0 12px;color:#fff}
+    nav a{
+      display:block;
+      text-decoration:none;
+      color:var(--muted);
+      padding:8px 10px;
+      border-radius:9px;
+      font-size:.92rem;
+    }
+    nav a:hover{background:var(--card2);color:#fff}
+    main{min-width:0}
+    section{
+      margin-bottom:28px;
+      border:1px solid var(--line);
+      border-radius:20px;
+      padding:clamp(20px,3vw,36px);
+      background:linear-gradient(180deg,rgba(24,34,53,.95),rgba(17,24,39,.95));
+      box-shadow:var(--shadow);
+    }
+    section h2{
+      margin-top:0;
+      font-size:clamp(1.6rem,3vw,2.45rem);
+      line-height:1.16;
+    }
+    h3{margin-top:30px;font-size:1.3rem;color:#fff;border-left:4px solid var(--accent);padding-left:12px;}
+    h4{margin-top:22px;color:#fff}
+    p,li{color:var(--muted)}
+    strong{color:#fff}
+    .lead{font-size:1.08rem;color:#dce6f3}
+    .callout{
+      border-left:4px solid var(--accent2);
+      background:rgba(69,183,255,.09);
+      padding:15px 17px;
+      border-radius:10px;
+      margin:18px 0;
+    }
+    .callout.warning{border-color:var(--warn);background:rgba(255,207,92,.09)}
+    .callout.ok{border-color:var(--ok);background:rgba(53,196,106,.09)}
+    .callout.danger{border-color:var(--danger);background:rgba(255,107,107,.08)}
+    .grid2,.grid3,.grid5{
+      display:grid;
+      gap:16px;
+      margin:18px 0;
+    }
+    .grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .grid5{grid-template-columns:repeat(5,minmax(0,1fr))}
+    .card{
+      border:1px solid var(--line);
+      background:var(--card2);
+      border-radius:15px;
+      padding:18px;
+    }
+    .card h4{margin-top:0}
+    pre{
+      white-space:pre-wrap;
+      overflow:auto;
+      padding:17px;
+      border:1px solid #263348;
+      border-radius:13px;
+      background:var(--code);
+      color:#e8edf5;
+      font:500 .94rem/1.5 "JetBrains Mono","Fira Code",Consolas,monospace;
+    }
+    code{
+      font-family:"JetBrains Mono","Fira Code",Consolas,monospace;
+      color:#ffe29a;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin:18px 0;
+      overflow:hidden;
+      border-radius:12px;
+    }
+    th,td{
+      padding:12px;
+      text-align:left;
+      border:1px solid var(--line);
+      vertical-align:top;
+    }
+    th{background:#25334a;color:#fff}
+    td{color:var(--muted);background:rgba(10,15,25,.25)}
+    .checklist{list-style:none;padding-left:0}
+    .checklist li{margin:8px 0;padding-left:28px;position:relative}
+    .checklist li:before{
+      content:"✓";
+      position:absolute;
+      left:0;
+      color:var(--ok);
+      font-weight:800;
+    }
+    .module{
+      display:inline-block;
+      color:#ffe2a1;
+      border:1px solid rgba(245,166,35,.4);
+      background:rgba(245,166,35,.08);
+      padding:5px 10px;
+      border-radius:999px;
+      font-weight:800;
+      font-size:.83rem;
+      margin-bottom:10px;
+    }
+    .practice{
+      border:1px dashed rgba(69,183,255,.6);
+      border-radius:14px;
+      padding:16px;
+      margin-top:18px;
+      background:rgba(69,183,255,.05);
+    }
+    .practice h4{margin-top:0;color:#9fd8ff}
+    .test{
+      border:1px dashed rgba(53,196,106,.65);
+      border-radius:14px;
+      padding:16px;
+      margin-top:18px;
+      background:rgba(53,196,106,.05);
+    }
+    details{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:12px 14px;
+      margin:12px 0;
+      background:rgba(5,10,18,.22);
+    }
+    summary{cursor:pointer;font-weight:800;color:#fff}
+    footer{
+      text-align:center;
+      color:var(--muted);
+      padding:28px 20px 55px;
+    }
+
+    /* Diagramas de Acordes SVG Estilizados */
+    .chord-svg-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 15px auto;
+      max-width: 150px;
+    }
+    .chord-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #fff;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    .chord-svg {
+      display: block;
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .chord-svg line {
+      stroke: #4a5d78;
+      stroke-width: 1.5;
+    }
+    .chord-svg .nut {
+      stroke: #fff;
+      stroke-width: 4;
+    }
+    .chord-svg .finger {
+      fill: var(--accent2);
+      transition: fill 0.2s ease;
+    }
+    .chord-svg .finger-root {
+      fill: var(--accent);
+    }
+    .chord-svg .finger-text {
+      fill: #000;
+      font-family: system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 800;
+      text-anchor: middle;
+      dominant-baseline: central;
+    }
+    .chord-svg .label-text {
+      fill: var(--muted);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      text-anchor: middle;
+    }
+    .chord-svg .label-mute {
+      stroke: var(--danger);
+      stroke-width: 2;
+    }
+
+    /* Estilização para representações visuais rítmicas */
+    .rhythm-bar-container {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 15px 0;
+    }
+    .rhythm-beats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .rhythm-beat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      text-align: center;
+    }
+    .rhythm-arrow {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin: 8px 0;
+      transition: transform 0.2s;
+    }
+    .rhythm-arrow.down {
+      color: var(--accent);
+    }
+    .rhythm-arrow.up {
+      color: var(--accent2);
+    }
+    .rhythm-arrow.mute {
+      color: var(--danger);
+    }
+    .rhythm-num {
+      font-weight: bold;
+      color: #fff;
+      font-size: 0.95rem;
+    }
+    .rhythm-sub {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    @media(max-width:1000px){
+      .layout{grid-template-columns:1fr}
+      nav{position:relative;max-height:none}
+      .hero-grid{grid-template-columns:repeat(2,1fr)}
+    }
+    @media(max-width:680px){
+      .grid2,.grid3,.grid5,.hero-grid{grid-template-columns:1fr}
+      section{padding:20px}
+      header{padding-top:50px}
+      table{font-size:.9rem}
+    }
+    @media print{
+      body{background:white;color:black}
+      nav{display:none}
+      .layout{display:block;max-width:none}
+      section{box-shadow:none;break-inside:avoid;background:white;color:black}
+      p,li,td{color:#222}
+      h1,h2,h3,h4,strong,th{color:#000}
+      pre{background:#f4f4f4;color:#111}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <span class="badge">Curso completo • prática progressiva • adaptado às suas mãos</span>
+  <h1>Curso Completo de Guitarra</h1>
+  <p>
+    Um caminho do zero até tocar acordes, ritmos, riffs, solos e improvisação.
+    O curso foi estruturado de forma personalizada para quem possui mãos menores, dedos mais largos
+    ou dificuldade com notas abafadas. Focamos em ergonomia cirúrgica e aplicação prática imediata.
+  </p>
+  <div class="hero-grid">
+    <div><strong>24 semanas</strong><span>progressão completa</span></div>
+    <div><strong>6 módulos</strong><span>do básico ao solo</span></div>
+    <div><strong>30–45 min</strong><span>por sessão</span></div>
+    <div><strong>100% prático</strong><span>com testes e revisões</span></div>
+  </div>
+</header>
+
+<div class="layout">
+<nav>
+  <h2>Conteúdo do curso</h2>
+  <a href="#como-usar">Como usar este curso</a>
+  <a href="#modulo0">Módulo 0 — Preparação</a>
+  <a href="#modulo1">Módulo 1 — Controle da mão</a>
+  <a href="#modulo2">Módulo 2 — Acordes e ritmo</a>
+  <a href="#modulo3">Módulo 3 — Braço e teoria</a>
+  <a href="#modulo4">Módulo 4 — Técnicas de solo</a>
+  <a href="#modulo5">Módulo 5 — Improvisação</a>
+  <a href="#modulo6">Módulo 6 — Repertório</a>
+  <a href="#planosemanal">Plano de 24 semanas</a>
+  <a href="#rotina">Rotinas de estudo</a>
+  <a href="#avaliacao">Avaliações</a>
+  <a href="#manutencao">Regulagem e equipamento</a>
+  <a href="#glossario">Glossário</a>
+</nav>
+
+<main>
+<section id="como-usar">
+  <h2>Como usar este curso</h2>
+  <p class="lead">
+    Você não deve tentar “vencer” a guitarra usando força bruta. O segredo de um som limpo reside no relaxamento,
+    na precisão geométrica e no ajuste milimétrico dos ângulos dos dedos. Para a sua anatomia, alguns milímetros 
+    de ajuste valem muito mais que dobrar a força de aperto.
+  </p>
+
+  <div class="grid3">
+    <div class="card">
+      <h4>1. Entenda e Analise</h4>
+      <p>Leia a explicação técnica, observe o diagrama visual e compreenda a mecânica anatômica ideal antes de tentar tocar.</p>
+    </div>
+    <div class="card">
+      <h4>2. Pratique Devagar</h4>
+      <p>Execute os movimentos de forma extremamente lenta, usando metrônomo. O cérebro precisa de lentidão para registrar movimentos eficientes.</p>
+    </div>
+    <div class="card">
+      <h4>3. Teste e Corrija</h4>
+      <p>Toque corda por corda para verificar se há notas abafadas, grave-se periodicamente e aplique os critérios de validação.</p>
+    </div>
+  </div>
+
+  <div class="callout ok">
+    <strong>Regra de ouro:</strong> Só aumente a velocidade do metrônomo quando conseguir realizar a progressão três vezes consecutivas de forma perfeitamente limpa, sem tensão muscular e sem abafar nenhuma corda acidentalmente.
+  </div>
+</section>
+
+<section id="modulo0">
+  <span class="module">MÓDULO 0</span>
+  <h2>Preparação: postura, postura clássica adaptada e anatomia</h2>
+
+  <h3>Aula 0.1 — Conhecendo a guitarra</h3>
+  <p>As seis cordas afinadas na afinação padrão, ordenadas da mais grossa (6ª corda) para a mais fina (1ª corda):</p>
+  
+  <div style="max-width: 500px; margin: 15px auto;">
+    <svg viewBox="0 0 400 150" xmlns="http://www.w3.org/2000/svg" style="background: var(--card); border-radius: 12px; border: 1px solid var(--line); padding: 15px; box-shadow: var(--shadow);">
+      <!-- Braço simplificado com as notas soltas -->
+      <line x1="30" y1="20" x2="350" y2="20" stroke="#ffcf5c" stroke-width="1.5" />
+      <line x1="30" y1="42" x2="350" y2="42" stroke="#bdc8d8" stroke-width="1.2" />
+      <line x1="30" y1="64" x2="350" y2="64" stroke="#bdc8d8" stroke-width="1.0" />
+      <line x1="30" y1="86" x2="350" y2="86" stroke="#bdc8d8" stroke-width="0.8" />
+      <line x1="30" y1="108" x2="350" y2="108" stroke="#bdc8d8" stroke-width="0.6" />
+      <line x1="30" y1="130" x2="350" y2="130" stroke="#45b7ff" stroke-width="0.5" />
+      
+      <!-- Nut (pestana superior) -->
+      <line x1="75" y1="15" x2="75" y2="135" stroke="#fff" stroke-width="4" />
+      
+      <!-- Textos -->
+      <text x="50" y="24" fill="#ffcf5c" font-family="JetBrains Mono, monospace" font-size="12" font-weight="bold" text-anchor="middle">E</text>
+      <text x="50" y="46" fill="#bdc8d8" font-family="JetBrains Mono, monospace" font-size="12" font-weight="bold" text-anchor="middle">A</text>
+      <text x="50" y="68" fill="#bdc8d8" font-family="JetBrains Mono, monospace" font-size="12" font-weight="bold" text-anchor="middle">D</text>
+      <text x="50" y="90" fill="#bdc8d8" font-family="JetBrains Mono, monospace" font-size="12" font-weight="bold" text-anchor="middle">G</text>
+      <text x="50" y="112" fill="#bdc8d8" font-family="JetBrains Mono, monospace" font-size="12" font-weight="bold" text-anchor="middle">B</text>
+      <text x="50" y="134" fill="#45b7ff" font-family="JetBrains Mono, monospace" font-size="12" font-weight="bold" text-anchor="middle">e</text>
+      
+      <text x="340" y="24" fill="#9fd8ff" font-family="system-ui" font-size="11" text-anchor="end">6ª Corda (Grave)</text>
+      <text x="340" y="134" fill="#9fd8ff" font-family="system-ui" font-size="11" text-anchor="end">1ª Corda (Aguda)</text>
+    </svg>
+  </div>
+
+  <p>Na tablatura, a representação visual funciona como um espelho de frente para o braço do instrumento (a corda mais aguda fica no topo da folha):</p>
+  <pre>
+e|----------------|  1ª corda — mais fina (Mi agudo)
+B|----------------|  2ª corda — Si
+G|----------------|  3ª corda — Sol
+D|----------------|  4ª corda — Ré
+A|----------------|  5ª corda — Lá
+E|----------------|  6ª corda — mais grossa (Mi grave)
+  </pre>
+
+  <h3>Aula 0.2 — Postura clássica adaptada para mãos menores</h3>
+  <p>
+    Para quem tem dedos menores ou dedos mais largos, a postura clássica da guitarra (com o corpo do instrumento apoiado na <strong>perna esquerda</strong>, usando um apoio de pé ou correia alta) é uma revolução biomecânica.
+  </p>
+  <div class="grid2">
+    <div class="card">
+      <h4>Postura Clássica Recomendada</h4>
+      <ul>
+        <li><strong>Apoio na perna esquerda:</strong> Mantém o braço da guitarra em um ângulo natural de ~45 graus para cima. Isso aproxima as primeiras casas do seu corpo, diminuindo radicalmente a necessidade de esticar o braço.</li>
+        <li><strong>Polegar verticalizado:</strong> O polegar fica atrás do braço da guitarra, na altura média, alinhado entre o indicador e o dedo médio. Nunca envolva o braço com a mão inteira quando for tocar acordes que exigem abertura.</li>
+        <li><strong>Punho projetado:</strong> O punho deve estar levemente inclinado para frente, criando um espaço arqueado ("C") entre a base da mão e o braço da guitarra.</li>
+        <li><strong>Toque na ponta:</strong> O dedo entra com a ponta (ao lado da unha), pressionando a milímetros do traste (metal), reduzindo em até 50% a força necessária para soar a nota.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Erros Críticos de Anatomia</h4>
+      <ul>
+        <li><strong>Palma colada:</strong> Apoiar o braço na palma da mão restringe severamente o alcance de dedos curtos.</li>
+        <li><strong>Dedo deitado:</strong> Pressionar com a polpa do dedo, fazendo com que ele deite e abafe as cordas vizinhas.</li>
+        <li><strong>Aperto excessivo:</strong> Aplicar força sem precisão machuca os tendões e desafina as notas.</li>
+        <li><strong>Polegar no topo:</strong> Prender o polegar na borda superior do braço ao fazer acordes cheios, bloqueando a mobilidade do dedo 3 e 4.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Aula 0.3 — Unhas, geometria do toque e anti-abafamento</h3>
+  <p>
+    Para quem tem pontas de dedos mais largas, o controle de unhas e o ângulo de ataque são cruciais. As unhas da mão esquerda devem ser mantidas bem rentes e ligeiramente arredondadas nos cantos. Se a unha bater na escala antes do dedo pressionar a corda, seu ângulo está vertical demais; se o dedo estiver deitado demais, ele abafará a corda vizinha.
+  </p>
+  
+  <div style="max-width: 600px; margin: 20px auto; display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+    <!-- Desenho Errado -->
+    <div style="background: var(--card); border: 1px solid var(--danger); border-radius: 12px; padding: 12px; width: 260px; text-align: center;">
+      <h5 style="color: var(--danger); margin: 0 0 10px;">ERRADO — Dedo Deitado</h5>
+      <svg viewBox="0 0 150 120" width="100%" height="100" xmlns="http://www.w3.org/2000/svg">
+        <!-- Corda principal e vizinha -->
+        <line x1="10" y1="80" x2="140" y2="80" stroke="#bdc8d8" stroke-width="2" />
+        <line x1="10" y1="100" x2="140" y2="100" stroke="#ff6b6b" stroke-width="2" />
+        <!-- Dedo deitado -->
+        <path d="M 20,40 Q 60,35 110,65 Q 120,75 105,82 Q 70,85 20,60 Z" fill="#2a3d59" stroke="#bdc8d8" stroke-width="1.5" />
+        <!-- Ponto de contato encostando na de baixo -->
+        <circle cx="105" cy="80" r="5" fill="#f5a623" />
+        <!-- Abafamento da de baixo -->
+        <circle cx="105" cy="100" r="4" fill="#ff6b6b" />
+        <text x="105" y="112" fill="#ff6b6b" font-family="system-ui" font-size="9" text-anchor="middle">Corda vizinha abafada</text>
+      </svg>
+    </div>
+    
+    <!-- Desenho Correto -->
+    <div style="background: var(--card); border: 1px solid var(--ok); border-radius: 12px; padding: 12px; width: 260px; text-align: center;">
+      <h5 style="color: var(--ok); margin: 0 0 10px;">CORRETO — Ângulo em Pé</h5>
+      <svg viewBox="0 0 150 120" width="100%" height="100" xmlns="http://www.w3.org/2000/svg">
+        <!-- Cordas livres -->
+        <line x1="10" y1="80" x2="140" y2="80" stroke="#bdc8d8" stroke-width="2" />
+        <line x1="10" y1="100" x2="140" y2="100" stroke="#35c46a" stroke-width="2" />
+        <!-- Dedo arqueado tocando na ponta -->
+        <path d="M 20,20 Q 75,10 90,50 Q 95,75 88,80 Q 75,70 40,40 Z" fill="#2a3d59" stroke="#bdc8d8" stroke-width="1.5" />
+        <!-- Ponto de contato na ponta -->
+        <circle cx="88" cy="80" r="5" fill="#35c46a" />
+        <!-- Texto indicativo -->
+        <text x="110" y="104" fill="#35c46a" font-family="system-ui" font-size="9" text-anchor="start">Corda vizinha soa livre!</text>
+      </svg>
+    </div>
+  </div>
+
+  <p><strong>Dica de ouro para dedos largos:</strong> gire levemente a ponta do dedo indicador ou anelar cerca de 5 a 10 graus em direção ao lado do polegar. Essa pequena assimetria reduz a largura horizontal do dedo sobre a corda, liberando espaço para a corda imediatamente inferior vibrar livremente.</p>
+
+  <div class="practice">
+    <h4>Exercício 0A — Técnica de Pressão Mínima</h4>
+    <ol>
+      <li>Coloque a ponta do seu dedo indicador na 2ª casa da corda Sol (3ª corda).</li>
+      <li>Toque a corda repetidamente sem colocar nenhuma força — o som deve sair totalmente abafado.</li>
+      <li>Aumente a pressão milímetro a milímetro enquanto continua tocando.</li>
+      <li><strong>Pare de apertar</strong> exatamente no instante em que a nota soar clara e limpa.</li>
+      <li>Perceba quanta força você economizou em comparação à sua pegada habitual. Memorize este nível mínimo de força necessário.</li>
+    </ol>
+  </div>
+
+  <div class="test">
+    <strong>Teste de Transição do Módulo:</strong> Você consegue tirar uma nota cristalina e focada com cada um dos 4 dedos individualmente, sem tensionar o ombro e mantendo a palma sem tocar a parte inferior do braço da guitarra?
+  </div>
+</section>
+
+<section id="modulo1">
+  <span class="module">MÓDULO 1</span>
+  <h2>Controle da mão esquerda, flexibilidade e independência dos dedos</h2>
+
+  <h3>Aula 1.1 — Exercício cromático posicional (1–2–3–4)</h3>
+  <p>
+    Não treine alongamento nas primeiras casas do instrumento, onde a distância física entre os trastes é enorme. Comece na <strong>7ª casa</strong>. Os espaços menores aliviam a tensão mecânica, reduzindo drasticamente o estiramento de quem possui mãos pequenas.
+  </p>
+
+  <pre>
+e|----------------------------------7--8--9--10--|
+B|--------------------------7--8--9--10----------|
+G|------------------7--8--9--10------------------|
+D|----------7--8--9--10--------------------------|
+A|--7--8--9--10----------------------------------|
+E|--7--8--9--10----------------------------------|
+    1  2  3  4   ... (Suba e desça corda por corda)
+  </pre>
+  <p><strong>Mapeamento de Dedos:</strong> 1 = Indicador | 2 = Médio | 3 = Anelar | 4 = Mínimo.</p>
+  <p><strong>Regra de Execução:</strong> Mantenha os dedos arqueados e bem pertinho das cordas. Ao pressionar o dedo 2, não levante o dedo 1. Ao pressionar o dedo 3, mantenha o 1 e o 2 ancorados. Isso cria flexibilidade ligamentar e força de controle.</p>
+
+  <h3>Aula 1.2 — Padrões assimétricos para independência extrema</h3>
+  <div class="grid2">
+    <div class="card">
+      <h4>Exemplo A — Padrão 1–3–2–4</h4>
+      <pre>
+e|--7--9--8--10--|
+B|--7--9--8--10--|
+G|--7--9--8--10--|
+      </pre>
+      <p>Excelente para separar os tendões flexores dos dedos médio e anelar, que naturalmente tendem a se mover juntos.</p>
+    </div>
+    <div class="card">
+      <h4>Exemplo B — Padrão 1–4–2–3</h4>
+      <pre>
+e|--7--10--8--9--|
+B|--7--10--8--9--|
+G|--7--10--8--9--|
+      </pre>
+      <p>Treina a abertura e o alcance do dedo mínimo (4) sem exigir força excessiva do punho.</p>
+    </div>
+  </div>
+
+  <h3>Aula 1.3 — O Desafio de Isolação Anti-Abafamento</h3>
+  <p>
+    Este é o exercício definitivo para dedos largos. Ele força você a arquear a mão perfeitamente para evitar tocar cordas abertas adjacentes.
+  </p>
+  <pre>
+e|--0--  (Corda Mi agudo soando totalmente livre)
+B|--0--  (Corda Si soando livre)
+G|--2--  (Dedo 1 pressiona rigidamente na ponta, casa 2)
+  </pre>
+  <p>
+    Pressione a corda Sol com a ponta do indicador. Ao palhetar as três cordas juntas de cima para baixo, as notas soltas Si e Mi devem soar cristalinas. Se soarem abafadas, mude o ângulo do pulso para frente ou rotacione levemente o dedo indicador.
+  </p>
+
+  <div class="practice">
+    <h4>Rotina de Estudo Prático Diário</h4>
+    <ul>
+      <li><strong>3 minutos:</strong> Técnica de pressão mínima na corda Sol (encontrar o ponto de som sem aplicar força excessiva).</li>
+      <li><strong>5 minutos:</strong> Exercício Cromático 1-2-3-4 na 7ª casa com metrônomo a 60 bpm.</li>
+      <li><strong>5 minutos:</strong> Padrão assimétrico 1-3-2-4 de forma lenta e precisa.</li>
+      <li><strong>5 minutos:</strong> Desafio Anti-abafamento (tocar 3 cordas garantindo que as soltas soem perfeitamente).</li>
+      <li><strong>2 minutos:</strong> Alongamento suave dos dedos, abrindo os dedos com a mão oposta, respirando fundo e soltando os ombros.</li>
+    </ul>
+  </div>
+
+  <div class="test">
+    <strong>Teste do Módulo:</strong> Você consegue tocar a sequência 1-2-3-4 a 60 bpm, com precisão matemática nas batidas do metrônomo (uma nota por clique), sem ruídos de trastejamento e sem levantar seus dedos mais de 1 cm acima das cordas ao movê-los?
+  </div>
+</section>
+
+<section id="modulo2">
+  <span class="module">MÓDULO 2</span>
+  <h2>Acordes abertos fundamentais, transições rápidas e ritmo</h2>
+
+  <h3>Aula 2.1 — Os Seis Acordes Essenciais em Diagramas de Alta Precision</h3>
+  <p>
+    Abaixo estão os seis acordes que formam a espinha dorsal de milhares de músicas. Note as indicações exatas dos dedos (1, 2, 3, 4) dentro das marcações, além de indicações claras de cordas que devem ser evitadas (<span style="color:var(--danger)">X</span>) ou tocadas soltas (<span style="color:var(--accent2)">O</span>).
+  </p>
+
+  <div class="grid3">
+    <!-- Em -->
+    <div class="chord-svg-container">
+      <div class="chord-title">Em (Mi menor)</div>
+      <svg class="chord-svg" width="130" height="150" viewBox="0 0 130 150">
+        <!-- Trastes -->
+        <line x1="20" y1="30" x2="110" y2="30" class="nut" />
+        <line x1="20" y1="54" x2="110" y2="54" />
+        <line x1="20" y1="78" x2="110" y2="78" />
+        <line x1="20" y1="102" x2="110" y2="102" />
+        <line x1="20" y1="126" x2="110" y2="126" />
+        <!-- Cordas -->
+        <line x1="20" y1="28" x2="20" y2="135" />
+        <line x1="38" y1="28" x2="38" y2="135" />
+        <line x1="56" y1="28" x2="56" y2="135" />
+        <line x1="74" y1="28" x2="74" y2="135" />
+        <line x1="92" y1="28" x2="92" y2="135" />
+        <line x1="110" y1="28" x2="110" y2="135" />
+        <!-- Simbolos no topo -->
+        <circle cx="20" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <circle cx="74" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <circle cx="92" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <circle cx="110" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <!-- Dedos -->
+        <circle cx="38" cy="66" r="7" class="finger" />
+        <text x="38" y="66" class="finger-text">1</text>
+        <circle cx="56" cy="66" r="7" class="finger" />
+        <text x="56" y="66" class="finger-text">2</text>
+      </svg>
+    </div>
+
+    <!-- Am -->
+    <div class="chord-svg-container">
+      <div class="chord-title">Am (Lá menor)</div>
+      <svg class="chord-svg" width="130" height="150" viewBox="0 0 130 150">
+        <line x1="20" y1="30" x2="110" y2="30" class="nut" />
+        <line x1="20" y1="54" x2="110" y2="54" />
+        <line x1="20" y1="78" x2="110" y2="78" />
+        <line x1="20" y1="102" x2="110" y2="102" />
+        <line x1="20" y1="126" x2="110" y2="126" />
+        <line x1="20" y1="28" x2="20" y2="135" />
+        <line x1="38" y1="28" x2="38" y2="135" />
+        <line x1="56" y1="28" x2="56" y2="135" />
+        <line x1="74" y1="28" x2="74" y2="135" />
+        <line x1="92" y1="28" x2="92" y2="135" />
+        <line x1="110" y1="28" x2="110" y2="135" />
+        <!-- Abafada/solta -->
+        <line x1="16" y1="11" x2="24" y2="19" class="label-mute" />
+        <line x1="24" y1="11" x2="16" y2="19" class="label-mute" />
+        <circle cx="38" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <circle cx="110" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <!-- Dedos -->
+        <circle cx="92" cy="42" r="7" class="finger" />
+        <text x="92" y="42" class="finger-text">1</text>
+        <circle cx="56" cy="66" r="7" class="finger" />
+        <text x="56" y="66" class="finger-text">2</text>
+        <circle cx="74" cy="66" r="7" class="finger" />
+        <text x="74" y="66" class="finger-text">3</text>
+      </svg>
+    </div>
+
+    <!-- C -->
+    <div class="chord-svg-container">
+      <div class="chord-title">C (Dó maior)</div>
+      <svg class="chord-svg" width="130" height="150" viewBox="0 0 130 150">
+        <line x1="20" y1="30" x2="110" y2="30" class="nut" />
+        <line x1="20" y1="54" x2="110" y2="54" />
+        <line x1="20" y1="78" x2="110" y2="78" />
+        <line x1="20" y1="102" x2="110" y2="102" />
+        <line x1="20" y1="126" x2="110" y2="126" />
+        <line x1="20" y1="28" x2="20" y2="135" />
+        <line x1="38" y1="28" x2="38" y2="135" />
+        <line x1="56" y1="28" x2="56" y2="135" />
+        <line x1="74" y1="28" x2="74" y2="135" />
+        <line x1="92" y1="28" x2="92" y2="135" />
+        <line x1="110" y1="28" x2="110" y2="135" />
+        <!-- Abafada/solta -->
+        <line x1="16" y1="11" x2="24" y2="19" class="label-mute" />
+        <line x1="24" y1="11" x2="16" y2="19" class="label-mute" />
+        <circle cx="74" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <circle cx="110" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <!-- Dedos -->
+        <circle cx="92" cy="42" r="7" class="finger" />
+        <text x="92" y="42" class="finger-text">1</text>
+        <circle cx="56" cy="66" r="7" class="finger" />
+        <text x="56" y="66" class="finger-text">2</text>
+        <circle cx="38" cy="90" r="7" class="finger" />
+        <text x="38" y="90" class="finger-text">3</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="grid3" style="margin-top: -10px;">
+    <!-- D -->
+    <div class="chord-svg-container">
+      <div class="chord-title">D (Ré maior)</div>
+      <svg class="chord-svg" width="130" height="150" viewBox="0 0 130 150">
+        <line x1="20" y1="30" x2="110" y2="30" class="nut" />
+        <line x1="20" y1="54" x2="110" y2="54" />
+        <line x1="20" y1="78" x2="110" y2="78" />
+        <line x1="20" y1="102" x2="110" y2="102" />
+        <line x1="20" y1="126" x2="110" y2="126" />
+        <line x1="20" y1="28" x2="20" y2="135" />
+        <line x1="38" y1="28" x2="38" y2="135" />
+        <line x1="56" y1="28" x2="56" y2="135" />
+        <line x1="74" y1="28" x2="74" y2="135" />
+        <line x1="92" y1="28" x2="92" y2="135" />
+        <line x1="110" y1="28" x2="110" y2="135" />
+        <!-- Abafada/solta -->
+        <line x1="16" y1="11" x2="24" y2="19" class="label-mute" />
+        <line x1="24" y1="11" x2="16" y2="19" class="label-mute" />
+        <line x1="34" y1="11" x2="42" y2="19" class="label-mute" />
+        <line x1="42" y1="11" x2="34" y2="19" class="label-mute" />
+        <circle cx="56" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <!-- Dedos -->
+        <circle cx="74" cy="66" r="7" class="finger" />
+        <text x="74" y="66" class="finger-text">1</text>
+        <circle cx="110" cy="66" r="7" class="finger" />
+        <text x="110" y="66" class="finger-text">2</text>
+        <circle cx="92" cy="90" r="7" class="finger" />
+        <text x="92" y="90" class="finger-text">3</text>
+      </svg>
+    </div>
+
+    <!-- G -->
+    <div class="chord-svg-container">
+      <div class="chord-title">G (Sol tradicional)</div>
+      <svg class="chord-svg" width="130" height="150" viewBox="0 0 130 150">
+        <line x1="20" y1="30" x2="110" y2="30" class="nut" />
+        <line x1="20" y1="54" x2="110" y2="54" />
+        <line x1="20" y1="78" x2="110" y2="78" />
+        <line x1="20" y1="102" x2="110" y2="102" />
+        <line x1="20" y1="126" x2="110" y2="126" />
+        <line x1="20" y1="28" x2="20" y2="135" />
+        <line x1="38" y1="28" x2="38" y2="135" />
+        <line x1="56" y1="28" x2="56" y2="135" />
+        <line x1="74" y1="28" x2="74" y2="135" />
+        <line x1="92" y1="28" x2="92" y2="135" />
+        <line x1="110" y1="28" x2="110" y2="135" />
+        <!-- Abafada/solta -->
+        <circle cx="56" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <circle cx="74" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <circle cx="92" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <!-- Dedos -->
+        <circle cx="38" cy="66" r="7" class="finger" />
+        <text x="38" y="66" class="finger-text">1</text>
+        <circle cx="20" cy="90" r="7" class="finger" />
+        <text x="20" y="90" class="finger-text">2</text>
+        <circle cx="110" cy="90" r="7" class="finger" />
+        <text x="110" y="90" class="finger-text">3</text>
+      </svg>
+    </div>
+
+    <!-- A -->
+    <div class="chord-svg-container">
+      <div class="chord-title">A (Lá maior)</div>
+      <svg class="chord-svg" width="130" height="150" viewBox="0 0 130 150">
+        <line x1="20" y1="30" x2="110" y2="30" class="nut" />
+        <line x1="20" y1="54" x2="110" y2="54" />
+        <line x1="20" y1="78" x2="110" y2="78" />
+        <line x1="20" y1="102" x2="110" y2="102" />
+        <line x1="20" y1="126" x2="110" y2="126" />
+        <line x1="20" y1="28" x2="20" y2="135" />
+        <line x1="38" y1="28" x2="38" y2="135" />
+        <line x1="56" y1="28" x2="56" y2="135" />
+        <line x1="74" y1="28" x2="74" y2="135" />
+        <line x1="92" y1="28" x2="92" y2="135" />
+        <line x1="110" y1="28" x2="110" y2="135" />
+        <!-- Abafada/solta -->
+        <line x1="16" y1="11" x2="24" y2="19" class="label-mute" />
+        <line x1="24" y1="11" x2="16" y2="19" class="label-mute" />
+        <circle cx="38" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <circle cx="110" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <!-- Dedos -->
+        <circle cx="56" cy="66" r="7" class="finger" />
+        <text x="56" y="66" class="finger-text">1</text>
+        <circle cx="74" cy="66" r="7" class="finger" />
+        <text x="74" y="66" class="finger-text">2</text>
+        <circle cx="92" cy="66" r="7" class="finger" />
+        <text x="92" y="66" class="finger-text">3</text>
+      </svg>
+    </div>
+  </div>
+
+  <h3>Aula 2.2 — Segredos Anatômicos para Execução dos Acordes</h3>
+  <ul>
+    <li><strong>Lá Maior (A) sem esmagamento:</strong> Dedos largos sofrem para espremer os dedos 1, 2 e 3 na mesma casa. <em>A Solução:</em> Monte o acorde com a sequência de dedos <strong>2, 1, 3</strong> (o dedo 1 recua ligeiramente por baixo) ou use apenas o seu dedo indicador fazendo uma meia pestana nas cordas 4, 3 e 2 (abafando a 1ª corda se necessário, o que é comum e aceitável no rock).</li>
+    <li><strong>Dó Maior (C) sem abafar:</strong> O anelar (dedo 3) na 5ª corda tende a deitar sobre a 4ª corda. Curve radicalmente a última articulação do anelar para cima e afaste totalmente a palma do braço.</li>
+    <li><strong>Ré Maior (D) perfeito:</strong> Posicione o dedo 3 (na corda Si, casa 3) colado ao traste metálico. Se ele recuar para o meio da casa, você precisará fazer o triplo de força e abafará a corda Mi agudo.</li>
+  </ul>
+
+  <h3>Aula 2.3 — A Forma de Ouro: Sol maior com quatro dedos</h3>
+  <p>
+    Esta variação do acorde de Sol é altamente recomendada para quem tem mãos menores. Ela estabiliza a mão esquerda e elimina movimentos bruscos de transição rítmica.
+  </p>
+  
+  <div class="grid2">
+    <div class="card">
+      <h4>Por que este formato é revolucionário?</h4>
+      <p>
+        Ao colocar o dedo 3 na corda Si (casa 3) e o dedo 4 na corda Mi agudo (casa 3), você cria uma <strong>âncora mecânica</strong>. Para mudar de Sol (G) para Ré (D) ou Mi Menor (Em7), os seus dedos 3 e 4 permanecem exatamente nas mesmas casas. Menos movimento significa trocas infinitamente mais rápidas e sem erros.
+      </p>
+    </div>
+    
+    <div class="chord-svg-container">
+      <div class="chord-title">G (Com 4 dedos)</div>
+      <svg class="chord-svg" width="130" height="150" viewBox="0 0 130 150">
+        <line x1="20" y1="30" x2="110" y2="30" class="nut" />
+        <line x1="20" y1="54" x2="110" y2="54" />
+        <line x1="20" y1="78" x2="110" y2="78" />
+        <line x1="20" y1="102" x2="110" y2="102" />
+        <line x1="20" y1="126" x2="110" y2="126" />
+        <line x1="20" y1="28" x2="20" y2="135" />
+        <line x1="38" y1="28" x2="38" y2="135" />
+        <line x1="56" y1="28" x2="56" y2="135" />
+        <line x1="74" y1="28" x2="74" y2="135" />
+        <line x1="92" y1="28" x2="92" y2="135" />
+        <line x1="110" y1="28" x2="110" y2="135" />
+        <!-- Soltas -->
+        <circle cx="56" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <circle cx="74" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <!-- Dedos -->
+        <circle cx="38" cy="66" r="7" class="finger" />
+        <text x="38" y="66" class="finger-text">1</text>
+        <circle cx="20" cy="90" r="7" class="finger" />
+        <text x="20" y="90" class="finger-text">2</text>
+        <circle cx="92" cy="90" r="7" class="finger" />
+        <text x="92" y="90" class="finger-text">3</text>
+        <circle cx="110" cy="90" r="7" class="finger" />
+        <text x="110" y="90" class="finger-text">4</text>
+      </svg>
+    </div>
+  </div>
+
+  <h3>Aula 2.4 — Ritmos e Levadas Básicas (Com Linha do Tempo Visual)</h3>
+  <p>Toque o ritmo com movimentos fluidos do pulso direito (ou esquerdo, se canhoto). Não use o braço inteiro; relaxe o cotovelo.</p>
+
+  <h4>Padrão 1 — O Pulso Regular (Balada Simples)</h4>
+  <p>Batidas lentas e constantes para baixo.</p>
+  <div class="rhythm-bar-container">
+    <div class="rhythm-beats">
+      <div class="rhythm-beat">
+        <span class="rhythm-num">Tempo 1</span>
+        <span class="rhythm-arrow down">↓</span>
+        <span class="rhythm-sub">Baixo</span>
+      </div>
+      <div class="rhythm-beat">
+        <span class="rhythm-num">Tempo 2</span>
+        <span class="rhythm-arrow down">↓</span>
+        <span class="rhythm-sub">Baixo</span>
+      </div>
+      <div class="rhythm-beat">
+        <span class="rhythm-num">Tempo 3</span>
+        <span class="rhythm-arrow down">↓</span>
+        <span class="rhythm-sub">Baixo</span>
+      </div>
+      <div class="rhythm-beat">
+        <span class="rhythm-num">Tempo 4</span>
+        <span class="rhythm-arrow down">↓</span>
+        <span class="rhythm-sub">Baixo</span>
+      </div>
+    </div>
+  </div>
+
+  <h4>Padrão 2 — O Ritmo Coringa (Pop/Rock)</h4>
+  <p>A levada mais versátil da música popular. O segredo é manter o braço direito subindo e descendo de forma contínua, mesmo quando não tocar nas cordas.</p>
+  <div class="rhythm-bar-container">
+    <div class="rhythm-beats">
+      <div class="rhythm-beat">
+        <span class="rhythm-num">Tempo 1</span>
+        <span class="rhythm-arrow down">↓</span>
+        <span class="rhythm-sub">Corda</span>
+      </div>
+      <div class="rhythm-beat">
+        <span class="rhythm-num">Tempo 2</span>
+        <span class="rhythm-arrow down">↓</span>
+        <span class="rhythm-sub">Corda</span>
+      </div>
+      <div class="rhythm-beat">
+        <span class="rhythm-num">E (&amp;)</span>
+        <span class="rhythm-arrow up">↑</span>
+        <span class="rhythm-sub">Sobe</span>
+      </div>
+      <div class="rhythm-beat">
+        <span class="rhythm-num">Tempo 3</span>
+        <span class="rhythm-arrow" style="color: var(--muted); opacity: 0.2;">↓</span>
+        <span class="rhythm-sub" style="opacity: 0.3;">Vazio</span>
+      </div>
+      <div class="rhythm-beat">
+        <span class="rhythm-num">E (&amp;)</span>
+        <span class="rhythm-arrow up">↑</span>
+        <span class="rhythm-sub">Sobe</span>
+      </div>
+      <div class="rhythm-beat">
+        <span class="rhythm-num">Tempo 4</span>
+        <span class="rhythm-arrow down">↓</span>
+        <span class="rhythm-sub">Desce</span>
+      </div>
+      <div class="rhythm-beat">
+        <span class="rhythm-num">E (&amp;)</span>
+        <span class="rhythm-arrow up">↑</span>
+        <span class="rhythm-sub">Sobe</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Aula 2.5 — Pontes e Transições sem Pestana (F Simplificado)</h3>
+  <p>
+    Não trave no "obstáculo intransponível" da pestana completa do F (Fá Maior) logo nas primeiras semanas. Use fôrmas ergonômicas alternativas para desenvolver a flexibilidade e o cérebro primeiro.
+  </p>
+
+  <div class="grid2">
+    <!-- Fmaj7 -->
+    <div class="chord-svg-container">
+      <div class="chord-title">Fmaj7 (Sem Pestana)</div>
+      <svg class="chord-svg" width="130" height="150" viewBox="0 0 130 150">
+        <line x1="20" y1="30" x2="110" y2="30" class="nut" />
+        <line x1="20" y1="54" x2="110" y2="54" />
+        <line x1="20" y1="78" x2="110" y2="78" />
+        <line x1="20" y1="102" x2="110" y2="102" />
+        <line x1="20" y1="126" x2="110" y2="126" />
+        <line x1="20" y1="28" x2="20" y2="135" />
+        <line x1="38" y1="28" x2="38" y2="135" />
+        <line x1="56" y1="28" x2="56" y2="135" />
+        <line x1="74" y1="28" x2="74" y2="135" />
+        <line x1="92" y1="28" x2="92" y2="135" />
+        <line x1="110" y1="28" x2="110" y2="135" />
+        <!-- Abafada/solta -->
+        <line x1="16" y1="11" x2="24" y2="19" class="label-mute" />
+        <line x1="24" y1="11" x2="16" y2="19" class="label-mute" />
+        <line x1="34" y1="11" x2="42" y2="19" class="label-mute" />
+        <line x1="42" y1="11" x2="34" y2="19" class="label-mute" />
+        <circle cx="110" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <!-- Dedos -->
+        <circle cx="92" cy="42" r="7" class="finger" />
+        <text x="92" y="42" class="finger-text">1</text>
+        <circle cx="74" cy="66" r="7" class="finger" />
+        <text x="74" y="66" class="finger-text">2</text>
+        <circle cx="56" cy="90" r="7" class="finger" />
+        <text x="56" y="90" class="finger-text">3</text>
+      </svg>
+      <p style="font-size: 0.85rem; color: var(--muted); text-align: center; margin-top: 8px;">Deixa a 1ª corda (Mi agudo) soar aberta.</p>
+    </div>
+
+    <!-- F Pequeno -->
+    <div class="chord-svg-container">
+      <div class="chord-title">F Pequeno (Minipestana)</div>
+      <svg class="chord-svg" width="130" height="150" viewBox="0 0 130 150">
+        <line x1="20" y1="30" x2="110" y2="30" class="nut" />
+        <line x1="20" y1="54" x2="110" y2="54" />
+        <line x1="20" y1="78" x2="110" y2="78" />
+        <line x1="20" y1="102" x2="110" y2="102" />
+        <line x1="20" y1="126" x2="110" y2="126" />
+        <line x1="20" y1="28" x2="20" y2="135" />
+        <line x1="38" y1="28" x2="38" y2="135" />
+        <line x1="56" y1="28" x2="56" y2="135" />
+        <line x1="74" y1="28" x2="74" y2="135" />
+        <line x1="92" y1="28" x2="92" y2="135" />
+        <line x1="110" y1="28" x2="110" y2="135" />
+        <!-- Abafada/solta -->
+        <line x1="16" y1="11" x2="24" y2="19" class="label-mute" />
+        <line x1="24" y1="11" x2="16" y2="19" class="label-mute" />
+        <line x1="34" y1="11" x2="42" y2="19" class="label-mute" />
+        <line x1="42" y1="11" x2="34" y2="19" class="label-mute" />
+        <!-- Minipestana Dedo 1 pegando cordas 1 e 2 na casa 1 -->
+        <rect x="88" y="36" width="26" height="12" rx="4" fill="var(--accent2)" />
+        <text x="101" y="42" class="finger-text">1</text>
+        <!-- Dedos adicionais -->
+        <circle cx="74" cy="66" r="7" class="finger" />
+        <text x="74" y="66" class="finger-text">2</text>
+        <circle cx="56" cy="90" r="7" class="finger" />
+        <text x="56" y="90" class="finger-text">3</text>
+      </svg>
+      <p style="font-size: 0.85rem; color: var(--muted); text-align: center; margin-top: 8px;">Dedo 1 deita firme apenas sobre as duas primeiras cordas.</p>
+    </div>
+  </div>
+
+  <div class="test">
+    <strong>Teste de Transição do Módulo:</strong> Toque a progressão G–D–Em–C de forma ininterrupta por dois minutos a 60 bpm no metrônomo usando a levada do Ritmo Coringa (Padrão 2), mantendo o tempo perfeitamente estável e as notas 100% audíveis.
+  </div>
+</section>
+
+<section id="modulo3">
+  <span class="module">MÓDULO 3</span>
+  <h2>Conectando o braço: teoria, mapeamento e o Sistema CAGED</h2>
+
+  <h3>Aula 3.1 — As notas naturais e a regra de ouro das distâncias</h3>
+  <p>Na música ocidental, temos 12 notas. Entender a distância entre elas no braço da guitarra é crucial para se movimentar livremente.</p>
+  
+  <div class="callout ok">
+    <strong>A Regra de Ouro da Distância:</strong> 
+    <br>• Entre <strong>E e F</strong> (Mi e Fá) e entre <strong>B e C</strong> (Si e Dó) a distância é de apenas <strong>1 casa</strong> (meio tom).
+    <br>• Para todas as outras notas naturais, a distância é de <strong>2 casas</strong> (um tom inteiro).
+  </div>
+
+  <h3>Aula 3.2 — Mapeamento Visual da 6ª e 5ª cordas</h3>
+  <p>Saber identificar as notas nas duas cordas mais grossas é a chave mestra para montar qualquer acorde barrado (pestana) ou power chord de forma instantânea.</p>
+
+  <h4>Notas na 6ª Corda (E — Mi grave)</h4>
+  <div style="overflow-x: auto; margin: 15px 0;">
+    <svg viewBox="0 0 600 80" xmlns="http://www.w3.org/2000/svg" style="background: var(--code); border-radius: 12px; border: 1px solid var(--line); min-width: 500px; padding: 10px;">
+      <line x1="20" y1="40" x2="580" y2="40" stroke="#ffcf5c" stroke-width="4" />
+      <line x1="70" y1="25" x2="70" y2="55" stroke="#fff" stroke-width="3" /> <!-- Nut -->
+      
+      <!-- Linhas de trastes -->
+      <line x1="130" y1="30" x2="130" y2="50" stroke="var(--line)" stroke-width="1.5" />
+      <line x1="200" y1="30" x2="200" y2="50" stroke="var(--line)" stroke-width="1.5" />
+      <line x1="270" y1="30" x2="270" y2="50" stroke="var(--line)" stroke-width="1.5" />
+      <line x1="340" y1="30" x2="340" y2="50" stroke="var(--line)" stroke-width="1.5" />
+      <line x1="410" y1="30" x2="410" y2="50" stroke="var(--line)" stroke-width="1.5" />
+      <line x1="480" y1="30" x2="480" y2="50" stroke="var(--line)" stroke-width="1.5" />
+      <line x1="550" y1="30" x2="550" y2="50" stroke="var(--line)" stroke-width="1.5" />
+
+      <!-- Casas/Notas -->
+      <circle cx="45" cy="40" r="12" fill="none" stroke="#fff" stroke-width="1" />
+      <text x="45" y="44" fill="#fff" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">E</text>
+
+      <circle cx="100" cy="40" r="12" fill="var(--accent)" />
+      <text x="100" y="44" fill="#000" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">F</text>
+      <text x="100" y="68" fill="var(--muted)" font-family="system-ui" font-size="9" text-anchor="middle">Casa 1</text>
+
+      <circle cx="235" cy="40" r="12" fill="var(--accent)" />
+      <text x="235" y="44" fill="#000" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">G</text>
+      <text x="235" y="68" fill="var(--muted)" font-family="system-ui" font-size="9" text-anchor="middle">Casa 3</text>
+
+      <circle cx="375" cy="40" r="12" fill="var(--accent)" />
+      <text x="375" y="44" fill="#000" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">A</text>
+      <text x="375" y="68" fill="var(--muted)" font-family="system-ui" font-size="9" text-anchor="middle">Casa 5</text>
+
+      <circle cx="515" cy="40" r="12" fill="var(--accent)" />
+      <text x="515" y="44" fill="#000" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">B</text>
+      <text x="515" y="68" fill="var(--muted)" font-family="system-ui" font-size="9" text-anchor="middle">Casa 7</text>
+    </svg>
+  </div>
+
+  <h4>Notas na 5ª Corda (A — Lá)</h4>
+  <div style="overflow-x: auto; margin: 15px 0;">
+    <svg viewBox="0 0 600 80" xmlns="http://www.w3.org/2000/svg" style="background: var(--code); border-radius: 12px; border: 1px solid var(--line); min-width: 500px; padding: 10px;">
+      <line x1="20" y1="40" x2="580" y2="40" stroke="#bdc8d8" stroke-width="3" />
+      <line x1="70" y1="25" x2="70" y2="55" stroke="#fff" stroke-width="3" /> <!-- Nut -->
+      
+      <!-- Linhas de trastes -->
+      <line x1="130" y1="30" x2="130" y2="50" stroke="var(--line)" stroke-width="1.5" />
+      <line x1="200" y1="30" x2="200" y2="50" stroke="var(--line)" stroke-width="1.5" />
+      <line x1="270" y1="30" x2="270" y2="50" stroke="var(--line)" stroke-width="1.5" />
+      <line x1="340" y1="30" x2="340" y2="50" stroke="var(--line)" stroke-width="1.5" />
+      <line x1="410" y1="30" x2="410" y2="50" stroke="var(--line)" stroke-width="1.5" />
+      <line x1="480" y1="30" x2="480" y2="50" stroke="var(--line)" stroke-width="1.5" />
+      <line x1="550" y1="30" x2="550" y2="50" stroke="var(--line)" stroke-width="1.5" />
+
+      <!-- Casas/Notas -->
+      <circle cx="45" cy="40" r="12" fill="none" stroke="#fff" stroke-width="1" />
+      <text x="45" y="44" fill="#fff" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">A</text>
+
+      <circle cx="165" cy="40" r="12" fill="var(--accent2)" />
+      <text x="165" y="44" fill="#000" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">B</text>
+      <text x="165" y="68" fill="var(--muted)" font-family="system-ui" font-size="9" text-anchor="middle">Casa 2</text>
+
+      <circle cx="235" cy="40" r="12" fill="var(--accent2)" />
+      <text x="235" y="44" fill="#000" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">C</text>
+      <text x="235" y="68" fill="var(--muted)" font-family="system-ui" font-size="9" text-anchor="middle">Casa 3</text>
+
+      <circle cx="375" cy="40" r="12" fill="var(--accent2)" />
+      <text x="375" y="44" fill="#000" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">D</text>
+      <text x="375" y="68" fill="var(--muted)" font-family="system-ui" font-size="9" text-anchor="middle">Casa 5</text>
+
+      <circle cx="515" cy="40" r="12" fill="var(--accent2)" />
+      <text x="515" y="44" fill="#000" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">E</text>
+      <text x="515" y="68" fill="var(--muted)" font-family="system-ui" font-size="9" text-anchor="middle">Casa 7</text>
+    </svg>
+  </div>
+
+  <h3>Aula 3.3 — Tabela de Intervalos Práticos</h3>
+  <table>
+    <tr><th>Intervalo</th><th>Distância Física</th><th>Exemplo (Tônica C)</th><th>Sensação Auditiva / Aplicação</th></tr>
+    <tr><td><strong>2ª Maior</strong></td><td>2 casas para frente</td><td>C – D</td><td>Tensão melódica passageira.</td></tr>
+    <tr><td><strong>3ª Menor</strong></td><td>3 casas para frente</td><td>C – Eb</td><td>Melancólico, triste (define o acorde menor).</td></tr>
+    <tr><td><strong>3ª Maior</strong></td><td>4 casas para frente</td><td>C – E</td><td>Alegre, brilhante, aberto (define o acorde maior).</td></tr>
+    <tr><td><strong>4ª Justa</strong></td><td>Corda de baixo, mesma casa</td><td>C – F</td><td>Suspenso, neutro, pede resolução.</td></tr>
+    <tr><td><strong>5ª Justa</strong></td><td>Corda de baixo, 2 casas à frente</td><td>C – G</td><td>Extremamente forte, estável. Base do Power Chord.</td></tr>
+    <tr><td><strong>8ª Justa</strong></td><td>Pule uma corda, 2 casas à frente</td><td>C – C</td><td>Som idêntico, porém em registro agudo.</td></tr>
+  </table>
+
+  <h3>Aula 3.4 — Power Chords (Os Acordes Mais Poderosos do Rock)</h3>
+  <p>Usados em guitarras distorcidas, eliminam as notas agudas para criar um som massivo e focado que não embola.</p>
+  
+  <div class="grid2">
+    <!-- G5 -->
+    <div class="chord-svg-container">
+      <div class="chord-title">G5 (Power Chord de Sol)</div>
+      <svg class="chord-svg" width="130" height="150" viewBox="0 0 130 150">
+        <!-- Casa indicativa inicial no braço -->
+        <text x="12" y="46" class="label-text" style="font-size: 9px;">3ªfr</text>
+        <line x1="20" y1="30" x2="110" y2="30" style="stroke-width: 1.5;" />
+        <line x1="20" y1="54" x2="110" y2="54" />
+        <line x1="20" y1="78" x2="110" y2="78" />
+        <line x1="20" y1="102" x2="110" y2="102" />
+        <line x1="20" y1="126" x2="110" y2="126" />
+        <line x1="20" y1="28" x2="20" y2="135" />
+        <line x1="38" y1="28" x2="38" y2="135" />
+        <line x1="56" y1="28" x2="56" y2="135" />
+        <line x1="74" y1="28" x2="74" y2="135" />
+        <line x1="92" y1="28" x2="92" y2="135" />
+        <line x1="110" y1="28" x2="110" y2="135" />
+        <!-- Mutes no topo -->
+        <line x1="70" y1="11" x2="78" y2="19" class="label-mute" />
+        <line x1="78" y1="11" x2="70" y2="19" class="label-mute" />
+        <line x1="88" y1="11" x2="96" y2="19" class="label-mute" />
+        <line x1="96" y1="11" x2="88" y2="19" class="label-mute" />
+        <line x1="106" y1="11" x2="114" y2="19" class="label-mute" />
+        <line x1="114" y1="11" x2="106" y2="19" class="label-mute" />
+        <!-- Dedos -->
+        <circle cx="20" cy="42" r="7" class="finger finger-root" />
+        <text x="20" y="42" class="finger-text" style="fill:#fff">1</text>
+        <circle cx="38" cy="90" r="7" class="finger" />
+        <text x="38" y="90" class="finger-text">3</text>
+        <circle cx="56" cy="90" r="7" class="finger" />
+        <text x="56" y="90" class="finger-text">4</text>
+      </svg>
+      <p style="font-size: 0.85rem; color: var(--muted); text-align: center; margin-top: 8px;">6ª corda pressionada na casa 3 (Nota G).</p>
+    </div>
+
+    <!-- C5 -->
+    <div class="chord-svg-container">
+      <div class="chord-title">C5 (Power Chord de Dó)</div>
+      <svg class="chord-svg" width="130" height="150" viewBox="0 0 130 150">
+        <text x="12" y="46" class="label-text" style="font-size: 9px;">3ªfr</text>
+        <line x1="20" y1="30" x2="110" y2="30" style="stroke-width: 1.5;" />
+        <line x1="20" y1="54" x2="110" y2="54" />
+        <line x1="20" y1="78" x2="110" y2="78" />
+        <line x1="20" y1="102" x2="110" y2="102" />
+        <line x1="20" y1="126" x2="110" y2="126" />
+        <line x1="20" y1="28" x2="20" y2="135" />
+        <line x1="38" y1="28" x2="38" y2="135" />
+        <line x1="56" y1="28" x2="56" y2="135" />
+        <line x1="74" y1="28" x2="74" y2="135" />
+        <line x1="92" y1="28" x2="92" y2="135" />
+        <line x1="110" y1="28" x2="110" y2="135" />
+        <!-- Mutes no topo -->
+        <line x1="16" y1="11" x2="24" y2="19" class="label-mute" />
+        <line x1="24" y1="11" x2="16" y2="19" class="label-mute" />
+        <line x1="88" y1="11" x2="96" y2="19" class="label-mute" />
+        <line x1="96" y1="11" x2="88" y2="19" class="label-mute" />
+        <line x1="106" y1="11" x2="114" y2="19" class="label-mute" />
+        <line x1="114" y1="11" x2="106" y2="19" class="label-mute" />
+        <!-- Dedos -->
+        <circle cx="38" cy="42" r="7" class="finger finger-root" />
+        <text x="38" y="42" class="finger-text" style="fill:#fff">1</text>
+        <circle cx="56" cy="90" r="7" class="finger" />
+        <text x="56" y="90" class="finger-text">3</text>
+        <circle cx="74" cy="90" r="7" class="finger" />
+        <text x="74" y="90" class="finger-text">4</text>
+      </svg>
+      <p style="font-size: 0.85rem; color: var(--muted); text-align: center; margin-top: 8px;">5ª corda pressionada na casa 3 (Nota C).</p>
+    </div>
+  </div>
+
+  <!-- AULA 3.5 - SISTEMA CAGED -->
+  <h3>Aula 3.5 — O Sistema CAGED: Mapeamento Visual e Destrave de Improviso</h3>
+  <p class="lead">
+    O Sistema CAGED é muito mais do que apenas "fôrmas de acordes de transposição". Como ensinado na metodologia didática do professor Daniel Bertamini, o CAGED é a **chave-mestra para libertar o seu improviso e mapear o braço da guitarra de forma intuitiva**.
+  </p>
+
+  <div class="grid3">
+    <div class="card" style="border-top: 3px solid var(--accent);">
+      <h4>1. O Esqueleto Invisível</h4>
+      <p>
+        O maior erro de quem estuda solos é enxergar escalas como um bando de bolinhas soltas e abstratas no braço. A chave está em enxergar a fôrma do acorde (a fôrma do CAGED) como um <strong>esqueleto luminoso invisível</strong> sob os seus dedos. 
+      </p>
+    </div>
+    <div class="card" style="border-top: 3px solid var(--accent2);">
+      <h4>2. Escala Colada ao Acorde</h4>
+      <p>
+        As notas de improvisação (da pentatônica ou escala maior) não estão separadas do acorde: elas estão <strong>literalmente coladas ao redor</strong> das notas desse esqueleto do acorde. Se você sabe montar o acorde, a escala inteira está a apenas 1 ou 2 casas de distância de cada dedo.
+      </p>
+    </div>
+    <div class="card" style="border-top: 3px solid var(--ok);">
+      <h4>3. As 3 Notas Sagradas</h4>
+      <p>
+        As notas que formam o acorde (Tônica, Terça e Quinta) são o seu <strong>porto seguro</strong> de repouso no solo. Terminar suas frases exatamente em uma dessas três notas sagradas dá ao seu improviso um som melódico, profissional e focado que "conversa" perfeitamente com a harmonia de baixo.
+      </p>
+    </div>
+  </div>
+
+  <div class="callout ok">
+    <strong>O Segredo das Casas Compartilhadas (C-A-G-E-D):</strong> Cada fôrma do braço não está isolada; elas compartilham a mesma "fronteira" de casas. Onde termina a fôrma de <strong>C</strong>, começa a fôrma de <strong>A</strong>; onde termina a de <strong>A</strong>, começa a de <strong>G</strong>, e assim por diante. Essa conexão contínua desenha a palavra <strong>C-A-G-E-D</strong> ao longo de todo o braço da guitarra!
+  </div>
+
+  <h4>As Cinco Fôrmas Conectadas no Tom de Dó Maior (C)</h4>
+  <p>Visualize abaixo como o mesmo acorde de <strong>Dó Maior (C)</strong> se comporta ao longo do braço. Note as tônicas (<span style="color:var(--accent)">laranja</span>) e as notas de apoio do acorde (<span style="color:var(--accent2)">azul</span>).</p>
+
+  <div class="grid5">
+    <!-- Forma de C -->
+    <div class="chord-svg-container">
+      <div class="chord-title" style="color: var(--accent);">Fôrma C</div>
+      <svg class="chord-svg" width="115" height="135" viewBox="0 0 130 150">
+        <text x="12" y="46" class="label-text" style="font-size: 9px;">1ªfr</text>
+        <line x1="20" y1="30" x2="110" y2="30" class="nut" />
+        <line x1="20" y1="54" x2="110" y2="54" />
+        <line x1="20" y1="78" x2="110" y2="78" />
+        <line x1="20" y1="102" x2="110" y2="102" />
+        <line x1="20" y1="126" x2="110" y2="126" />
+        <line x1="20" y1="28" x2="20" y2="135" />
+        <line x1="38" y1="28" x2="38" y2="135" />
+        <line x1="56" y1="28" x2="56" y2="135" />
+        <line x1="74" y1="28" x2="74" y2="135" />
+        <line x1="92" y1="28" x2="92" y2="135" />
+        <line x1="110" y1="28" x2="110" y2="135" />
+        <line x1="16" y1="11" x2="24" y2="19" class="label-mute" />
+        <line x1="24" y1="11" x2="16" y2="19" class="label-mute" />
+        <circle cx="74" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <circle cx="110" cy="15" r="4" fill="none" stroke="var(--accent2)" stroke-width="1.5" />
+        <!-- Dedos -->
+        <circle cx="92" cy="42" r="7" class="finger" />
+        <text x="92" y="42" class="finger-text">1</text>
+        <circle cx="56" cy="66" r="7" class="finger" />
+        <text x="56" y="66" class="finger-text">2</text>
+        <circle cx="38" cy="90" r="7" class="finger finger-root" />
+        <text x="38" y="90" class="finger-text" style="fill:#fff;">3</text>
+      </svg>
+      <span style="font-size:0.75rem; color:var(--muted); text-align:center;">Dó Aberto</span>
+    </div>
+
+    <!-- Forma de A -->
+    <div class="chord-svg-container">
+      <div class="chord-title" style="color: var(--accent2);">Fôrma A</div>
+      <svg class="chord-svg" width="115" height="135" viewBox="0 0 130 150">
+        <text x="12" y="46" class="label-text" style="font-size: 9px;">3ªfr</text>
+        <line x1="20" y1="30" x2="110" y2="30" style="stroke-width: 1.5;" />
+        <line x1="20" y1="54" x2="110" y2="54" />
+        <line x1="20" y1="78" x2="110" y2="78" />
+        <line x1="20" y1="102" x2="110" y2="102" />
+        <line x1="20" y1="126" x2="110" y2="126" />
+        <line x1="20" y1="28" x2="20" y2="135" />
+        <line x1="38" y1="28" x2="38" y2="135" />
+        <line x1="56" y1="28" x2="56" y2="135" />
+        <line x1="74" y1="28" x2="74" y2="135" />
+        <line x1="92" y1="28" x2="92" y2="135" />
+        <line x1="110" y1="28" x2="110" y2="135" />
+        <line x1="16" y1="11" x2="24" y2="19" class="label-mute" />
+        <line x1="24" y1="11" x2="16" y2="19" class="label-mute" />
+        <!-- Dedos -->
+        <rect x="18" y="36" width="94" height="12" rx="4" fill="var(--accent2)" style="opacity: 0.6;" />
+        <text x="25" y="42" class="finger-text" style="fill:#fff">1</text>
+        <circle cx="38" cy="42" r="7" class="finger finger-root" />
+        <text x="38" y="42" class="finger-text" style="fill:#fff">1</text>
+        <circle cx="56" cy="90" r="7" class="finger" />
+        <text x="56" y="90" class="finger-text">2</text>
+        <circle cx="74" cy="90" r="7" class="finger" />
+        <text x="74" y="90" class="finger-text">3</text>
+        <circle cx="92" cy="90" r="7" class="finger" />
+        <text x="92" y="90" class="finger-text">4</text>
+      </svg>
+      <span style="font-size:0.75rem; color:var(--muted); text-align:center;">Pestana C3</span>
+    </div>
+
+    <!-- Forma de G -->
+    <div class="chord-svg-container">
+      <div class="chord-title" style="color: var(--accent2);">Fôrma G</div>
+      <svg class="chord-svg" width="115" height="135" viewBox="0 0 130 150">
+        <text x="12" y="46" class="label-text" style="font-size: 9px;">5ªfr</text>
+        <line x1="20" y1="30" x2="110" y2="30" style="stroke-width: 1.5;" />
+        <line x1="20" y1="54" x2="110" y2="54" />
+        <line x1="20" y1="78" x2="110" y2="78" />
+        <line x1="20" y1="102" x2="110" y2="102" />
+        <line x1="20" y1="126" x2="110" y2="126" />
+        <line x1="20" y1="28" x2="20" y2="135" />
+        <line x1="38" y1="28" x2="38" y2="135" />
+        <line x1="56" y1="28" x2="56" y2="135" />
+        <line x1="74" y1="28" x2="74" y2="135" />
+        <line x1="92" y1="28" x2="92" y2="135" />
+        <line x1="110" y1="28" x2="110" y2="135" />
+        <!-- Dedos -->
+        <circle cx="20" cy="114" r="7" class="finger finger-root" />
+        <text x="20" y="114" class="finger-text" style="fill:#fff">4</text>
+        <circle cx="38" cy="90" r="7" class="finger" />
+        <text x="38" y="90" class="finger-text">3</text>
+        <rect x="52" y="36" width="60" height="12" rx="4" fill="var(--accent2)" style="opacity:0.6" />
+        <text x="56" y="42" class="finger-text" style="fill:#fff">1</text>
+        <circle cx="110" cy="114" r="7" class="finger" />
+        <text x="110" y="114" class="finger-text">4</text>
+      </svg>
+      <span style="font-size:0.75rem; color:var(--muted); text-align:center;">Fôrma G (C5)</span>
+    </div>
+
+    <!-- Forma de E -->
+    <div class="chord-svg-container">
+      <div class="chord-title" style="color: var(--accent2);">Fôrma E</div>
+      <svg class="chord-svg" width="115" height="135" viewBox="0 0 130 150">
+        <text x="12" y="46" class="label-text" style="font-size: 9px;">8ªfr</text>
+        <line x1="20" y1="30" x2="110" y2="30" style="stroke-width: 1.5;" />
+        <line x1="20" y1="54" x2="110" y2="54" />
+        <line x1="20" y1="78" x2="110" y2="78" />
+        <line x1="20" y1="102" x2="110" y2="102" />
+        <line x1="20" y1="126" x2="110" y2="126" />
+        <line x1="20" y1="28" x2="20" y2="135" />
+        <line x1="38" y1="28" x2="38" y2="135" />
+        <line x1="56" y1="28" x2="56" y2="135" />
+        <line x1="74" y1="28" x2="74" y2="135" />
+        <line x1="92" y1="28" x2="92" y2="135" />
+        <line x1="110" y1="28" x2="110" y2="135" />
+        <!-- Dedos -->
+        <rect x="18" y="36" width="94" height="12" rx="4" fill="var(--accent2)" />
+        <text x="25" y="42" class="finger-text" style="fill:#fff">1</text>
+        <circle cx="20" cy="42" r="7" class="finger finger-root" />
+        <text x="20" y="42" class="finger-text" style="fill:#fff">1</text>
+        <circle cx="110" cy="42" r="7" class="finger" />
+        <text x="110" y="42" class="finger-text">1</text>
+        <circle cx="38" cy="90" r="7" class="finger" />
+        <text x="38" y="90" class="finger-text">3</text>
+        <circle cx="56" cy="90" r="7" class="finger finger-root" />
+        <text x="56" y="90" class="finger-text" style="fill:#fff">4</text>
+        <circle cx="74" cy="66" r="7" class="finger" />
+        <text x="74" y="66" class="finger-text">2</text>
+      </svg>
+      <span style="font-size:0.75rem; color:var(--muted); text-align:center;">Pestana C8</span>
+    </div>
+
+    <!-- Forma de D -->
+    <div class="chord-svg-container">
+      <div class="chord-title" style="color: var(--accent2);">Fôrma D</div>
+      <svg class="chord-svg" width="115" height="135" viewBox="0 0 130 150">
+        <text x="9" y="46" class="label-text" style="font-size: 8px;">10ªfr</text>
+        <line x1="20" y1="30" x2="110" y2="30" style="stroke-width: 1.5;" />
+        <line x1="20" y1="54" x2="110" y2="54" />
+        <line x1="20" y1="78" x2="110" y2="78" />
+        <line x1="20" y1="102" x2="110" y2="102" />
+        <line x1="20" y1="126" x2="110" y2="126" />
+        <line x1="20" y1="28" x2="20" y2="135" />
+        <line x1="38" y1="28" x2="38" y2="135" />
+        <line x1="56" y1="28" x2="56" y2="135" />
+        <line x1="74" y1="28" x2="74" y2="135" />
+        <line x1="92" y1="28" x2="92" y2="135" />
+        <line x1="110" y1="28" x2="110" y2="135" />
+        <line x1="16" y1="11" x2="24" y2="19" class="label-mute" />
+        <line x1="24" y1="11" x2="16" y2="19" class="label-mute" />
+        <line x1="34" y1="11" x2="42" y2="19" class="label-mute" />
+        <line x1="42" y1="11" x2="34" y2="19" class="label-mute" />
+        <!-- Dedos -->
+        <circle cx="56" cy="42" r="7" class="finger finger-root" />
+        <text x="56" y="42" class="finger-text" style="fill:#fff">1</text>
+        <circle cx="74" cy="90" r="7" class="finger" />
+        <text x="74" y="90" class="finger-text">2</text>
+        <circle cx="110" cy="90" r="7" class="finger" />
+        <text x="110" y="90" class="finger-text">3</text>
+        <circle cx="92" cy="114" r="7" class="finger finger-root" />
+        <text x="92" y="114" class="finger-text" style="fill:#fff">4</text>
+      </svg>
+      <span style="font-size:0.75rem; color:var(--muted); text-align:center;">Fôrma D (C10)</span>
+    </div>
+  </div>
+
+  <div class="practice">
+    <h4>Exercício Bertamini de Integração Harmônica (2 Passos)</h4>
+    <p>
+      Este é o exercício definitivo demonstrado pelo professor Daniel Bertamini para unir de vez o acompanhamento (harmonia) e o solo (melodia) no seu cérebro. Ele elimina aquele pensamento mecânico e "frio" de escalas e destrava o improviso instantaneamente:
+    </p>
+    <ol>
+      <li>
+        <strong>Passo 1 (Projetar o Esqueleto):</strong> Escolha uma fôrma (por exemplo, a Fôrma de A na 3ª casa). Toque as notas do acorde uma a uma, de forma arpejada (dedilhada) de cima para baixo. Deixe o som soar. Isso projeta o "esqueleto invisível" do acorde na sua tela mental.
+      </li>
+      <li>
+        <strong>Passo 2 (Fluidez ao redor):</strong> Sem mover a sua mão esquerda dessa região, improvise uma pequena frase melódica curta (de 4 a 6 notas) utilizando as notas da escala pentatônica que estão literalmente coladas nesse formato. <strong>A regra de ouro:</strong> a sua frase deve repousar (terminar) em uma das <strong>3 Notas Sagradas</strong> daquele acorde (Tônica, Terça ou Quinta).
+      </li>
+    </ol>
+    <p>Exemplo prático de frase colada ao redor do acorde na Fôrma de A (casa 3), terminando na tônica Dó:</p>
+    <pre>
+e|----------3--5--3--------------------|
+B|----3h5------------5--3--------------| (Notas da escala coladas na fôrma de A)
+G|-------------------------5~ ---------| (Repouso seguro na tônica C da 3ª casa!)
+    </pre>
+    <p><em>Pratique isso repetindo o processo para cada uma das 5 fôrmas. Isso fará você enxergar as notas da escala como extensões naturais do próprio acorde, e não como desenhos abstratos!</em></p>
+  </div>
+
+  <h4>Dicas de Simplificação e Sobrevivência Biomecânica</h4>
+  <p>
+    As fôrmas completas com pestanas do CAGED (como as fôrmas de G e A) exigem uma enorme flexibilidade e força de quem tem mãos menores. <strong>Não sofra desnecessariamente!</strong> Use fôrmas reduzidas que soam incrivelmente limpas e profissionais:
+  </p>
+  <div class="grid2">
+    <div class="card">
+      <h4>A Fôrma de G Inteligente (Sem Dor!)</h4>
+      <p>
+        Em vez de tentar fazer o monstruoso alongamento da fôrma de G completa na casa 5 (Dó maior), abafe a 5ª e a 6ª cordas e toque apenas as quatro mais agudas:
+      </p>
+      <pre>
+e|--8-- (Dedo 4 — Tônica!)
+B|--5-- (Dedo 1 — Meia-pestana)
+G|--5-- (Dedo 1 — Meia-pestana)
+D|--5-- (Dedo 1 — Meia-pestana)
+A|--x--
+E|--x--
+      </pre>
+      <p>Isso é chamado de <strong>voicing triádico</strong> e soa perfeitamente limpo no funk, pop e jazz!</p>
+    </div>
+
+    <div class="card">
+      <h4>A Fôrma de A Reduzida</h4>
+      <p>
+        Para transpor a fôrma de A para a casa 3 (acorde de Dó), em vez de uma pestana com o dedo 1 e mais três dedos na casa 5, deite seu dedo 3 em mini-pestana nas cordas D, G, B e abafe a Mi aguda:
+      </p>
+      <pre>
+e|--x--
+B|--5-- (Dedo 3 — deitado na casa 5)
+G|--5-- (Dedo 3 — deitado na casa 5)
+D|--5-- (Dedo 3 — deitado na casa 5)
+A|--3-- (Dedo 1 — Pressiona a tônica)
+E|--x--
+      </pre>
+      <p>Este formato é usado por 10 entre 10 profissionais de estúdio para bases rápidas.</p>
+    </div>
+  </div>
+
+  <div class="test">
+    <strong>Exercício Prático de CAGED:</strong> Toque a fôrma de C e depois mude para o mesmo acorde usando a fôrma de A (casa 3) e fôrma de E (casa 8). Toque uma corda por vez garantindo que a tônica de cada fôrma soe proeminente e resolvida.
+  </div>
+</section>
+
+<section id="modulo4">
+  <span class="module">MÓDULO 4</span>
+  <h2>Técnicas essenciais de expressão e solo</h2>
+
+  <h3>Aula 4.1 — Segredos da palhetada alternada</h3>
+  <p>
+    Mantenha o movimento da palheta rigorosamente simétrico: baixo (↓) nos tempos ímpares, cima (↑) nos tempos pares. A palheta deve bater nas cordas de forma ligeiramente angulada (cerca de 45°), deslizando suavemente em vez de colidir de frente com o metal.
+  </p>
+  <pre>
+Metrônomo:  [Clique]       [Clique]       [Clique]
+Direção:    ↓     ↑        ↓     ↑        ↓     ↑
+e|----------5-----7--------8-----7--------5-----5---|
+  </pre>
+
+  <h3>Aula 4.2 — O Hammer-on (Ligado Ascendente)</h3>
+  <p>
+    Toque a primeira nota com a palheta e, com o dedo subsequente da mão esquerda, "martele" a corda de forma veloz e precisa na casa da frente. A força vem do impacto rápido do dedo, e não da pressão aplicada depois.
+  </p>
+  <pre>
+e|--5h7---5h8---|  (Palhete apenas as notas da casa 5)
+  </pre>
+
+  <h3>Aula 4.3 — O Pull-off (Ligado Descendente)</h3>
+  <p>
+    Ao retirar o dedo mais agudo para revelar a nota mais grave que já está sendo pressionada atrás, realize um pequenino movimento de "puxada" lateral na corda com a ponta do dedo para fazê-la vibrar. Se apenas levantar o dedo verticalmente, o som sairá fraco.
+  </p>
+  <pre>
+e|--8p5---7p5---|  (Palhete apenas as notas das casas 8 e 7)
+  </pre>
+
+  <h3>Aula 4.4 — O Slide (Deslize de Notas)</h3>
+  <p>
+    Desloque o dedo sobre o traste mantendo uma pressão constante para que o som continue soando sem morrer durante a jornada entre as notas.
+  </p>
+  <pre>
+e|--5/7---7\5---|  (Sobe da casa 5 para a 7, e retorna da 7 para a 5)
+  </pre>
+
+  <h3>Aula 4.5 — Bend: O Segredo de Solo e a Afinação</h3>
+  <p>
+    Para levantar o tom da corda empurrando-a para cima, <strong>nunca use um dedo isolado</strong>. Use o seu dedo anelar (3) para empurrar, mas mantenha o dedo médio (2) e o indicador (1) encostados logo atrás para somar forças.
+  </p>
+  <pre>
+e|--7b9---|  (A nota tocada na casa 7 deve soar idêntica à nota da casa 9)
+  </pre>
+
+  <h3>Aula 4.6 — O Vibrato dos Mestres</h3>
+  <p>
+    A oscilação vocalizada da nota não deve vir de um movimento desesperado dos dedos. A mecânica correta assemelha-se a um movimento de girar a maçaneta de uma porta: o pulso e o antebraço giram suavemente, oscilando a afinação de forma controlada.
+  </p>
+
+  <div class="test">
+    <strong>Teste do Módulo:</strong> Toque um pequeno improviso ou frase contendo um Hammer-on, um Pull-off, um Slide, um Bend de um tom inteiro perfeitamente afinado e termine com um Vibrato contínuo e bonito de 3 segundos sem perder o ritmo.
+  </div>
+</section>
+
+<section id="modulo5">
+  <span class="module">MÓDULO 5</span>
+  <h2>A Escala Pentatônica e a arte da Improvisação</h2>
+
+  <h3>Aula 5.1 — O Diagrama da Escala Pentatônica Menor (Padrão 1 em Lá menor)</h3>
+  <p>
+    Esta é a escala mais importante do guitarrista de solos. No diagrama abaixo, todas as tônicas da escala (as notas fundamentais A — Lá) estão representadas em <strong>laranja vibrante</strong>, enquanto as outras notas da escala estão em <strong>azul claro</strong>. Memorize as tônicas primeiro para saber onde descansar suas frases!
+  </p>
+
+  <div style="max-width: 450px; margin: 25px auto;">
+    <svg viewBox="0 0 160 220" xmlns="http://www.w3.org/2000/svg" style="background: var(--card); border-radius: 12px; border: 1px solid var(--line); padding: 15px; box-shadow: var(--shadow);">
+      <!-- Braço / Trastes -->
+      <line x1="30" y1="30" x2="130" y2="30" stroke="#bdc8d8" stroke-width="2.5" /> <!-- Traste superior inicial -->
+      <line x1="30" y1="70" x2="130" y2="70" stroke="var(--line)" stroke-width="1.5" />
+      <line x1="30" y1="110" x2="130" y2="110" stroke="var(--line)" stroke-width="1.5" />
+      <line x1="30" y1="150" x2="130" y2="150" stroke="var(--line)" stroke-width="1.5" />
+      <line x1="30" y1="190" x2="130" y2="190" stroke="var(--line)" stroke-width="1.5" />
+      
+      <!-- Cordas (6 a 1) -->
+      <line x1="30" y1="28" x2="30" y2="195" stroke="#ffcf5c" stroke-width="2" /> <!-- E -->
+      <line x1="50" y1="28" x2="50" y2="195" stroke="#bdc8d8" stroke-width="1.6" /> <!-- A -->
+      <line x1="70" y1="28" x2="70" y2="195" stroke="#bdc8d8" stroke-width="1.4" /> <!-- D -->
+      <line x1="90" y1="28" x2="90" y2="195" stroke="#bdc8d8" stroke-width="1.2" /> <!-- G -->
+      <line x1="110" y1="28" x2="110" y2="195" stroke="#bdc8d8" stroke-width="1.0" /> <!-- B -->
+      <line x1="130" y1="28" x2="130" y2="195" stroke="#45b7ff" stroke-width="0.8" /> <!-- e -->
+
+      <!-- Rótulos de Casas do Braço -->
+      <text x="145" y="52" fill="var(--muted)" font-family="system-ui" font-size="10" text-anchor="start">Casa 5</text>
+      <text x="145" y="92" fill="var(--muted)" font-family="system-ui" font-size="10" text-anchor="start">Casa 6</text>
+      <text x="145" y="132" fill="var(--muted)" font-family="system-ui" font-size="10" text-anchor="start">Casa 7</text>
+      <text x="145" y="172" fill="var(--muted)" font-family="system-ui" font-size="10" text-anchor="start">Casa 8</text>
+
+      <!-- Notas da Pentatônica Am -->
+      <!-- Casa 5 (Y=50) -->
+      <circle cx="30" cy="50" r="8" fill="var(--accent)" /> <!-- Tônica A -->
+      <text x="30" y="50" fill="#000" font-family="system-ui" font-size="9" font-weight="bold" text-anchor="middle">A</text>
+      
+      <circle cx="50" cy="50" r="8" fill="var(--accent2)" />
+      <circle cx="70" cy="50" r="8" fill="var(--accent2)" />
+      
+      <circle cx="90" cy="50" r="8" fill="var(--accent2)" />
+      <circle cx="110" cy="50" r="8" fill="var(--accent2)" />
+      
+      <circle cx="130" cy="50" r="8" fill="var(--accent)" /> <!-- Tônica A -->
+      <text x="130" y="50" fill="#000" font-family="system-ui" font-size="9" font-weight="bold" text-anchor="middle">A</text>
+
+      <!-- Casa 6 (Y=90) -->
+      <!-- (Nenhuma nota da pentatônica de Am nesta casa) -->
+
+      <!-- Casa 7 (Y=130) -->
+      <circle cx="50" cy="130" r="8" fill="var(--accent2)" />
+      
+      <circle cx="70" cy="130" r="8" fill="var(--accent)" /> <!-- Tônica A -->
+      <text x="70" y="130" fill="#000" font-family="system-ui" font-size="9" font-weight="bold" text-anchor="middle">A</text>
+      
+      <circle cx="90" cy="130" r="8" fill="var(--accent2)" />
+
+      <!-- Casa 8 (Y=170) -->
+      <circle cx="30" cy="170" r="8" fill="var(--accent2)" />
+      <circle cx="110" cy="170" r="8" fill="var(--accent2)" />
+      <circle cx="130" cy="170" r="8" fill="var(--accent2)" />
+    </svg>
+  </div>
+
+  <h3>Aula 5.2 — Como Sair do Modo Automático (Frasear com Intencionalidade)</h3>
+  <p>
+    Saber tocar a escala de cima para baixo de forma contínua é apenas um exercício de dedos. Fazer solos de verdade é <strong>conversar</strong> usando notas musicais.
+  </p>
+  
+  <div class="grid3">
+    <div class="card">
+      <h4>1. Use Notas-Alvo</h4>
+      <p>Termine as suas frases na tônica (Nota Lá — bolinha laranja). Isso traz uma sensação reconfortante de finalização e coerência para quem ouve.</p>
+    </div>
+    <div class="card">
+      <h4>2. Crie Silêncios (Pausas)</h4>
+      <p>O espaço entre as notas é tão importante quanto as próprias notas. Deixe seu solo "respirar" como se fosse um cantor puxando o fôlego.</p>
+    </div>
+    <div class="card">
+      <h4>3. Repita Ideias</h4>
+      <p>Desenvolva um pequeno "motivo" rítmico (uma frase curta de 3 notas) e repita-o com variações de dinâmica e timbre.</p>
+    </div>
+  </div>
+
+  <div class="practice">
+    <h4>Exercício Prático de Fraseado (Pergunta e Resposta)</h4>
+    <p>Treine este formato simulando uma conversa musical:</p>
+    <pre>
+<strong>A Pergunta (Sobe gerando tensão):</strong>
+e|--5h7--7--5---------|
+B|-------------8--8---| (Frase aberta, esperando resposta...)
+
+<strong>A Resposta (Desce resolvendo na tônica):</strong>
+e|--------------------|
+B|--5--8b10--8--5-----|
+G|-----------------7~-| (Nota Sol resolvida suavemente na tônica)
+    </pre>
+  </div>
+
+  <div class="test">
+    <strong>Teste do Módulo:</strong> Coloque um Backing Track de Blues em Am para rodar, feche os olhos e improvise por 2 minutos completos mantendo a segurança rítmica, usando silêncios estratégicos e resolvendo suas frases na tônica.
+  </div>
+</section>
+
+<section id="modulo6">
+  <span class="module">MÓDULO 6</span>
+  <h2>Dominando Repertório, Riffs Históricos e a Grande Meta</h2>
+
+  <h3>Aula 6.1 — A Estratégia de Memorização de Repertório (Fatiamento)</h3>
+  <p>Tentar aprender uma música inteira de uma vez só gera frustração. Utilize a técnica de fatiamento cirúrgico:</p>
+  <ol>
+    <li>Isole apenas <strong>1 compasso</strong> (ou uma frase de 4 batidas).</li>
+    <li>Reduza o metrônomo para <strong>50%</strong> da velocidade original da gravação.</li>
+    <li>Toque o compasso 5 vezes seguidas sem cometer nenhum erro.</li>
+    <li>Apenas depois disso, aprenda o próximo compasso e costure-os juntos.</li>
+  </ol>
+
+  <h3>Aula 6.2 — Um Arpejo Dedilhado Incrível (Em)</h3>
+  <p>Deixe todas as cordas soando juntas, como um piano clássico dedilhado.</p>
+  <pre>
+e|--------------0--------------|
+B|-----------0-----0-----------|
+G|--------0-----------0--------|
+D|-----2-----------------2-----|
+A|-----------------------------|
+E|--0-----------------------0--|
+  </pre>
+
+  <h3>Aula 6.3 — Riff de Guitarra Icônico</h3>
+  <pre>
+e|----------------------------------|
+B|----------------------------------|
+G|----------------------------------|
+D|------------2---0-----------------|
+A|----2---2-----------2---0---------|
+E|----------------------------3-----|
+  </pre>
+
+  <h3>Aula 6.4 — Preparação Avançada para Sweet Child O’ Mine</h3>
+  <p>
+    O riff introdutório da clássica canção do Guns N' Roses exige independência fantástica do dedo mínimo e controle rígido da palhetada alternada ao pular cordas. Pratique este exercício isolado de preparação postural:
+  </p>
+  <pre>
+e|-----------12----------12------|
+B|--------15----15----15----15---|
+G|-----14----------14------------| (Mantenha o punho relaxado e projetado para frente)
+D|--12---------------------------|
+  </pre>
+
+  <div class="test">
+    <strong>PROJETO FINAL DO CURSO:</strong> Grave um vídeo tocando um riff histórico que você ame (pode ser o de cima), seguido de uma base usando a levada rítmica cheia do Módulo 2 e finalize solando por 30 segundos sobre o Backing Track do curso.
+  </div>
+</section>
+
+<section id="planosemanal">
+  <h2>Plano de Estudo Estruturado de 24 Semanas</h2>
+  <p class="lead">Uma jornada passo a passo pensada para garantir evolução sem lacunas de conhecimento técnico ou dores no punho.</p>
+  <table>
+    <thead>
+      <tr><th>Semanas</th><th>Foco Técnico Principal</th><th>Meta de Validação</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>1–2</strong></td><td>Postura clássica, pressão mínima e ajuste de unhas.</td><td>Notas limpas e livres de abafamento em todas as cordas.</td></tr>
+      <tr><td><strong>3–4</strong></td><td>Cromáticos na 7ª casa e independência mecânica de dedos.</td><td>Execução perfeita a 60 bpm.</td></tr>
+      <tr><td><strong>5–6</strong></td><td>Aprendizado dos 6 acordes principais.</td><td>Fisiologia limpa de Em, Am, C, G, D, A.</td></tr>
+      <tr><td><strong>7–8</strong></td><td>Transição de acordes ancorados e ritmos básicos.</td><td>Transições fluidas a 60 bpm sem parar o ritmo da mão direita.</td></tr>
+      <tr><td><strong>9–10</strong></td><td>F simplificado e introdução prática a Power Chords.</td><td>Primeiro repertório completo sem dor.</td></tr>
+      <tr><td><strong>11–12</strong></td><td>Mapeamento geográfico das notas na 6ª e 5ª corda.</td><td>Localizar notas de forma instantânea sem ajuda visual.</td></tr>
+      <tr><td><strong>13–14</strong></td><td>Teoria prática de intervalos e o Sistema CAGED.</td><td>Saber formar acordes e transpô-los por todo o braço de ouvido.</td></tr>
+      <tr><td><strong>15–16</strong></td><td>Palhetada alternada rítmica regular.</td><td>Tocar em semicolcheias a 80 bpm com precisão cirúrgica.</td></tr>
+      <tr><td><strong>17–18</strong></td><td>Técnicas de expressão: Hammer-on, Pull-off e Slides.</td><td>Ligar frases sem usar a palheta de forma redundante.</td></tr>
+      <tr><td><strong>19–20</strong></td><td>Controle de bends e afinação perfeita de vibratos.</td><td>Afinação do bend validada no afinador cromático.</td></tr>
+      <tr><td><strong>21–22</strong></td><td>Escala Pentatônica e fraseado melódico de improvisação.</td><td>Solo estruturado sobre backing track.</td></tr>
+      <tr><td><strong>23–24</strong></td><td>Gravação e refinamento do projeto final completo.</td><td>Vídeo gravado para registro e auto-análise.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="rotina">
+  <h2>Rotinas de Estudo Prático Personalizadas</h2>
+  
+  <div class="grid3">
+    <div class="card" style="border-top: 4px solid var(--accent2);">
+      <h4>A Super Rápida (20 minutos)</h4>
+      <p>Para dias extremamente corridos onde a prioridade máxima é manter a memória muscular ativa.</p>
+      <pre style="font-size:0.85rem;">
+• 3 min — Aquecimento e alongamento.
+• 5 min — Cromáticos na 7ª casa.
+• 5 min — Transições de acordes de ouro.
+• 5 min — Toque o Riff da semana.
+• 2 min — Análise e feedback mental.
+      </pre>
+    </div>
+    <div class="card" style="border-top: 4px solid var(--accent);">
+      <h4>A Equilibrada (40 minutos)</h4>
+      <p>A rotina ideal para consolidação de novas rotas de processamento motor e progresso regular.</p>
+      <pre style="font-size:0.85rem;">
+• 5 min — Ajuste de postura clássica.
+• 10 min — Técnicas de solo alternadas.
+• 10 min — Transições harmônicas e ritmo.
+• 10 min — Peça de repertório ativa.
+• 5 min — Improvisação livre com backing.
+      </pre>
+    </div>
+    <div class="card" style="border-top: 4px solid var(--ok);">
+      <h4>A de Final de Semana (60 minutos)</h4>
+      <p>Sessão aprofundada para consolidação de teorias e desenvolvimento de foco melódico longo.</p>
+      <pre style="font-size:0.85rem;">
+• 10 min — Cromáticos + Alongamentos.
+• 10 min — Teoria e CAGED no braço.
+• 10 min — Ritmo rítmico estrito (metrônomo).
+• 15 min — Repertório e trechos difíceis.
+• 10 min — Solo e técnicas de expressão.
+• 5 min — Gravação do vídeo e análise.
+      </pre>
+    </div>
+  </div>
+
+  <div class="callout warning">
+    <strong>Aviso de Saúde Biomecânica:</strong> Dores agudas nas articulações, fisgadas nos tendões ou dormência nos dedos NUNCA são normais do treino. Se sentir qualquer um desses sintomas, pare imediatamente de tocar, relaxe os braços por alguns minutos e reveja criticamente a inclinação do seu punho e braço da guitarra.
+  </div>
+</section>
+
+<section id="avaliacao">
+  <h2>Avaliações e critérios de progresso saudável</h2>
+  
+  <h3>Ficha Semanal de Progresso</h3>
+  <table>
+    <thead>
+      <tr><th>Critério Técnico</th><th>Meta Desejada</th><th>Nota de Autoavaliação (0 a 5)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Limpeza do Som</strong></td><td>Corda vizinha soa livre sem nenhum ruído de abafamento.</td><td>______</td></tr>
+      <tr><td><strong>Ergonomia / Relaxamento</strong></td><td>O ombro esquerdo e o trapézio estão totalmente livres de tensão física.</td><td>______</td></tr>
+      <tr><td><strong>Fluidez de Transição</strong></td><td>Mudar de acordes na cabeça do compasso sem atrasar a batida.</td><td>______</td></tr>
+      <tr><td><strong>Precisão de Tempo</strong></td><td>Palhetadas caindo exatamente no "clique" do metrônomo.</td><td>______</td></tr>
+      <tr><td><strong>Afinação de Bend</strong></td><td>Atingir a nota-alvo do bend sem desafinar para cima ou para baixo.</td><td>______</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="manutencao">
+  <h2>Regulagem de equipamento: O Segredo Invisível</h2>
+  <p>Uma técnica perfeita pode ser totalmente arruinada por um instrumento desregulado.</p>
+  
+  <div class="grid2">
+    <div class="card">
+      <h4>Configurações Ideais Recomendadas</h4>
+      <ul>
+        <li><strong>Calibre de Cordas:</strong> Comece exclusivamente com cordas de calibre <strong>.009 — .042</strong>. Cordas mais grossas exigem o dobro de esforço ligamentar.</li>
+        <li><strong>Ação das Cordas:</strong> A altura das cordas deve ser mantida baixa. No 12º traste, a distância entre o topo do metal e a base da corda deve ser de no máximo <strong>1.5mm</strong> (Mi agudo) e <strong>2.0mm</strong> (Mi grave).</li>
+        <li><strong>Tensor bem regulado:</strong> O braço não deve estar totalmente reto e nem muito curvado; uma regulagem profissional com leve alívio impede o trastejamento indesejado nas primeiras casas.</li>
+      </ul>
+    </div>
+    
+    <div class="card">
+      <h4>Sinais de que o Instrumento Precisa de Luthier</h4>
+      <ul>
+        <li>Fazer pestana na casa 1 exige uma força absurda que chega a doer a junta do dedo.</li>
+        <li>Mesmo pressionando muito perto do traste metálico, o som sai "morde canela" (trastejando).</li>
+        <li>A afinação muda dependendo de quão forte você pressiona a corda contra a madeira.</li>
+        <li>As cordas estão visualmente afastadas da escala, parecendo um arco de atirar flecha.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="glossario">
+  <h2>Glossário Essencial</h2>
+  <details open>
+    <summary>Ação das Cordas</summary>
+    <p>A altura física que separa as cordas da escala de madeira e dos trastes metálicos.</p>
+  </details>
+  <details>
+    <summary>Bend</summary>
+    <p>Técnica de levantar ou empurrar fisicamente uma corda para cima na escala, elevando a altura afinada da nota de forma progressiva.</p>
+  </details>
+  <details>
+    <summary>CAGED</summary>
+    <p>Sistema que mapeia a escala a partir de cinco fôrmas de acordes básicos maiores: Dó (C), Lá (A), Sol (G), Mi (E) e Ré (D).</p>
+  </details>
+  <details>
+    <summary>Casa</summary>
+    <p>O espaço físico de madeira localizado entre dois trastes metálicos.</p>
+  </details>
+  <details>
+    <summary>Hammer-on</summary>
+    <p>Técnica de produzir um som agudo martelando o dedo de forma enérgica e ágil sobre a escala sem precisar usar a palheta de forma repetida.</p>
+  </details>
+  <details>
+    <summary>Intervalo</summary>
+    <p>A medida da distância física e auditiva que existe entre duas notas musicais.</p>
+  </details>
+  <details>
+    <summary>Pentatônica</summary>
+    <p>Uma maravilhosa escala estruturada com 5 notas que funciona como base para solos de rock, blues, pop e heavy metal.</p>
+  </details>
+  <details>
+    <summary>Pull-off</summary>
+    <p>Técnica de soltar um traste puxando de leve a corda para baixo com o dedo para soar uma nota mais grave que já está pressionada atrás.</p>
+  </details>
+  <details>
+    <summary>Traste</summary>
+    <p>Pequeno filete de metal transversal cravado na escala de madeira que divide as casas do instrumento.</p>
+  </details>
+</section>
+
+<section>
+  <h2>Conclusão</h2>
+  <p class="lead">
+    Sua anatomia e o formato das suas mãos não são obstáculos limitantes. Pelo contrário: eles são o seu passaporte para desenvolver uma técnica consciente, cirúrgica e limpa baseada na pura física dos movimentos em vez de força mecânica.
+  </p>
+  <div class="callout ok">
+    <strong>Seu Próximo Passo:</strong> Comece hoje pelo Módulo 0 e grave um vídeo curto de 10 segundos do seu polegar atrás do braço. Compare sua postura visual ao longo dos dias para garantir que você esteja construindo hábitos musculares saudáveis desde o início!
+  </div>
+</section>
+</main>
+</div>
+
+<footer>
+  Curso Completo de Guitarra — material de estudo pessoal de Wesley Oliveira.
+</footer>
+</body>
+</html>

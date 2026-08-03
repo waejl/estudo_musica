@@ -1,0 +1,193 @@
+{# app/school_admin/templates/school_admin/lesson_form.html #}
+{% extends "school_admin/base_admin.html" %}
+{% from "_form_helpers.html" import render_field %}
+
+{% block extra_css %}
+<!-- Quill.js CSS -->
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+{% endblock %}
+
+{% block admin_title %}{{ 'Editar Aula: ' ~ lesson.title if lesson else 'Criar Nova Aula' }}{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ url_for('school_admin.manage_lessons') }}" class="btn btn-secondary fw-bold shadow-sm">
+        <i class="bi bi-x-lg me-1"></i> Cancelar
+    </a>
+{% endblock %}
+
+{% block admin_content %}
+<div class="row g-4 mb-5">
+    {# Coluna Esquerda: Informações Básicas #}
+    <div class="col-lg-5">
+        <div class="card shadow-sm border border-secondary-subtle">
+            <div class="card-body">
+                <h5 class="card-title fw-bold mb-4 border-bottom pb-2">
+                    <i class="bi bi-info-circle-fill text-primary me-2"></i>Ficha Técnica
+                </h5>
+                <form method="POST" action="{{ url_for('school_admin.edit_lesson', lesson_id=lesson.id) if lesson else url_for('school_admin.new_lesson') }}" novalidate>
+                    {{ form.hidden_tag() }}
+                    {{ render_field(form.title, extra_class="form-control") }}
+                    {{ render_field(form.description, extra_class="form-control") }}
+                    <div class="row g-2">
+                        <div class="col-md-7">{{ render_field(form.module, extra_class="form-control") }}</div>
+                        <div class="col-md-5">{{ render_field(form.level, extra_class="form-select") }}</div>
+                    </div>
+                    {{ render_field(form.estimated_minutes, extra_class="form-control") }}
+                    {{ render_field(form.objectives, extra_class="form-control") }}
+                    {{ render_field(form.prerequisites, extra_class="form-control") }}
+                    {{ render_field(form.practice_focus, extra_class="form-control") }}
+                    <div class="row g-2">
+                        <div class="col-md-6">{{ render_field(form.order, extra_class="form-control") }}</div>
+                        <div class="col-md-6 d-flex align-items-center mt-4">{{ render_field(form.is_published, extra_class="form-check-input") }}</div>
+                    </div>
+                    <hr class="my-4">
+                    <div class="d-grid">{{ form.submit(class="btn btn-primary fw-bold btn-lg shadow-sm") }}</div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {# Coluna Direita: Etapas e Formulário #}
+    <div class="col-lg-7">
+        {% if lesson %}
+            {# Card 1: Sequência de Passos #}
+            <div class="card shadow-sm border border-secondary-subtle mb-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold mb-4 border-bottom pb-2">
+                        <i class="bi bi-list-ol text-warning me-2"></i>Sequência de Passos Atual
+                    </h5>
+                    {% if lesson.resources.all() %}
+                        <div class="list-group gap-3">
+                        {% for resource in lesson.resources.order_by('order') %}
+                            <div class="list-group-item border rounded-3 p-3 shadow-sm">
+                                <div class="d-flex justify-content-between align-items-start mb-2 pb-2 border-bottom">
+                                    <div>
+                                        <span class="badge bg-secondary font-monospace me-2">Etapa {{ loop.index }}</span>
+                                        <strong class="text-body fs-6">{{ resource.title }}</strong>
+                                    </div>
+                                    <div class="d-flex gap-1">
+                                        <form method="POST" action="{{ url_for('school_admin.move_resource', resource_id=resource.id, direction='up') }}" class="m-0">
+                                            <button type="submit" class="btn btn-xs btn-outline-secondary border-0" title="Subir"><i class="bi bi-chevron-up"></i></button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('school_admin.move_resource', resource_id=resource.id, direction='down') }}" class="m-0">
+                                            <button type="submit" class="btn btn-xs btn-outline-secondary border-0" title="Descer"><i class="bi bi-chevron-down"></i></button>
+                                        </form>
+                                        <button type="button" class="btn btn-xs btn-outline-primary fw-bold py-1 px-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#editResourceModal-{{ resource.id }}">
+                                            <i class="bi bi-pencil-fill me-1"></i>Editar
+                                        </button>
+                                        <form method="POST" action="{{ url_for('school_admin.delete_resource', resource_id=resource.id) }}" onsubmit="return confirm('Excluir esta etapa?');" class="m-0">
+                                            <button type="submit" class="btn btn-xs btn-outline-danger border-0 rounded-circle" title="Excluir"><i class="bi bi-trash-fill"></i></button>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div class="small text-muted" style="max-height: 80px; overflow-y: hidden;">{{ resource.content | safe }}</div>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center p-4 bg-body-secondary rounded-3">Nenhum passo adicionado.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Card 2: Formulário para Adicionar Nova Etapa #}
+            <div class="card shadow-sm border border-secondary-subtle mb-4">
+                <div class="card-body bg-body-secondary">
+                    <h6 class="fw-bold mb-3 text-primary"><i class="bi bi-plus-circle-fill me-2"></i>Adicionar Novo Passo (Etapa)</h6>
+                    <form method="POST" action="{{ url_for('school_admin.add_resource', lesson_id=lesson.id) }}" id="addStepForm" enctype="multipart/form-data" novalidate>
+                        {{ resource_form.hidden_tag() }}
+                        {{ render_field(resource_form.title, extra_class="form-control-sm") }}
+                        <div class="mb-3">
+                            <label class="form-label fw-medium small text-body-secondary">Texto Rico</label>
+                            {{ resource_form.content() }}
+                            <div id="quillEditor" style="height: 150px; background-color: white;" class="bg-body"></div>
+                        </div>
+                        <div class="bg-body p-3 rounded-3 border mb-3">
+                            {{ render_field(resource_form.resource_type, extra_class="form-select-sm") }}
+                            <div id="urlField" class="d-none">{{ render_field(resource_form.url, extra_class="form-control-sm") }}</div>
+                            <div id="fileField" class="d-none">
+                                <label class="form-label fw-medium small">Arquivo</label>
+                                <input type="file" name="file" id="file" class="form-control form-control-sm" accept=".pdf,image/*">
+                            </div>
+                        </div>
+                        <div class="bg-body p-3 rounded-3 border mb-3">
+                            <h6 class="fw-bold small text-body-secondary mb-3">Prática e conclusão</h6>
+                            {{ render_field(resource_form.exercise_type, extra_class="form-select-sm") }}
+                            {{ render_field(resource_form.exercise_params, extra_class="form-control-sm") }}
+                            {{ render_field(resource_form.checklist_items, extra_class="form-control-sm") }}
+                        </div>
+                        <div class="d-grid">{{ resource_form.submit(class="btn btn-primary fw-bold shadow-sm") }}</div>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-info">Salve a aula para começar a adicionar etapas.</div>
+        {% endif %}
+    </div>
+</div>
+
+{# Seção de Visualização Prévia da Aula #}
+{% if lesson %}
+    <div class="card shadow-sm border border-secondary mt-4">
+        <div class="card-header bg-dark text-white fw-bold">
+            <i class="bi bi-eye-fill me-2"></i>Visualização Prévia da Aula
+        </div>
+        <div class="card-body bg-dark text-light">
+            <h3 class="fw-bold text-white">{{ lesson.title }}</h3>
+            <p class="text-secondary">{{ lesson.description }}</p>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                {% if lesson.module %}<span class="badge bg-primary-subtle text-primary-emphasis">{{ lesson.module }}</span>{% endif %}
+                {% if lesson.level %}<span class="badge bg-info-subtle text-info-emphasis">{{ lesson.level|title }}</span>{% endif %}
+                {% if lesson.estimated_minutes %}<span class="badge bg-warning-subtle text-warning-emphasis">{{ lesson.estimated_minutes }} min</span>{% endif %}
+            </div>
+            <hr class="border-secondary">
+            {% for resource in lesson.resources.order_by('order') %}
+                <div class="mb-5 p-3 bg-secondary bg-opacity-10 rounded border border-secondary">
+                    <h5 class="fw-bold mb-3 text-warning">{{ resource.title }}</h5>
+                    <div class="mb-3 text-light">{{ resource.content | safe }}</div>
+                    {% for media in resource.media_items.order_by('order') %}
+                        <div class="mt-2">
+                            {% if media.media_type == 'image' %}
+                                <img src="{{ url_for('guitar_study.serve_media', filepath=media.path if media.path.startswith('uploads/') else 'uploads/' + media.path) }}" alt="{{ media.title }}" class="img-fluid rounded border border-secondary">
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editor = document.getElementById('quillEditor');
+    if (!editor) {
+        console.error("Editor container não encontrado");
+        return;
+    }
+    
+    const quill = new Quill('#quillEditor', { 
+        theme: 'snow', 
+        modules: { toolbar: [['bold', 'italic'], [{ 'list': 'ordered'}, { 'list': 'bullet' }]] } 
+    });
+    
+    document.getElementById('addStepForm').addEventListener('submit', function() {
+        document.getElementById('content').value = quill.root.innerHTML;
+    });
+    
+    const sel = document.getElementById('resourceTypeSelector');
+    function toggle() {
+        if(!sel) return;
+        document.getElementById('urlField').classList.toggle('d-none', !['youtube_url', 'video_url'].includes(sel.value));
+        document.getElementById('fileField').classList.toggle('d-none', !['pdf', 'image'].includes(sel.value));
+    }
+    if(sel) {
+        sel.addEventListener('change', toggle);
+        toggle();
+    }
+});
+</script>
+{% endblock %}

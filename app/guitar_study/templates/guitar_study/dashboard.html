@@ -15,6 +15,34 @@
     </div>
 </div>
 
+{% if lesson_recommendation %}
+{% set rec_lesson = lesson_recommendation.lesson %}
+{% set rec_progress = lesson_recommendation.progress %}
+<div class="card mb-4 bg-primary-subtle border-primary-subtle shadow-sm">
+    <div class="card-body p-4">
+        <div class="row align-items-center g-3">
+            <div class="col-12 col-lg-8">
+                <span class="badge bg-primary mb-2">{{ lesson_recommendation.title }}</span>
+                <h2 class="fw-extrabold mb-1">{{ rec_lesson.title }}</h2>
+                <p class="text-muted mb-3">{{ lesson_recommendation.description }}</p>
+                <div class="d-flex flex-wrap gap-2">
+                    {% if rec_lesson.module %}<span class="badge bg-body text-body border">{{ rec_lesson.module }}</span>{% endif %}
+                    {% if rec_lesson.level %}<span class="badge bg-body text-body border">{{ rec_lesson.level|title }}</span>{% endif %}
+                    {% if rec_lesson.estimated_minutes %}<span class="badge bg-body text-body border">{{ rec_lesson.estimated_minutes }} min</span>{% endif %}
+                    {% if rec_progress and rec_progress.status == 'in_progress' %}<span class="badge bg-warning text-dark">Em andamento</span>{% endif %}
+                </div>
+            </div>
+            <div class="col-12 col-lg-4 text-lg-end">
+                <a href="{{ url_for('guitar_study.lesson_view', lesson_id=rec_lesson.id) }}" class="btn btn-primary btn-lg fw-bold shadow">
+                    {% if rec_progress and rec_progress.status == 'in_progress' %}Continuar aula{% else %}Começar aula{% endif %}
+                    <i class="bi bi-arrow-right-short"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Cards de Estatísticas Principais -->
 <div class="row g-3 mb-4">
     <div class="col-12 col-sm-6 col-lg-3">

@@ -1,11 +1,15 @@
+import os
 from datetime import datetime, timedelta
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, send_from_directory, abort, current_app
 from flask_login import login_required, current_user
 from sqlalchemy import func
 from app.extensions import db
 from app.guitar_study import guitar_study
 from app.guitar_study.models import (
-    UserSettings, Favorite, StudySession, ExerciseAttempt, StudyGoal, RecentItem, Song
+    UserSettings, Favorite, StudySession, ExerciseAttempt, StudyGoal, RecentItem, Song, Lesson
+)
+from app.guitar_study.services.lesson_flow import (
+    get_or_create_progress, grouped_lessons_for_user, recommendation_for_user
 )
 from app.guitar_study.services.music_theory import TUNINGS, SHARPS_SCALE
 
@@ -74,6 +78,8 @@ def dashboard():
     
     # 7. Metas de estudos
     goals = StudyGoal.query.filter_by(user_id=user_id).order_by(StudyGoal.is_completed.asc(), StudyGoal.deadline.asc()).limit(3).all()
+
+    lesson_recommendation = recommendation_for_user(user_id)
     
     # 8. Recomendações (Dinâmicas simplificadas baseadas no que já foi estudado)
     recommendations = []
@@ -111,7 +117,8 @@ def dashboard():
         favorites=favorites,
         weekly_sessions_count=weekly_sessions_count,
         goals=goals,
-        recommendations=recommendations
+        recommendations=recommendations,
+        lesson_recommendation=lesson_recommendation
     )
 
 
@@ -131,6 +138,18 @@ def fretboard():
         settings=settings,
         tunings=tunings,
         custom_tunings=custom_tunings,
+        chromatic_notes=SHARPS_SCALE
+    )
+
+
+@guitar_study.route("/fretboard-practice")
+@login_required
+def fretboard_practice():
+    """Área de prática livre com mapas de braço salvos."""
+    settings = current_user.settings
+    return render_template(
+        "guitar_study/fretboard_practice.html",
+        settings=settings,
         chromatic_notes=SHARPS_SCALE
     )
 
@@ -240,4 +259,110 @@ def settings():
         settings=settings,
         tunings=tunings,
         custom_tunings=custom_tunings
+    )
+
+
+# --- Rota protegida para servir mídias privadas ---
+
+@guitar_study.route("/media/<path:filepath>")
+@login_required
+def serve_media(filepath):
+    """Serve arquivos de mídia das aulas com autenticação obrigatória."""
+    private_base = os.path.dirname(current_app.config['UPLOAD_FOLDER'])
+    safe_path = os.path.normpath(filepath)
+    if safe_path.startswith('..'):
+        abort(403)
+
+    full_path = os.path.join(private_base, safe_path)
+    if not os.path.isfile(full_path):
+        abort(404)
+
+    # Detecta o MIME type pelo conteúdo real do arquivo (ignora extensão)
+    with open(full_path, 'rb') as f:
+        header = f.read(16)
+
+    if header.startswith(b'\xff\xd8'):
+        mime = 'image/jpeg'
+    elif header.startswith(b'\x89PNG\r\n\x1a\n'):
+        mime = 'image/png'
+    elif header.startswith(b'GIF8'):
+        mime = 'image/gif'
+    elif header.startswith(b'%PDF'):
+        mime = 'application/pdf'
+    elif b'<svg' in header or header.lstrip().startswith(b'<'):
+        mime = 'image/svg+xml'
+    else:
+        import mimetypes
+        mime = mimetypes.guess_type(safe_path)[0] or 'application/octet-stream'
+
+    response = send_from_directory(private_base, safe_path, mimetype=mime)
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    return response
+
+
+@guitar_study.route("/circle-of-fifths")
+@login_required
+def circle_of_fifths():
+    """Página interativa do Círculo de Quintas e relacionamento de tonalidades."""
+    settings = current_user.settings
+    return render_template("guitar_study/circle_of_fifths.html", settings=settings)
+
+
+@guitar_study.route("/triads-arpeggios")
+@login_required
+def triads_arpeggios():
+    """Página interativa para visualização de Tríades e Arpejos do CAGED."""
+    settings = current_user.settings
+    from app.guitar_study.services.music_theory import SHARPS_SCALE
+    return render_template("guitar_study/triads_arpeggios.html", settings=settings, chromatic_notes=SHARPS_SCALE)
+
+
+# --- Rotas de Aulas ---
+
+@guitar_study.route("/lessons")
+@login_required
+def lessons_list():
+    """Mostra a lista de aulas disponíveis para o aluno."""
+    lesson_groups = grouped_lessons_for_user(current_user.id)
+    lesson_recommendation = recommendation_for_user(current_user.id)
+    return render_template(
+        "guitar_study/lessons_list.html",
+        lesson_groups=lesson_groups,
+        lesson_recommendation=lesson_recommendation
+    )
+
+
+@guitar_study.route("/lessons/<int:lesson_id>")
+@login_required
+def lesson_view(lesson_id):
+    """Exibe o conteúdo de uma aula específica."""
+    lesson = Lesson.query.filter_by(id=lesson_id, is_published=True).first_or_404()
+    progress = get_or_create_progress(current_user.id, lesson)
+    completed_resource_ids = progress.completed_ids()
+    checklist_state = progress.checklist_state()
+    
+    # Lógica para tratar URL do YouTube
+    youtube_embed_url = None
+    for resource in lesson.resources:
+        if resource.resource_type == 'youtube_url':
+            try:
+                # Extrai o ID do vídeo de vários formatos de URL do YouTube
+                video_id = None
+                if "v=" in resource.path:
+                    video_id = resource.path.split("v=")[1].split("&")[0]
+                elif "youtu.be/" in resource.path:
+                    video_id = resource.path.split("youtu.be/")[1].split("?")[0]
+                
+                if video_id:
+                    resource.youtube_embed_url = f"https://www.youtube.com/embed/{video_id}"
+            except Exception:
+                resource.youtube_embed_url = None # Falha em extrair, não quebra a página
+
+    return render_template(
+        "guitar_study/lesson_view.html",
+        lesson=lesson,
+        progress=progress,
+        completed_resource_ids=completed_resource_ids,
+        checklist_state=checklist_state
     )

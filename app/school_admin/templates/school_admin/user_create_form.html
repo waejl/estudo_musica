@@ -1,0 +1,52 @@
+{# app/school_admin/templates/school_admin/user_create_form.html #}
+{% extends "school_admin/base_admin.html" %}
+
+{% from "_form_helpers.html" import render_field %}
+
+{% block admin_title %}Registrar Novo Usuário{% endblock %}
+
+{% block page_title %}
+    <i class="bi bi-person-plus-fill me-2"></i> Registrar Novo Usuário
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ url_for('school_admin.manage_users') }}" class="btn btn-secondary fw-bold">
+        <i class="bi bi-x-lg me-1"></i> Cancelar
+    </a>
+{% endblock %}
+
+{% block admin_content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm border border-secondary-subtle">
+            <div class="card-body">
+                <h5 class="card-title fw-bold mb-4 border-bottom pb-2 text-primary">
+                    <i class="bi bi-person-badge-fill me-2"></i>Informações do Novo Usuário
+                </h5>
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    {{ render_field(form.name) }}
+                    
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            {{ render_field(form.username) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ render_field(form.role) }}
+                        </div>
+                    </div>
+                    
+                    {{ render_field(form.email) }}
+                    {{ render_field(form.password) }}
+                    
+                    <hr class="my-4">
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary fw-bold btn-lg shadow-sm") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

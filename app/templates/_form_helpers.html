@@ -1,0 +1,32 @@
+{# app/templates/_form_helpers.html #}
+{% macro render_field(field, extra_class="", render_kw=None) %}
+    <div class="mb-3">
+        {{ field.label(class="form-label fw-medium") }}
+        
+        {# Prepara os argumentos para o campo #}
+        {% set final_kwargs = {} %}
+        {% if render_kw %}{% set _ = final_kwargs.update(render_kw) %}{% endif %}
+        
+        {% if field.type == 'BooleanField' %}
+            <div class="form-check form-switch">
+                {% set _ = final_kwargs.update({'class': 'form-check-input ' + extra_class}) %}
+                {{ field(**final_kwargs) }}
+            </div>
+        {% else %}
+            {% set _ = final_kwargs.update({'class': 'form-control ' + extra_class}) %}
+            {{ field(**final_kwargs) }}
+        {% endif %}
+        
+        {% if field.errors %}
+            <div class="invalid-feedback d-block">
+                {% for error in field.errors %}
+                    <span>{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% if field.description %}
+            <small class="form-text text-muted">{{ field.description }}</small>
+        {% endif %}
+    </div>
+{% endmacro %}

@@ -5,8 +5,10 @@ from app.extensions import db
 from app.guitar_study import guitar_study
 from app.guitar_study.models import (
     UserSettings, CustomTuning, Favorite, StudySession,
-    ExerciseAttempt, StudyGoal, RecentItem, Song
+    ExerciseAttempt, StudyGoal, RecentItem, Song, Lesson, LessonResource, LessonProgress,
+    SavedFretboardMap
 )
+from app.guitar_study.services.lesson_flow import complete_progress_if_ready, get_or_create_progress
 from app.guitar_study.services.music_theory import MusicTheoryService, TUNINGS
 
 def get_user_tuning_notes(user_id: int, tuning_id: str) -> list:
@@ -300,6 +302,8 @@ def api_study_sessions():
         item_key = data.get("item_key", "").strip()
         duration = data.get("duration_minutes")
         notes = data.get("notes", "").strip()
+        lesson_id = data.get("lesson_id")
+        resource_id = data.get("resource_id")
         
         if not category or not item_key or duration is None:
             return jsonify({
@@ -330,7 +334,9 @@ def api_study_sessions():
                 category=category,
                 item_key=item_key,
                 duration_minutes=duration,
-                notes=notes
+                notes=notes,
+                lesson_id=lesson_id,
+                resource_id=resource_id
             )
             db.session.add(session)
             
@@ -348,6 +354,8 @@ def api_study_sessions():
                     "category": session.category,
                     "item_key": session.item_key,
                     "duration_minutes": session.duration_minutes,
+                    "lesson_id": session.lesson_id,
+                    "resource_id": session.resource_id,
                     "created_at": session.created_at.isoformat()
                 }
             }), 201
@@ -374,6 +382,8 @@ def api_study_sessions():
                 "item_key": s.item_key,
                 "duration_minutes": s.duration_minutes,
                 "notes": s.notes,
+                "lesson_id": s.lesson_id,
+                "resource_id": s.resource_id,
                 "created_at": s.created_at.isoformat()
             })
             
@@ -391,6 +401,175 @@ def api_study_sessions():
                 "message": f"Erro ao carregar sessões de estudo: {str(e)}"
             }
         }), 500
+
+
+# =====================================================================
+# API: PROGRESSO DE AULAS
+# =====================================================================
+@guitar_study.route("/api/v1/lessons/<int:lesson_id>/progress", methods=["GET", "POST"])
+@login_required
+def api_lesson_progress(lesson_id):
+    lesson = Lesson.query.filter_by(id=lesson_id, is_published=True).first_or_404()
+    progress = get_or_create_progress(current_user.id, lesson)
+
+    if request.method == "POST":
+        data = request.get_json() or {}
+        resource_id = data.get("resource_id")
+        completed = data.get("completed")
+        checklist = data.get("checklist")
+        complete_lesson = bool(data.get("complete_lesson"))
+
+        resource_ids = {r.id for r in lesson.resources.all()}
+        completed_ids = progress.completed_ids()
+
+        if resource_id:
+            try:
+                resource_id = int(resource_id)
+            except (TypeError, ValueError):
+                return jsonify({"success": False, "error": {"code": "INVALID_RESOURCE", "message": "Etapa inválida."}}), 400
+
+            if resource_id not in resource_ids:
+                return jsonify({"success": False, "error": {"code": "RESOURCE_NOT_FOUND", "message": "Etapa não pertence a esta aula."}}), 404
+
+            progress.current_resource_id = resource_id
+            if completed is True:
+                completed_ids.add(resource_id)
+            elif completed is False:
+                completed_ids.discard(resource_id)
+            progress.set_completed_ids(completed_ids)
+            progress.status = "in_progress"
+            progress.completed_at = None
+
+        if isinstance(checklist, dict):
+            state = progress.checklist_state()
+            for key, value in checklist.items():
+                state[str(key)] = bool(value)
+            progress.set_checklist_state(state)
+
+        if complete_lesson:
+            complete_progress_if_ready(progress, lesson)
+
+        db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "lesson_id": lesson.id,
+            "status": progress.status,
+            "current_resource_id": progress.current_resource_id,
+            "completed_resource_ids": sorted(progress.completed_ids()),
+            "checklist": progress.checklist_state(),
+            "completed_at": progress.completed_at.isoformat() if progress.completed_at else None
+        }
+    })
+
+
+# =====================================================================
+# API: MAPAS SALVOS DO BRAÇO
+# =====================================================================
+def _parse_fretboard_map_payload(data):
+    title = (data.get("title") or "").strip()
+    description = (data.get("description") or "").strip()
+    notes = data.get("notes", [])
+
+    if not title:
+        return None, ("MISSING_TITLE", "Informe um nome para salvar o braço.")
+
+    if not isinstance(notes, list):
+        return None, ("INVALID_NOTES", "A lista de notas do braço é inválida.")
+
+    sanitized_notes = []
+    for note in notes:
+        if not isinstance(note, dict):
+            return None, ("INVALID_NOTES", "Cada nota salva precisa conter corda e casa.")
+        try:
+            string = int(note.get("string"))
+            fret = int(note.get("fret"))
+        except (TypeError, ValueError):
+            return None, ("INVALID_NOTES", "Corda e casa precisam ser números.")
+
+        if string < 1 or string > 6 or fret < 0 or fret > 24:
+            return None, ("INVALID_NOTES", "Corda ou casa fora do intervalo permitido.")
+
+        sanitized_notes.append({
+            "string": string,
+            "fret": fret,
+            "note": str(note.get("note") or "")
+        })
+
+    try:
+        fret_count = int(data.get("fret_count") or 22)
+    except (TypeError, ValueError):
+        fret_count = 22
+
+    payload = {
+        "title": title[:150],
+        "description": description,
+        "tuning_id": (data.get("tuning_id") or "standard")[:50],
+        "fret_count": fret_count,
+        "tonic": (data.get("tonic") or "")[:10],
+        "display_type": (data.get("display_type") or "notes")[:30],
+        "notes": sanitized_notes,
+    }
+    return payload, None
+
+
+@guitar_study.route("/api/v1/fretboard-maps", methods=["GET", "POST"])
+@login_required
+def api_fretboard_maps():
+    if request.method == "POST":
+        payload, error = _parse_fretboard_map_payload(request.get_json() or {})
+        if error:
+            code, message = error
+            return jsonify({"success": False, "error": {"code": code, "message": message}}), 400
+
+        saved_map = SavedFretboardMap(
+            user_id=current_user.id,
+            title=payload["title"],
+            description=payload["description"],
+            tuning_id=payload["tuning_id"],
+            fret_count=payload["fret_count"],
+            tonic=payload["tonic"],
+            display_type=payload["display_type"],
+        )
+        saved_map.set_notes(payload["notes"])
+        db.session.add(saved_map)
+        db.session.commit()
+        return jsonify({"success": True, "data": saved_map.to_dict()}), 201
+
+    maps = SavedFretboardMap.query.filter_by(user_id=current_user.id).order_by(
+        SavedFretboardMap.updated_at.desc()
+    ).all()
+    return jsonify({"success": True, "data": {"maps": [m.to_dict() for m in maps]}})
+
+
+@guitar_study.route("/api/v1/fretboard-maps/<int:map_id>", methods=["GET", "PUT", "DELETE"])
+@login_required
+def api_fretboard_map_detail(map_id):
+    saved_map = SavedFretboardMap.query.filter_by(id=map_id, user_id=current_user.id).first_or_404()
+
+    if request.method == "GET":
+        return jsonify({"success": True, "data": saved_map.to_dict()})
+
+    if request.method == "DELETE":
+        db.session.delete(saved_map)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Braço salvo excluído com sucesso."})
+
+    payload, error = _parse_fretboard_map_payload(request.get_json() or {})
+    if error:
+        code, message = error
+        return jsonify({"success": False, "error": {"code": code, "message": message}}), 400
+
+    saved_map.title = payload["title"]
+    saved_map.description = payload["description"]
+    saved_map.tuning_id = payload["tuning_id"]
+    saved_map.fret_count = payload["fret_count"]
+    saved_map.tonic = payload["tonic"]
+    saved_map.display_type = payload["display_type"]
+    saved_map.set_notes(payload["notes"])
+    db.session.commit()
+    return jsonify({"success": True, "data": saved_map.to_dict()})
 
 
 # =====================================================================
@@ -645,7 +824,9 @@ def api_get_settings():
             "tuning_id": settings.tuning_id,
             "fret_count": settings.fret_count,
             "accidentals_preference": settings.accidentals_preference,
-            "theme": settings.theme
+            "theme": settings.theme,
+            "hand_orientation": settings.hand_orientation,
+            "learning_mode": settings.learning_mode
         }
     })
 

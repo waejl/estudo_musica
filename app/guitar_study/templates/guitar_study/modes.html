@@ -10,6 +10,34 @@
     </div>
 </div>
 
+<!-- Guia de Estudo: Motivo e Aplicação -->
+<div class="card mb-4 bg-body-tertiary border-0 shadow-sm border-start border-primary border-3">
+    <div class="card-body p-4">
+        <div class="d-flex align-items-start gap-3">
+            <div class="bg-primary text-white p-2.5 rounded-3 fs-5 d-inline-flex">
+                <i class="bi bi-book-half"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold mb-1 text-white">Guia de Estudo: Por que estudar Modos Gregos?</h5>
+                <div class="row g-3 mt-1 fs-7 text-muted">
+                    <div class="col-12 col-md-4">
+                        <strong class="text-primary-emphasis d-block mb-1"><i class="bi bi-question-circle"></i> Motivo de existir:</strong>
+                        Desvendar o mistério harmônico e as sonoridades exclusivas de cada um dos sete graus da escala maior.
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <strong class="text-primary-emphasis d-block mb-1"><i class="bi bi-person-fill-check"></i> Por que você deve usar:</strong>
+                        Para expandir seu vocabulário emocional e expressivo na guitarra, saindo do som comum e aprendendo a criar climas específicos (místicos, sombrios, ciganos).
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <strong class="text-primary-emphasis d-block mb-1"><i class="bi bi-briefcase"></i> Para que serve na prática:</strong>
+                        Para comparar as características de cada modo grego, estudar as notas e acordes característicos de cada som e saber solar na música certa.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Abas para Alternar entre Estudo de Modo e Comparador de Modos -->
 <ul class="nav nav-tabs mb-4" id="modesTab" role="tablist">
     <li class="nav-item" role="presentation">
@@ -79,7 +107,12 @@
                             <div class="mb-2"><strong>Origem:</strong> <span id="modeParent" class="text-body fw-semibold">Escala Maior de Sol (2º Grau)</span></div>
                             <div class="mb-2"><strong>Sensação Sonora:</strong> <span id="modeFeeling" class="text-body fw-semibold">Intensa e brilhante</span></div>
                             <div class="mb-2"><strong>Nota Característica:</strong> <span id="modeCharacteristic" class="text-warning fw-extrabold">6ª Maior (F#)</span></div>
-                            <div class="mb-0"><strong>Acorde Característico:</strong> <span id="modeChord" class="text-primary fw-bold">Am6 / Am7</span></div>
+                            <div class="mb-3"><strong>Acorde Característico:</strong> <span id="modeChord" class="text-primary fw-bold">Am6 / Am7</span></div>
+                            
+                            <!-- Botão de Teoria -->
+                            <button class="btn btn-sm btn-outline-primary fw-bold w-100 mt-2 py-1.5" onclick="openModeTheoryModal()">
+                                <i class="bi bi-book-half me-1"></i> Teoria e Execução
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -233,10 +266,28 @@
                 </div>
             </div>
         </div>
-    </div>
-    
-</div>
-{% endblock %}
+        </div>
+
+        </div>
+
+        <!-- Modal de Teoria dos Modos -->
+        <div class="modal fade" id="modeTheoryModal" tabindex="-1" aria-labelledby="modeTheoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-secondary" style="box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <div class="modal-header border-secondary bg-body-tertiary">
+                <h5 class="modal-title fw-bold text-primary" id="modeTheoryModalLabel"><i class="bi bi-book-half me-2"></i> Teoria e Execução do Modo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body p-4" id="modeTheoryModalBody" style="max-height: 75vh; overflow-y: auto;">
+                <!-- Conteúdo gerado dinamicamente via JS -->
+            </div>
+            <div class="modal-footer border-secondary bg-body-tertiary">
+                <button type="button" class="btn btn-secondary fw-semibold px-4" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+        </div>
+        </div>
+        {% endblock %}
 
 {% block extra_js %}
 <script type="module">
@@ -253,7 +304,8 @@
         fretboard = new Fretboard("modeFretboard", {
             tuningId: "{{ settings.tuning_id }}",
             fretCount: {{ settings.fret_count }},
-            viewMode: "highlight_set"
+            viewMode: "highlight_set",
+            handOrientation: "{{ settings.hand_orientation if settings else 'right_handed' }}"
         });
         await fretboard.init();
         
@@ -261,7 +313,8 @@
         compareFretboard = new Fretboard("compareFretboard", {
             tuningId: "{{ settings.tuning_id }}",
             fretCount: {{ settings.fret_count }},
-            viewMode: "highlight_set"
+            viewMode: "highlight_set",
+            handOrientation: "{{ settings.hand_orientation if settings else 'right_handed' }}"
         });
         await compareFretboard.init();
         
@@ -462,5 +515,136 @@
             runComparison();
         });
     });
+
+    const MODE_THEORY_DATA = {
+        ionian: {
+            name: "Jônio (Escala Maior Natural)",
+            formula: "T - T - ST - T - T - T - ST",
+            intervals: "1 - 2 - 3 - 4 - 5 - 6 - 7",
+            tonicSymbol: "I",
+            characteristic: "4ª Justa e 7ª Maior",
+            feeling: "Alegre, resoluto, estável, solar.",
+            context: "É a escala maior tradicional e o pilar de toda a harmonia ocidental moderna. Usado como o ponto de partida e repouso de quase todas as músicas maiores.",
+            execution: "Toque as notas de forma fluida. O maior desafio é a 4ª justa (evitar repouso prolongado nela sobre o acorde maior estável, pois causa choque de semitom com a terça maior do acorde, o que os jazzistas chamam de 'avoid note'). Use-a como nota de passagem.",
+            examples: "Let It Be (The Beatles), Always With Me, Always With You (Joe Satriani - partes maiores)."
+        },
+        dorian: {
+            name: "Dórico (Menor Sofisticada)",
+            formula: "T - ST - T - T - T - ST - T",
+            intervals: "1 - 2 - b3 - 4 - 5 - 6 - b7",
+            tonicSymbol: "II",
+            characteristic: "6ª Maior (o grande segredo de sofisticação)",
+            feeling: "Misterioso, melancólico mas esperançoso, jazzístico.",
+            context: "É o segundo modo grego. Ele se assemelha muito ao modo menor natural (Eólio), mas possui a 6ª Maior em vez da 6ª Menor. Essa única nota de diferença remove a tristeza pesada e traz uma sensação de brilho e sofisticação espiritual.",
+            execution: "Destaque a 6ª Maior nas suas frases de solo! Ao tocar sobre uma base menor, prolongar a nota na 6ª Maior (ex: nota F# no tom de Am) trará a sonoridade clássica do modo dórico de forma instantânea.",
+            examples: "Oye Como Va (Santana), Eleanor Rigby (The Beatles), Stayin' Alive (Bee Gees), So What (Miles Davis)."
+        },
+        phrygian: {
+            name: "Frígio (Metal / Flamenco)",
+            formula: "ST - T - T - T - ST - T - T",
+            intervals: "1 - b2 - b3 - 4 - 5 - b6 - b7",
+            tonicSymbol: "III",
+            characteristic: "2ª Menor (b2) (tensão exótica imediata)",
+            feeling: "Tenso, sombrio, dramático, exótico, agressivo.",
+            context: "O terceiro modo grego. Ele se inicia com um intervalo de meio tom (segunda menor), o que gera uma tensão exótica fortíssima. É a base do flamenco tradicional espanhol e dos riffs mais pesados do Heavy Metal.",
+            execution: "Explore a b2 (segunda menor, a nota imediatamente meio tom acima da tônica)! Faça pequenos hammer-ons e pull-offs entre a tônica e a casa vizinha (casa 1 em relação à casa 0) para cravar a sonoridade exótica frígia.",
+            examples: "Wherever I May Roam (Metallica), Symphony of Destruction (Megadeth), Remember Tomorrow (Iron Maiden)."
+        },
+        lydian: {
+            name: "Lídio (Místico / Espacial)",
+            formula: "T - T - T - ST - T - T - ST",
+            intervals: "1 - 2 - 3 - #4 - 5 - 6 - 7",
+            tonicSymbol: "IV",
+            characteristic: "4ª Aumentada (#4 / Trítono místico)",
+            feeling: "Espacial, místico, flutuante, onírico, futurista.",
+            context: "O quarto modo grego. Possui a 4ª Aumentada, que cria uma tensão mística e futurista. É o modo queridinho dos compositores de trilhas sonoras de ficção científica do cinema, pois soa 'fora deste mundo'.",
+            execution: "Deite e repouse sobre a #4 (quarta aumentada, que fica meio tom acima da quarta justa padrão). Ao solar, essa nota traz um clima flutuante e onírico maravilhoso.",
+            examples: "Steve Vai (várias composições), Flying in a Blue Dream (Joe Satriani), Trilha Sonora de Star Wars, Os Simpsons (tema de abertura)."
+        },
+        mixolydian: {
+            name: "Mixolídio (Rock / Nordeste / Blues)",
+            formula: "T - T - ST - T - T - ST - T",
+            intervals: "1 - 2 - 3 - 4 - 5 - 6 - b7",
+            tonicSymbol: "V",
+            characteristic: "7ª Menor (b7) (atitude dominante)",
+            feeling: "Festivo, alegre com atitude, descontraído, bluseiro.",
+            context: "O quinto modo grego. Trata-se da escala maior tradicional, mas com a 7ª menor (b7) em vez da 7ª maior. É a fôrma por trás dos acordes de sétima dominante (G7, C7), sendo a alma do Blues, do Rock clássico de garagem e do Baião nordestino brasileiro.",
+            examples: "Sweet Child O' Mine (Guns N' Roses - solo final), Sweet Home Alabama (Lynyrd Skynyrd), Asa Branca (Luiz Gonzaga), Clocks (Coldplay)."
+        },
+        aeolian: {
+            name: "Eólio (Escala Menor Natural)",
+            formula: "T - ST - T - T - ST - T - T",
+            intervals: "1 - 2 - b3 - 4 - 5 - b6 - b7",
+            tonicSymbol: "VI",
+            characteristic: "6ª Menor (b6) (melancolia clássica)",
+            feeling: "Melancólico, triste, introspectivo, dramático, épico.",
+            context: "O sexto modo grego e a própria escala menor natural (relativa). É a base harmônica de praticamente todas as composições tristes, baladas introspectivas e hinos épicos menores da história da música.",
+            execution: "Utilize a b6 (sexta menor) para criar picos de melancolia dramática na sua melodia, resolvendo na quinta ou na terça menor.",
+            examples: "Losing My Religion (R.E.M.), Stairway to Heaven (Led Zeppelin), Still Got The Blues (Gary Moore)."
+        },
+        locrian: {
+            name: "Lócrio (Tensão Máxima / Caótico)",
+            formula: "ST - T - T - ST - T - T - T",
+            intervals: "1 - b2 - b3 - 4 - b5 - b6 - b7",
+            tonicSymbol: "VII",
+            characteristic: "5ª Diminuta (b5) e 2ª Menor (b2)",
+            feeling: "Extremamente tenso, instável, dissonante, caótico.",
+            context: "O sétimo e último modo grego. O único com a 5ª diminuta (trítono direto na tônica). É o modo mais instável e difícil de aplicar, pois o acorde de repouso é meio-diminuto e pede resolução imediata.",
+            execution: "Use com cautela! O modo lócrio brilha em solos rápidos sobre acordes m7(b5) em bases de Jazz complexas ou riffs extremamente dissonantes e agressivos no Metal extremo.",
+            examples: "Painkiller (Judas Priest - trechos do riff), Sad But True (Metallica - partes do riff), composições de Jazz Fusion bop."
+        }
+    };
+
+    window.openModeTheoryModal = function() {
+        const root = document.getElementById("modeRoot").value;
+        const type = document.getElementById("modeType").value;
+        
+        const theory = MODE_THEORY_DATA[type];
+        if (!theory) return;
+        
+        // Define o título do modal
+        document.getElementById("modeTheoryModalLabel").innerHTML = `<i class="bi bi-book-half text-primary me-2"></i> Teoria e Execução: ${root} ${theory.name}`;
+        
+        // Constrói o HTML dinamicamente com base nas informações
+        const html = `
+            <div class="row g-4 text-start">
+                <div class="col-12 col-md-5">
+                    <div class="bg-body-secondary p-3 rounded border border-secondary-subtle">
+                        <h6 class="fw-bold text-primary mb-3"><i class="bi bi-gear-wide-connected me-1"></i> Estrutura de Intervalos</h6>
+                        <div class="mb-2 fs-7"><strong>Intervalos do Modo:</strong> <span class="text-body-emphasis font-monospace fw-extrabold fs-6 ms-2">${theory.intervals}</span></div>
+                        <div class="mb-2 fs-7"><strong>Fórmula de Tons:</strong> <span class="text-body-emphasis font-monospace fs-7 ms-2">${theory.formula}</span></div>
+                        <div class="mb-2 fs-7"><strong>Grau de Origem:</strong> <span class="badge bg-primary text-white text-uppercase fs-9 px-2 ms-2">${theory.tonicSymbol}º Grau</span></div>
+                        <hr class="my-2 border-secondary">
+                        <div class="mb-2 fs-7"><strong>Nota Característica:</strong> <span class="text-warning fw-extrabold ms-2">${theory.characteristic}</span></div>
+                        <div class="mb-0 fs-7"><strong>Sensação Sonora:</strong> <span class="text-info fw-semibold ms-2">${theory.feeling}</span></div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-7">
+                    <h6 class="fw-bold text-primary"><i class="bi bi-journal-text me-1"></i> Contexto Histórico e Musical</h6>
+                    <p class="fs-7 text-muted lh-lg mb-3" style="text-align: justify;">${theory.context}</p>
+                    
+                    <h6 class="fw-bold text-primary"><i class="bi bi-play-circle me-1"></i> Dicas de Execução e Solos</h6>
+                    <p class="fs-7 text-muted lh-lg mb-0" style="text-align: justify;">${theory.execution}</p>
+                </div>
+                <div class="col-12">
+                    <hr class="my-1 border-secondary">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-disc text-primary fs-5"></i>
+                        <h6 class="fw-bold text-primary mb-0">Músicas Clássicas e Exemplos Práticos:</h6>
+                    </div>
+                    <p class="fs-7 text-muted-emphasis font-monospace bg-body-secondary p-3 rounded border border-secondary-subtle mb-0 lh-lg" style="text-align: justify;">
+                        <i class="bi bi-music-note-beamed text-success me-2"></i> ${theory.examples}
+                    </p>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById("modeTheoryModalBody").innerHTML = html;
+        
+        // Mostra o modal do Bootstrap 5 de forma nativa e sem jQuery
+        const modalEl = document.getElementById('modeTheoryModal');
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    };
 </script>
 {% endblock %}

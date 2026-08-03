@@ -33,6 +33,7 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-guitar_user}:${POSTGRES_PASSWORD:-guitar_pass}@db:5432/${POSTGRES_DB:-guitar_db}
     volumes:
       - .:/workspace
+    command: flask run --host=0.0.0.0 --port=5000
     depends_on:
       db:
         condition: service_healthy

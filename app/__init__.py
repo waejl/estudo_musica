@@ -5,6 +5,32 @@ from flask import Flask, redirect, jsonify, request, url_for
 from app.config import config_by_name
 from app.extensions import db, login_manager
 
+
+class PrefixMiddleware(object):
+    """WSGI Middleware para injetar um prefixo de URL global dinâmico"""
+    def __init__(self, app, prefix=''):
+        self.app = app
+        self.prefix = prefix
+
+    def __call__(self, environ, start_response):
+        path_info = environ.get('PATH_INFO', '')
+
+        if not self.prefix or self.prefix == '/':
+            return self.app(environ, start_response)
+
+        if path_info.startswith(self.prefix):
+            environ['PATH_INFO'] = path_info[len(self.prefix):] or '/'
+            environ['SCRIPT_NAME'] = self.prefix
+            return self.app(environ, start_response)
+
+        if path_info == '/' or not path_info:
+            start_response('302 Found', [('Location', self.prefix + '/')])
+            return []
+
+        start_response('404 Not Found', [('Content-Type', 'text/plain')])
+        return [b'Not Found']
+
+
 def create_app(config_name=None):
     """Application Factory para criar e configurar a app Flask."""
     if not config_name:
@@ -41,7 +67,16 @@ def create_app(config_name=None):
         
     # Tratamento global de erros
     register_error_handlers(app)
-    
+
+    # Aplicar o middleware de prefixo global, se houver (usado atras de proxy reverso)
+    prefix = os.getenv('URL_PREFIX', '').strip() if config_name != 'testing' else ''
+    if prefix and prefix != '/':
+        if not prefix.startswith('/'):
+            prefix = '/' + prefix
+        if prefix.endswith('/'):
+            prefix = prefix[:-1]
+        app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix=prefix)
+
     app.logger.info("Aplicação Guitar Study inicializada com sucesso!")
     return app
 

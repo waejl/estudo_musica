@@ -20,6 +20,21 @@
         border-color: var(--bs-primary);
         box-shadow: 0 0 0 1px var(--bs-primary);
     }
+    .btn-note-type {
+        --bs-btn-border-color: var(--bs-border-color-translucent);
+        --bs-btn-bg: var(--bs-tertiary-bg);
+        --bs-btn-hover-bg: var(--bs-secondary-bg);
+    }
+    .btn-note-type.active {
+        --bs-btn-bg: var(--bs-primary);
+        --bs-btn-border-color: var(--bs-primary);
+        color: var(--bs-white);
+    }
+    .fret-note[data-note-type="root"] { background-color: var(--bs-danger); }
+    .fret-note[data-note-type="scale_note"] { background-color: var(--bs-success); }
+    .fret-note[data-note-type="blue_note"] { background-color: #007bff; }
+    .fret-note[data-note-type="passing_note"] { background-color: var(--bs-secondary); }
+
 </style>
 {% endblock %}
 
@@ -94,6 +109,20 @@
             </div>
         </div>
 
+        <div class="d-flex align-items-center gap-3 practice-toolbar rounded-3 p-3 mb-4">
+            <h5 class="fw-bold fs-7 mb-0 text-primary"><i class="bi bi-palette-fill"></i> Pintar Notas</h5>
+            <div id="noteTypePalette" class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-note-type active" data-type="root">Tônica</button>
+                <button type="button" class="btn btn-sm btn-note-type" data-type="scale_note">Nota da Escala</button>
+                <button type="button" class="btn btn-sm btn-note-type" data-type="blue_note">Blue Note</button>
+                <button type="button" class="btn btn-sm btn-note-type" data-type="passing_note">Nota de Passagem</button>
+            </div>
+            <div class="form-check form-switch ms-auto">
+                <input class="form-check-input" type="checkbox" role="switch" id="linkNotesSwitch" checked>
+                <label class="form-check-label" for="linkNotesSwitch">Ligar Notas</label>
+            </div>
+        </div>
+
         <div>
             <h5 class="fw-extrabold mb-3 text-center text-body-emphasis">Clique nas notas para acender ou apagar e montar seu estudo.</h5>
             <div class="overflow-hidden rounded-3 border border-secondary-subtle">
@@ -128,6 +157,7 @@
     let fretboard = null;
     let activeMapId = null;
     let savedMaps = [];
+    let currentNoteType = "root"; // 'root' é o padrão inicial
 
     document.addEventListener("DOMContentLoaded", async () => {
         fretboard = new Fretboard("practiceFretboard", {
@@ -136,7 +166,8 @@
             tonic: document.getElementById("tonicSelect").value,
             viewMode: "modo_editor",
             displayType: "notes",
-            handOrientation: settings.handOrientation
+            handOrientation: settings.handOrientation,
+            onNoteClick: handleNoteClickInEditor
         });
         await fretboard.init();
         fretboard.setViewMode("modo_editor");
@@ -151,12 +182,52 @@
             fretboard.renderNotesContent();
         });
 
+        document.getElementById("noteTypePalette").addEventListener("click", (event) => {
+            const button = event.target.closest(".btn-note-type");
+            if (!button) return;
+            
+            currentNoteType = button.dataset.type;
+            
+            document.querySelectorAll(".btn-note-type").forEach(btn => btn.classList.remove("active"));
+            button.classList.add("active");
+        });
+
+        document.getElementById("linkNotesSwitch").addEventListener("change", () => {
+            fretboard.renderExecutionPath(collectVisibleNotes());
+        });
+
         document.getElementById("btnLoadScale").addEventListener("click", loadScaleIntoFretboard);
         document.getElementById("btnClearFretboard").addEventListener("click", clearFretboard);
         document.getElementById("btnNewMap").addEventListener("click", resetEditor);
         document.getElementById("btnSaveMap").addEventListener("click", createSavedMap);
         document.getElementById("btnUpdateMap").addEventListener("click", updateSavedMap);
         document.getElementById("btnDeleteMap").addEventListener("click", deleteSavedMap);
+    }
+
+    function handleNoteClickInEditor(noteData) {
+        const { noteBadge } = noteData;
+
+        const isVisible = noteBadge.classList.contains("visible");
+
+        if (isVisible) {
+            // Se a nota já está visível, clicar novamente a apaga
+            setBadgeVisible(noteBadge, false);
+            noteBadge.removeAttribute("data-note-type");
+            noteBadge.removeAttribute("data-sequence");
+        } else {
+            // Se está apagada, acende com o tipo de nota atual
+            setBadgeVisible(noteBadge, true);
+            noteBadge.setAttribute("data-note-type", currentNoteType);
+
+            // Adiciona o número de sequência
+            const existingNotes = collectVisibleNotes();
+            const maxSequence = existingNotes.reduce((max, note) => Math.max(max, note.sequence || 0), 0);
+            noteBadge.setAttribute("data-sequence", maxSequence + 1);
+        }
+
+        // Re-renderiza o caminho e atualiza a tablatura
+        fretboard.renderExecutionPath(collectVisibleNotes());
+        fretboard.updateTabAndSheet();
     }
 
     async function loadScaleIntoFretboard() {
@@ -183,18 +254,40 @@
     }
 
     function applyNotesByName(noteNames) {
+        clearFretboardSilently();
+        const root = document.getElementById("scaleRoot").value;
         const cells = fretboard.fretboardEl.querySelectorAll(".fretboard-cell");
+        let sequence = 1;
+
         cells.forEach((cell) => {
-            const badge = cell.querySelector(".fret-note");
-            const visible = noteNames.includes(cell.getAttribute("data-note"));
-            setBadgeVisible(badge, visible);
+            const noteName = cell.getAttribute("data-note");
+            if (noteNames.includes(noteName)) {
+                const badge = cell.querySelector(".fret-note");
+                if (badge) {
+                    const isRoot = fretboard.isNotesEqual(noteName, root);
+                    const noteType = isRoot ? 'root' : 'scale_note';
+                    
+                    badge.setAttribute("data-note-type", noteType);
+                    badge.setAttribute("data-sequence", sequence++);
+                    setBadgeVisible(badge, true);
+                }
+            }
         });
+        fretboard.renderExecutionPath(collectVisibleNotes());
         fretboard.updateTabAndSheet();
     }
 
     function clearFretboard() {
         const cells = fretboard.fretboardEl.querySelectorAll(".fretboard-cell");
-        cells.forEach((cell) => setBadgeVisible(cell.querySelector(".fret-note"), false));
+        cells.forEach((cell) => {
+            const badge = cell.querySelector(".fret-note");
+            if (badge) {
+                setBadgeVisible(badge, false);
+                badge.removeAttribute("data-note-type");
+                badge.removeAttribute("data-sequence");
+            }
+        });
+        fretboard.renderExecutionPath([]);
         fretboard.updateTabAndSheet();
         showToast("Braço limpo.", "info");
     }
@@ -215,7 +308,9 @@
                 notes.push({
                     string: Number(cell.getAttribute("data-string")),
                     fret: Number(cell.getAttribute("data-fret")),
-                    note: cell.getAttribute("data-note")
+                    note: cell.getAttribute("data-note"),
+                    type: badge.getAttribute("data-note-type") || 'scale_note',
+                    sequence: Number(badge.getAttribute("data-sequence") || 0)
                 });
             }
         });
@@ -350,14 +445,29 @@
         notes.forEach((note) => {
             const selector = `.fretboard-cell[data-string="${note.string}"][data-fret="${note.fret}"]`;
             const cell = fretboard.fretboardEl.querySelector(selector);
-            setBadgeVisible(cell?.querySelector(".fret-note"), true);
+            const badge = cell?.querySelector(".fret-note");
+            if (badge) {
+                setBadgeVisible(badge, true);
+                badge.setAttribute("data-note-type", note.type || 'scale_note');
+                if (note.sequence) {
+                    badge.setAttribute("data-sequence", note.sequence);
+                }
+            }
         });
+        fretboard.renderExecutionPath(notes);
         fretboard.updateTabAndSheet();
     }
 
     function clearFretboardSilently() {
         const cells = fretboard.fretboardEl.querySelectorAll(".fretboard-cell");
-        cells.forEach((cell) => setBadgeVisible(cell.querySelector(".fret-note"), false));
+        cells.forEach((cell) => {
+            const badge = cell.querySelector(".fret-note");
+            if (badge) {
+                setBadgeVisible(badge, false);
+                badge.removeAttribute("data-note-type");
+                badge.removeAttribute("data-sequence");
+            }
+        });
     }
 
     function resetEditor() {

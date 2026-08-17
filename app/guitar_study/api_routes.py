@@ -494,7 +494,9 @@ def _parse_fretboard_map_payload(data):
         sanitized_notes.append({
             "string": string,
             "fret": fret,
-            "note": str(note.get("note") or "")
+            "note": str(note.get("note") or ""),
+            "type": str(note.get("type") or "scale_note"),
+            "sequence": int(note.get("sequence") or 0)
         })
 
     try:

@@ -31,6 +31,7 @@ export class Fretboard {
 
         this.stringsData = []; // Armazenará os dados vindos da API
         this.fretboardEl = null;
+        this.pathOverlay = null; // SVG para desenhar caminhos
     }
 
     /**
@@ -53,6 +54,52 @@ export class Fretboard {
         } catch (e) {
             this.container.innerHTML = `<div class="alert alert-danger">Erro de rede ao carregar o braço da guitarra.</div>`;
             console.error(e);
+        }
+    }
+
+    /**
+     * Desenha o caminho de execução entre as notas.
+     * @param {Array<Object>} notes - Array de objetos de nota, cada um com `string`, `fret` e `sequence`.
+     */
+    renderExecutionPath(notes) {
+        if (!this.pathOverlay) return;
+        this.pathOverlay.innerHTML = '';
+
+        const linkNotesSwitch = document.getElementById('linkNotesSwitch');
+        if (!linkNotesSwitch || !linkNotesSwitch.checked) {
+            return;
+        }
+
+        const sortedNotes = notes
+            .filter(n => n.sequence > 0)
+            .sort((a, b) => a.sequence - b.sequence);
+
+        if (sortedNotes.length < 2) return;
+
+        for (let i = 0; i < sortedNotes.length - 1; i++) {
+            const noteA = sortedNotes[i];
+            const noteB = sortedNotes[i+1];
+
+            const cellA = this.fretboardEl.querySelector(`.fretboard-cell[data-string="${noteA.string}"][data-fret="${noteA.fret}"]`);
+            const cellB = this.fretboardEl.querySelector(`.fretboard-cell[data-string="${noteB.string}"][data-fret="${noteB.fret}"]`);
+
+            if (cellA && cellB) {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                const rectA = cellA.getBoundingClientRect();
+                const rectB = cellB.getBoundingClientRect();
+                const containerRect = this.container.getBoundingClientRect();
+
+                line.setAttribute('x1', rectA.left - containerRect.left + rectA.width / 2);
+                line.setAttribute('y1', rectA.top - containerRect.top + rectA.height / 2);
+                line.setAttribute('x2', rectB.left - containerRect.left + rectB.width / 2);
+                line.setAttribute('y2', rectB.top - containerRect.top + rectB.height / 2);
+                
+                line.setAttribute('stroke', '#ffc107');
+                line.setAttribute('stroke-width', '3');
+                line.setAttribute('marker-end', 'url(#arrowhead)');
+                
+                this.pathOverlay.appendChild(line);
+            }
         }
     }
 
@@ -114,6 +161,37 @@ export class Fretboard {
         // 1. Container de scroll horizontal
         const outerWrapper = document.createElement("div");
         outerWrapper.className = "fretboard-container";
+        outerWrapper.style.position = 'relative'; // Para o overlay SVG
+        
+        // Overlay SVG para desenhar caminhos
+        this.pathOverlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        this.pathOverlay.setAttribute('class', 'fretboard-path-overlay');
+        this.pathOverlay.style.position = 'absolute';
+        this.pathOverlay.style.top = '0';
+        this.pathOverlay.style.left = '0';
+        this.pathOverlay.style.width = '100%';
+        this.pathOverlay.style.height = '100%';
+        this.pathOverlay.style.pointerEvents = 'none';
+        this.pathOverlay.style.zIndex = '10';
+
+        // Definir a ponta da seta para as linhas
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+        marker.setAttribute('id', 'arrowhead');
+        marker.setAttribute('viewBox', '0 0 10 10');
+        marker.setAttribute('refX', '8');
+        marker.setAttribute('refY', '5');
+        marker.setAttribute('markerWidth', '6');
+        marker.setAttribute('markerHeight', '6');
+        marker.setAttribute('orient', 'auto-start-reverse');
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
+        path.setAttribute('fill', '#ffc107');
+        marker.appendChild(path);
+        defs.appendChild(marker);
+        this.pathOverlay.appendChild(defs);
+
+        outerWrapper.appendChild(this.pathOverlay);
         
         // 2. O braço em si
         this.fretboardEl = document.createElement("div");
@@ -244,8 +322,19 @@ export class Fretboard {
                     // Toca som
                     audioEngine.playNote(fretData.frequency);
                     
-                    // Suporte ao Modo Editor: Alterna visibilidade da nota individualmente
-                    if (this.options.viewMode === "modo_editor") {
+                    // Callback externo de clique
+                    if (this.options.onNoteClick) {
+                        this.options.onNoteClick({
+                            string: strIdx + 1,
+                            fret: fretData.fret,
+                            note: fretData.note,
+                            frequency: fretData.frequency,
+                            openString: strData.open_note,
+                            cell: cell,
+                            noteBadge: noteBadge
+                        });
+                    } else if (this.options.viewMode === "modo_editor") {
+                        // Comportamento padrão do modo editor se nenhum callback for fornecido
                         noteBadge.classList.toggle("visible");
                         if (noteBadge.classList.contains("visible")) {
                             noteBadge.style.opacity = "1";
@@ -254,20 +343,7 @@ export class Fretboard {
                             noteBadge.style.opacity = "0";
                             noteBadge.style.transform = "scale(0.6)";
                         }
-                        
-                        // Atualiza a Tablatura e Partitura com as notas selecionadas manualmente pelo usuário
                         this.updateTabAndSheet();
-                    }
-                    
-                    // Callback externo de clique
-                    if (this.options.onNoteClick) {
-                        this.options.onNoteClick({
-                            string: strIdx + 1,
-                            fret: fretData.fret,
-                            note: fretData.note,
-                            frequency: fretData.frequency,
-                            openString: strData.open_note
-                        });
                     }
                     
                     // Pequeno efeito temporário de pulsação na nota clicada

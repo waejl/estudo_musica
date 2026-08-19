@@ -60,46 +60,169 @@ export class Fretboard {
     /**
      * Desenha o caminho de execução entre as notas.
      * @param {Array<Object>} notes - Array de objetos de nota, cada um com `string`, `fret` e `sequence`.
+     * @param {Array<Object>} connections - Array de objetos de conexão manual.
+     * @param {string} mode - Modo de conexão ("auto" ou "manual").
      */
-    renderExecutionPath(notes) {
+    renderExecutionPath(notes, connections = [], mode = "auto") {
         if (!this.pathOverlay) return;
+
+        // Mantém as definições de defs que são limpas no innerHTML = ''
+        const defs = this.pathOverlay.querySelector('defs');
         this.pathOverlay.innerHTML = '';
+        if (defs) {
+            this.pathOverlay.appendChild(defs);
+        } else {
+            const newDefs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+            marker.setAttribute('id', 'arrowhead');
+            marker.setAttribute('viewBox', '0 0 10 10');
+            marker.setAttribute('refX', '8');
+            marker.setAttribute('refY', '5');
+            marker.setAttribute('markerWidth', '6');
+            marker.setAttribute('markerHeight', '6');
+            marker.setAttribute('orient', 'auto-start-reverse');
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
+            path.setAttribute('fill', '#ffc107');
+            marker.appendChild(path);
+            newDefs.appendChild(marker);
+            this.pathOverlay.appendChild(newDefs);
+        }
+
+        // DESENHO AUTOMÁTICO DE PESTANAS (BARRE CHORDS)
+        // Agrupa as notas visíveis que estão na mesma casa (fret > 0)
+        const notesByFret = {};
+        notes.forEach(note => {
+            const f = parseInt(note.fret);
+            if (f > 0) {
+                if (!notesByFret[f]) notesByFret[f] = [];
+                notesByFret[f].push(note);
+            }
+        });
+
+        // Para cada casa com 3 ou mais notas visíveis, desenhamos uma barra vertical grossa de pestana
+        for (const [fret, fretNotes] of Object.entries(notesByFret)) {
+            if (fretNotes.length >= 3) {
+                // Ordena por corda para encontrar o intervalo (da corda menor à maior)
+                fretNotes.sort((a, b) => a.string - b.string);
+                const minStr = fretNotes[0].string;
+                const maxStr = fretNotes[fretNotes.length - 1].string;
+
+                const cellMin = this.fretboardEl.querySelector(`.fretboard-cell[data-string="${minStr}"][data-fret="${fret}"]`);
+                const cellMax = this.fretboardEl.querySelector(`.fretboard-cell[data-string="${maxStr}"][data-fret="${fret}"]`);
+
+                if (cellMin && cellMax) {
+                    const rectMin = cellMin.getBoundingClientRect();
+                    const rectMax = cellMax.getBoundingClientRect();
+                    const containerRect = this.container.getBoundingClientRect();
+
+                    const x = rectMin.left - containerRect.left + rectMin.width / 2;
+                    const y1 = rectMin.top - containerRect.top + rectMin.height / 2;
+                    const y2 = rectMax.top - containerRect.top + rectMax.height / 2;
+
+                    const barreLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    barreLine.setAttribute('x1', x);
+                    barreLine.setAttribute('y1', y1);
+                    barreLine.setAttribute('x2', x);
+                    barreLine.setAttribute('y2', y2);
+                    barreLine.setAttribute('stroke', 'rgba(255, 193, 7, 0.45)'); // Amarelo translúcido didático
+                    barreLine.setAttribute('stroke-width', '18'); // Espessura de 18px cobrindo a casa como um dedo
+                    barreLine.setAttribute('stroke-linecap', 'round');
+                    barreLine.style.pointerEvents = 'none';
+
+                    this.pathOverlay.appendChild(barreLine);
+                }
+            }
+        }
 
         const linkNotesSwitch = document.getElementById('linkNotesSwitch');
         if (!linkNotesSwitch || !linkNotesSwitch.checked) {
             return;
         }
 
-        const sortedNotes = notes
-            .filter(n => n.sequence > 0)
-            .sort((a, b) => a.sequence - b.sequence);
+        if (mode === "auto") {
+            const sortedNotes = notes
+                .filter(n => n.sequence > 0)
+                .sort((a, b) => a.sequence - b.sequence);
 
-        if (sortedNotes.length < 2) return;
+            if (sortedNotes.length < 2) return;
 
-        for (let i = 0; i < sortedNotes.length - 1; i++) {
-            const noteA = sortedNotes[i];
-            const noteB = sortedNotes[i+1];
-
-            const cellA = this.fretboardEl.querySelector(`.fretboard-cell[data-string="${noteA.string}"][data-fret="${noteA.fret}"]`);
-            const cellB = this.fretboardEl.querySelector(`.fretboard-cell[data-string="${noteB.string}"][data-fret="${noteB.fret}"]`);
-
-            if (cellA && cellB) {
-                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                const rectA = cellA.getBoundingClientRect();
-                const rectB = cellB.getBoundingClientRect();
-                const containerRect = this.container.getBoundingClientRect();
-
-                line.setAttribute('x1', rectA.left - containerRect.left + rectA.width / 2);
-                line.setAttribute('y1', rectA.top - containerRect.top + rectA.height / 2);
-                line.setAttribute('x2', rectB.left - containerRect.left + rectB.width / 2);
-                line.setAttribute('y2', rectB.top - containerRect.top + rectB.height / 2);
-                
-                line.setAttribute('stroke', '#ffc107');
-                line.setAttribute('stroke-width', '3');
-                line.setAttribute('marker-end', 'url(#arrowhead)');
-                
-                this.pathOverlay.appendChild(line);
+            for (let i = 0; i < sortedNotes.length - 1; i++) {
+                const noteA = sortedNotes[i];
+                const noteB = sortedNotes[i+1];
+                this.drawArrow(noteA.string, noteA.fret, noteB.string, noteB.fret);
             }
+        } else {
+            connections.forEach(conn => {
+                this.drawArrow(
+                    conn.from_string || conn.fromStr,
+                    conn.from_fret || conn.fromFret,
+                    conn.to_string || conn.toStr,
+                    conn.to_fret || conn.toFret
+                );
+            });
+        }
+    }
+
+    /**
+     * Desenha uma seta de ligação entre duas células do braço de guitarra.
+     */
+    drawArrow(fromStr, fromFret, toStr, toFret, color = '#ffc107') {
+        const cellA = this.fretboardEl.querySelector(`.fretboard-cell[data-string="${fromStr}"][data-fret="${fromFret}"]`);
+        const cellB = this.fretboardEl.querySelector(`.fretboard-cell[data-string="${toStr}"][data-fret="${toFret}"]`);
+
+        if (cellA && cellB) {
+            const rectA = cellA.getBoundingClientRect();
+            const rectB = cellB.getBoundingClientRect();
+            const containerRect = this.container.getBoundingClientRect();
+
+            const x1 = rectA.left - containerRect.left + rectA.width / 2;
+            const y1 = rectA.top - containerRect.top + rectA.height / 2;
+            const x2 = rectB.left - containerRect.left + rectB.width / 2;
+            const y2 = rectB.top - containerRect.top + rectB.height / 2;
+
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            let finalX2 = x2;
+            let finalY2 = y2;
+            const shrinkOffset = 18; // Deslocamento de 18px para que a seta termine na borda do badge da nota
+
+            if (dist > shrinkOffset) {
+                finalX2 = x2 - (shrinkOffset * dx) / dist;
+                finalY2 = y2 - (shrinkOffset * dy) / dist;
+            }
+
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x1);
+            line.setAttribute('y1', y1);
+            line.setAttribute('x2', finalX2);
+            line.setAttribute('y2', finalY2);
+
+            line.setAttribute('stroke', color);
+            line.setAttribute('stroke-width', '3');
+            line.setAttribute('marker-end', 'url(#arrowhead)');
+
+            // Estilização e suporte a clique duplo para exclusão de ligação individual
+            line.setAttribute('class', 'fretboard-connection-line');
+            line.style.cursor = 'pointer';
+            line.style.pointerEvents = 'auto'; // Habilita detecção de mousedown/dblclick na própria linha
+
+            line.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                const event = new CustomEvent('connection-dblclick', {
+                    detail: {
+                        from_string: parseInt(fromStr),
+                        from_fret: parseInt(fromFret),
+                        to_string: parseInt(toStr),
+                        to_fret: parseInt(toFret)
+                    }
+                });
+                this.container.dispatchEvent(event);
+            });
+
+            this.pathOverlay.appendChild(line);
         }
     }
 
@@ -418,20 +541,30 @@ export class Fretboard {
             const noteBadge = cell.querySelector(".fret-note");
             if (!noteBadge) return;
             
-            // Remove destaques antigos de tônica
             noteBadge.classList.remove("tonica");
             
-            // Se for a tônica ativa de referência, adiciona destaque visual
-            if (this.isNotesEqual(noteName, this.options.tonic)) {
+            const isTonic = this.isNotesEqual(noteName, this.options.tonic);
+            
+            if (isTonic) {
                 noteBadge.classList.add("tonica");
             }
             
-            // Define o conteúdo da nota conforme a preferência de visualização
-            if (this.options.displayType === "intervals" || this.options.displayType === "degrees") {
+            const noteType = noteBadge.getAttribute("data-note-type");
+            if (noteType === "open") {
+                noteBadge.textContent = "O";
+            } else if (noteType === "muted") {
+                noteBadge.textContent = "X";
+            } else if (this.options.displayType === "intervals" || this.options.displayType === "degrees") {
                 const intervalSymbol = this.calculateIntervalSymbol(this.options.tonic, noteName);
                 noteBadge.textContent = intervalSymbol;
             } else {
-                noteBadge.textContent = noteName;
+                // Se a célula for a tônica, force o texto a ser o da seleção original.
+                // Caso contrário, use o nome da nota que respeita a preferência de #/b.
+                if (isTonic && this.options.tonic) {
+                    noteBadge.textContent = this.options.tonic;
+                } else {
+                    noteBadge.textContent = noteName;
+                }
             }
         });
     }

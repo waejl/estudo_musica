@@ -230,12 +230,45 @@ class SavedFretboardMap(db.Model):
 
     def notes(self):
         try:
-            return json.loads(self.notes_data or "[]")
+            data = json.loads(self.notes_data or "[]")
+            if isinstance(data, dict):
+                return data.get("notes", [])
+            return data
         except (TypeError, json.JSONDecodeError):
             return []
 
     def set_notes(self, notes):
         self.notes_data = json.dumps(notes or [], ensure_ascii=False)
+
+    def connections(self):
+        try:
+            data = json.loads(self.notes_data or "[]")
+            if isinstance(data, dict):
+                return data.get("connections", [])
+            return []
+        except (TypeError, json.JSONDecodeError):
+            return []
+
+    def connection_mode(self):
+        try:
+            data = json.loads(self.notes_data or "[]")
+            if isinstance(data, dict):
+                return data.get("connection_mode", "auto")
+            return "auto"
+        except (TypeError, json.JSONDecodeError):
+            return "auto"
+
+    def bpm(self):
+        try:
+            data = json.loads(self.notes_data or "[]")
+            if isinstance(data, dict):
+                try:
+                    return int(data.get("bpm") or 100)
+                except (TypeError, ValueError):
+                    return 100
+            return 100
+        except (TypeError, json.JSONDecodeError):
+            return 100
 
     def to_dict(self):
         return {
@@ -247,6 +280,9 @@ class SavedFretboardMap(db.Model):
             "tonic": self.tonic,
             "display_type": self.display_type,
             "notes": self.notes(),
+            "connections": self.connections(),
+            "connection_mode": self.connection_mode(),
+            "bpm": self.bpm(),
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

@@ -499,10 +499,50 @@ def _parse_fretboard_map_payload(data):
             "sequence": int(note.get("sequence") or 0)
         })
 
+    # Validação e processamento de conexões manuais adicionais
+    connections = data.get("connections", [])
+    sanitized_connections = []
+    if isinstance(connections, list):
+        for conn in connections:
+            if isinstance(conn, dict):
+                try:
+                    from_str = int(conn.get("from_string"))
+                    from_fret = int(conn.get("from_fret"))
+                    to_str = int(conn.get("to_string"))
+                    to_fret = int(conn.get("to_fret"))
+                    if 1 <= from_str <= 6 and 0 <= from_fret <= 24 and 1 <= to_str <= 6 and 0 <= to_fret <= 24:
+                        sanitized_connections.append({
+                            "from_string": from_str,
+                            "from_fret": from_fret,
+                            "to_string": to_str,
+                            "to_fret": to_fret
+                        })
+                except (TypeError, ValueError):
+                    continue
+
+    connection_mode = str(data.get("connection_mode") or "auto")
+    if connection_mode not in ["auto", "manual"]:
+        connection_mode = "auto"
+
+    try:
+        bpm = int(data.get("bpm") or 100)
+        if bpm < 40 or bpm > 440:
+            bpm = 100
+    except (TypeError, ValueError):
+        bpm = 100
+
     try:
         fret_count = int(data.get("fret_count") or 22)
     except (TypeError, ValueError):
         fret_count = 22
+
+    # Salvamos estruturado no notes para persistência transparente sem mudar colunas do banco
+    structured_notes_data = {
+        "notes": sanitized_notes,
+        "connections": sanitized_connections,
+        "connection_mode": connection_mode,
+        "bpm": bpm
+    }
 
     payload = {
         "title": title[:150],
@@ -511,7 +551,7 @@ def _parse_fretboard_map_payload(data):
         "fret_count": fret_count,
         "tonic": (data.get("tonic") or "")[:10],
         "display_type": (data.get("display_type") or "notes")[:30],
-        "notes": sanitized_notes,
+        "notes": structured_notes_data,
     }
     return payload, None
 

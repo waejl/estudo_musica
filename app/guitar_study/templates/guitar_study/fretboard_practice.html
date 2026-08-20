@@ -120,7 +120,7 @@
             </div>
         </div>
 
-        <div class="d-flex align-items-center gap-3 practice-toolbar rounded-3 p-3 mb-4">
+        <div class="d-flex flex-wrap row-gap-3 align-items-center gap-3 practice-toolbar rounded-3 p-3 mb-4">
             <h5 class="fw-bold fs-7 mb-0 text-primary"><i class="bi bi-palette-fill"></i> Pintar Notas</h5>
             <div id="noteTypePalette" class="d-flex gap-2">
                 <button type="button" class="btn btn-sm btn-note-type active" data-type="scale_note">Nota da Escala</button>
@@ -131,7 +131,7 @@
 
             <div class="vr mx-2 d-none d-lg-block"></div>
 
-            <div class="ms-lg-auto d-flex align-items-center gap-3">
+            <div class="ms-lg-auto d-flex flex-wrap row-gap-2 align-items-center gap-3">
                 <div id="displayTypeToggle" class="btn-group btn-group-sm" role="group">
                     <button type="button" class="btn btn-outline-primary" data-type="notes">Notas</button>
                     <button type="button" class="btn btn-outline-primary" data-type="intervals">Intervalos</button>
@@ -1493,22 +1493,38 @@
         const inputRoot = match[1]; // ex: "C#", "F", "Eb"
         let suffixInput = match[2].trim(); // ex: "m", "7", "7M", "7M9"
 
-        // Normalização e mapeamento do sufixo de acordes para bater com o dicionário de templates
+        // Normalização e mapeamento do sufixo de acordes para bater com o dicionário de templates.
+        // Atenção: "M" maiúsculo x "m" minúsculo distingue maior de menor (ex: M7 = maj7, m7 = menor com sétima),
+        // então a comparação é case-sensitive de propósito.
         let suffix = "major";
+        let suffixRecognized = suffixInput === "";
         if (suffixInput === "m" || suffixInput === "min" || suffixInput === "minor" || suffixInput === "menor" || suffixInput === "-") {
             suffix = "minor";
+            suffixRecognized = true;
         } else if (suffixInput === "7") {
             suffix = "7";
+            suffixRecognized = true;
         } else if (suffixInput === "7M" || suffixInput === "maj7" || suffixInput === "M7" || suffixInput === "7major") {
             suffix = "7M";
+            suffixRecognized = true;
         } else if (suffixInput === "7M9" || suffixInput === "maj9" || suffixInput === "M7M9" || suffixInput === "M7(9)" || suffixInput === "maj7(9)" || suffixInput === "7M(9)") {
             suffix = "7M9";
+            suffixRecognized = true;
         } else if (suffixInput === "m7" || suffixInput === "min7" || suffixInput === "m7M") {
             suffix = "m7";
+            suffixRecognized = true;
         } else if (suffixInput === "m7b5" || suffixInput === "m7(b5)" || suffixInput === "ø" || suffixInput === "meio-diminuto") {
             suffix = "m7b5";
+            suffixRecognized = true;
         } else if (suffixInput === "dim" || suffixInput === "o" || suffixInput === "diminuto") {
             suffix = "dim";
+            suffixRecognized = true;
+        }
+
+        // Antes o sufixo não reconhecido virava tríade maior silenciosamente (ex: "C7m9" era exibido como
+        // "C" maior sem aviso nenhum). Agora avisamos o usuário para não passar teoria errada sem ele perceber.
+        if (!suffixRecognized) {
+            showToast(`Sufixo "${suffixInput}" não reconhecido — exibindo a tríade maior de ${inputRoot}. Sufixos aceitos: m, 7, 7M/maj7, 7M9/maj9, m7, m7b5, dim.`, "warning");
         }
 
         const chromaticScale = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -1611,8 +1627,10 @@
             });
         }
 
-        // Ordena as posições por casa base (da mais grave para a mais aguda)
-        transposedPositions.sort((a, b) => a.baseFret - b.baseFret);
+        // Ordena as posições por casa base da mais aguda para a mais grave: no braço renderizado (destro),
+        // a casa 1 fica à direita e as casas mais altas à esquerda, então os botões de região seguem a
+        // mesma direção esquerda->direita do braço em vez de ficarem invertidos em relação a ele.
+        transposedPositions.sort((a, b) => b.baseFret - a.baseFret);
 
         displayChordPositions(transposedPositions, query, inputRoot);
     }
@@ -1711,6 +1729,16 @@
         fretboard.renderNotesContent();
         fretboard.renderExecutionPath(collectVisibleNotes(), connections, connectionMode);
         fretboard.updateTabAndSheet();
+
+        // Rola o braço (que é mais largo que a tela) até a casa da fôrma desenhada, para o usuário
+        // não precisar procurar manualmente onde o acorde apareceu no braço de 22 casas.
+        const firstFrettedIdx = position.frets.findIndex(f => f > 0);
+        if (firstFrettedIdx !== -1) {
+            const targetString = 6 - firstFrettedIdx;
+            const targetFret = position.frets[firstFrettedIdx];
+            const targetCell = fretboard.fretboardEl.querySelector(`.fretboard-cell[data-string="${targetString}"][data-fret="${targetFret}"]`);
+            targetCell?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+        }
     }
 </script>
 {% endblock %}

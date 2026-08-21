@@ -31,6 +31,14 @@ export class Fretboard {
 
         this.stringsData = []; // Armazenará os dados vindos da API
         this.fretboardEl = null;
+        this.linkingState = {
+            isLinking: false,
+            startCell: null,
+            color: '#3b82f6' // Cor azul como padrão
+        };
+        this.blockLinkColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6']; // Azul, Vermelho, Verde, Amarelo, Roxo
+
+
         this.pathOverlay = null; // SVG para desenhar caminhos
     }
 
@@ -39,12 +47,12 @@ export class Fretboard {
      */
     async init() {
         this.container.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Afinando guitarra e montando o braço...</p></div>`;
-        
+
         try {
             const url = `${window.APP_PREFIX || ""}/guitar-study/api/v1/fretboard?tuning_id=${this.options.tuningId}&fret_count=${this.options.fretCount}&preference=${this.options.preference}`;
             const response = await fetch(url);
             const resData = await response.json();
-            
+
             if (resData.success) {
                 this.stringsData = resData.data.strings;
                 this.render();
@@ -83,7 +91,7 @@ export class Fretboard {
             marker.setAttribute('orient', 'auto-start-reverse');
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             path.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
-            path.setAttribute('fill', '#ffc107');
+            path.setAttribute('fill', 'context-stroke');
             marker.appendChild(path);
             newDefs.appendChild(marker);
             this.pathOverlay.appendChild(newDefs);
@@ -147,10 +155,11 @@ export class Fretboard {
 
             if (sortedNotes.length < 2) return;
 
+            const autoColor = this.options.connectionColor || '#ffc107';
             for (let i = 0; i < sortedNotes.length - 1; i++) {
                 const noteA = sortedNotes[i];
                 const noteB = sortedNotes[i+1];
-                this.drawArrow(noteA.string, noteA.fret, noteB.string, noteB.fret);
+                this.drawArrow(noteA.string, noteA.fret, noteB.string, noteB.fret, autoColor);
             }
         } else {
             connections.forEach(conn => {
@@ -158,7 +167,8 @@ export class Fretboard {
                     conn.from_string || conn.fromStr,
                     conn.from_fret || conn.fromFret,
                     conn.to_string || conn.toStr,
-                    conn.to_fret || conn.toFret
+                    conn.to_fret || conn.toFret,
+                    conn.color || '#ffc107'
                 );
             });
         }
@@ -227,6 +237,48 @@ export class Fretboard {
     }
 
     /**
+     * Desenha uma linha de bloco (sem seta) entre duas células.
+     * @param {number} fromStr
+     * @param {number} fromFret
+     * @param {number} toStr
+     * @param {number} toFret
+     * @param {string} color
+     */
+    drawBlockLine(fromStr, fromFret, toStr, toFret, color) {
+        const cellA = this.fretboardEl.querySelector(`.fretboard-cell[data-string="${fromStr}"][data-fret="${fromFret}"]`);
+        const cellB = this.fretboardEl.querySelector(`.fretboard-cell[data-string="${toStr}"][data-fret="${toFret}"]`);
+
+        if (cellA && cellB) {
+            const rectA = cellA.getBoundingClientRect();
+            const rectB = cellB.getBoundingClientRect();
+            const containerRect = this.container.getBoundingClientRect();
+
+            const x1 = rectA.left - containerRect.left + rectA.width / 2;
+            const y1 = rectA.top - containerRect.top + rectA.height / 2;
+            const x2 = rectB.left - containerRect.left + rectB.width / 2;
+            const y2 = rectB.top - containerRect.top + rectB.height / 2;
+
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x1);
+            line.setAttribute('y1', y1);
+            line.setAttribute('x2', x2);
+            line.setAttribute('y2', y2);
+
+            line.setAttribute('stroke', color);
+            line.setAttribute('stroke-width', '4'); // Linha mais grossa para blocos
+            line.setAttribute('stroke-linecap', 'round');
+            line.setAttribute('class', 'fretboard-block-line');
+            line.style.pointerEvents = 'auto';
+            line.style.cursor = 'pointer';
+
+            // Futuramente, pode-se adicionar um evento de clique para remover a linha
+
+            this.pathOverlay.appendChild(line);
+        }
+    }
+
+
+    /**
      * Define o modo de exibição das notas e redesenha.
      * @param {string} mode - show_all, hide_all, natural, tonic_only, highlight_set, modo_editor
      */
@@ -280,12 +332,12 @@ export class Fretboard {
      */
     render() {
         this.container.innerHTML = "";
-        
+
         // 1. Container de scroll horizontal
         const outerWrapper = document.createElement("div");
         outerWrapper.className = "fretboard-container";
         outerWrapper.style.position = 'relative'; // Para o overlay SVG
-        
+
         // Overlay SVG para desenhar caminhos
         this.pathOverlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         this.pathOverlay.setAttribute('class', 'fretboard-path-overlay');
@@ -309,20 +361,20 @@ export class Fretboard {
         marker.setAttribute('orient', 'auto-start-reverse');
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
-        path.setAttribute('fill', '#ffc107');
+        path.setAttribute('fill', 'context-stroke');
         marker.appendChild(path);
         defs.appendChild(marker);
         this.pathOverlay.appendChild(defs);
 
         outerWrapper.appendChild(this.pathOverlay);
-        
+
         // 2. O braço em si
         this.fretboardEl = document.createElement("div");
         this.fretboardEl.className = "fretboard";
         if (this.options.handOrientation === "right_handed") {
             this.fretboardEl.classList.add("right-handed");
         }
-        
+
         // 3. Renderizar Trastes (Linhas verticais metálicas)
         const fretsRow = document.createElement("div");
         fretsRow.className = "fretboard-frets-row";
@@ -340,7 +392,7 @@ export class Fretboard {
         fretsRow.style.display = "flex";
         fretsRow.style.pointerEvents = "none";
         fretsRow.style.zIndex = "1";
-        
+
         // Adiciona Nut (Linha inicial)
         const nut = document.createElement("div");
         nut.className = "fretboard-nut";
@@ -356,7 +408,7 @@ export class Fretboard {
         nut.style.height = "100%";
         nut.style.zIndex = "2";
         this.fretboardEl.appendChild(nut);
-        
+
         // Casas
         for (let f = 1; f <= this.options.fretCount; f++) {
             const fretEl = document.createElement("div");
@@ -364,7 +416,7 @@ export class Fretboard {
             fretEl.style.flex = "1";
             fretEl.style.height = "100%";
             fretEl.style.position = "relative";
-            
+
             // Adiciona marcações (Inlays) nas casas 3, 5, 7, 9, 12 (duplo), 15, 17, 19, 21
             if ([3, 5, 7, 9, 15, 17, 19, 21].includes(f)) {
                 const inlay = document.createElement("div");
@@ -379,32 +431,32 @@ export class Fretboard {
                 fretEl.appendChild(inlayTop);
                 fretEl.appendChild(inlayBottom);
             }
-            
+
             fretsRow.appendChild(fretEl);
         }
         this.fretboardEl.appendChild(fretsRow);
-        
+
         // 4. Renderizar Cordas de Guitarras (Linhas horizontais - Desabilitado o método de render antigo)
         const stringsEl = document.createElement("div");
         stringsEl.className = "fretboard-strings";
         this.fretboardEl.appendChild(stringsEl);
-        
+
         // 5. Renderizar Grade de Células clicáveis (Notas sobre as cordas e casas com indicadores embutidos)
         const gridEl = document.createElement("div");
         gridEl.className = "fretboard-grid";
-        
+
         const renderedStrings = this.options.handOrientation === "right_handed" ? [...this.stringsData].reverse() : this.stringsData;
-        
+
         renderedStrings.forEach((strData, loopIdx) => {
             const strIdx = this.options.handOrientation === "right_handed" ? (this.stringsData.length - 1 - loopIdx) : loopIdx;
-            
+
             const stringRow = document.createElement("div");
             stringRow.className = "fretboard-string-row";
-            
+
             // Cria o indicador lateral esquerdo da corda (Ex: 1 - MI, 2 - SI, 3 - SOL, etc.)
             const stringLabel = document.createElement("div");
             stringLabel.className = "string-label-indicator";
-            
+
             // Nomes de cordas em português do Brasil conforme solicitado
             const stringNamesMap = {
                 0: "MI",  // 1ª corda (E aguda)
@@ -417,34 +469,34 @@ export class Fretboard {
             const labelName = stringNamesMap[strIdx] || strData.open_note;
             stringLabel.textContent = `${strIdx + 1} - ${labelName}`;
             stringRow.appendChild(stringLabel);
-            
+
             strData.frets.forEach((fretData) => {
                 const cell = document.createElement("div");
                 cell.className = "fretboard-cell";
                 if (fretData.fret === 0) {
                     cell.classList.add("cell-open");
                 }
-                
+
                 cell.setAttribute("data-string", strIdx + 1);
                 cell.setAttribute("data-fret", fretData.fret);
                 cell.setAttribute("data-note", fretData.note);
                 cell.setAttribute("data-freq", fretData.frequency);
-                
+
                 // Cria o balãozinho da nota que fica oculto ou visível
                 const noteBadge = document.createElement("div");
                 noteBadge.className = "fret-note";
-                
+
                 // Define se é natural ou sustenido/bemol para cor diferente
                 const isAccidental = fretData.note.includes("#") || fretData.note.includes("b");
                 noteBadge.classList.add(isAccidental ? "accidental" : "natural");
-                
+
                 cell.appendChild(noteBadge);
-                
+
                 // Evento de clique na casa/nota
                 cell.addEventListener("click", () => {
                     // Toca som
                     audioEngine.playNote(fretData.frequency);
-                    
+
                     // Callback externo de clique
                     if (this.options.onNoteClick) {
                         this.options.onNoteClick({
@@ -468,7 +520,7 @@ export class Fretboard {
                         }
                         this.updateTabAndSheet();
                     }
-                    
+
                     // Pequeno efeito temporário de pulsação na nota clicada
                     const currentScale = this.options.viewMode === "modo_editor" && !noteBadge.classList.contains("visible") ? "0" : "1";
                     noteBadge.classList.add("active-pulse");
@@ -478,33 +530,33 @@ export class Fretboard {
                         noteBadge.classList.remove("active-pulse");
                     }, 200);
                 });
-                
+
                 stringRow.appendChild(cell);
             });
             gridEl.appendChild(stringRow);
         });
-        
+
         this.fretboardEl.appendChild(gridEl);
         outerWrapper.appendChild(this.fretboardEl);
-        
+
         // 6. Renderizar números das casas abaixo do braço
         const numbersRow = document.createElement("div");
         numbersRow.className = "fretboard-numbers";
         if (this.options.handOrientation === "right_handed") {
             numbersRow.classList.add("right-handed");
         }
-        
+
         // Compensação horizontal de 60px para alinhar com os rótulos laterais esquerdos de cordas
         const spacer = document.createElement("div");
         spacer.style.flex = "0 0 60px";
         numbersRow.appendChild(spacer);
-        
+
         // Casa 0 (Open) - Sem número ou espaço alinhado
         const numberOpen = document.createElement("div");
         numberOpen.className = "fret-number cell-open";
         numberOpen.style.flex = "0 0 25px";
         numbersRow.appendChild(numberOpen);
-        
+
         for (let f = 1; f <= this.options.fretCount; f++) {
             const numberEl = document.createElement("div");
             numberEl.className = "fret-number";
@@ -515,16 +567,16 @@ export class Fretboard {
             numbersRow.appendChild(numberEl);
         }
         outerWrapper.appendChild(numbersRow);
-        
+
         this.container.appendChild(outerWrapper);
-        
+
         // Garante a criação dinâmica dos contêineres de Tablatura e Partitura se não existirem no HTML
         this.renderTablatureAndSheetMusicContainers();
-        
+
         // Renderiza o conteúdo e a visibilidade das notas
         this.renderNotesContent();
         this.updateNoteVisibilities();
-        
+
         // Atualiza a Tablatura e Partitura inicialmente
         this.updateTabAndSheet();
     }
@@ -534,21 +586,21 @@ export class Fretboard {
      */
     renderNotesContent() {
         if (!this.fretboardEl) return;
-        
+
         const cells = this.fretboardEl.querySelectorAll(".fretboard-cell");
         cells.forEach(cell => {
             const noteName = cell.getAttribute("data-note");
             const noteBadge = cell.querySelector(".fret-note");
             if (!noteBadge) return;
-            
+
             noteBadge.classList.remove("tonica");
-            
+
             const isTonic = this.isNotesEqual(noteName, this.options.tonic);
-            
+
             if (isTonic) {
                 noteBadge.classList.add("tonica");
             }
-            
+
             const noteType = noteBadge.getAttribute("data-note-type");
             if (noteType === "open") {
                 noteBadge.textContent = "O";
@@ -574,20 +626,20 @@ export class Fretboard {
      */
     updateNoteVisibilities() {
         if (!this.fretboardEl) return;
-        
+
         // Se estiver no Modo Editor, preservamos a seleção manual e individual das notas pelo usuário
         if (this.options.viewMode === "modo_editor") {
             return;
         }
-        
+
         const cells = this.fretboardEl.querySelectorAll(".fretboard-cell");
         cells.forEach(cell => {
             const noteName = cell.getAttribute("data-note");
             const noteBadge = cell.querySelector(".fret-note");
             if (!noteBadge) return;
-            
+
             let isVisible = false;
-            
+
             switch (this.options.viewMode) {
                 case "show_all":
                     isVisible = true;
@@ -608,14 +660,14 @@ export class Fretboard {
                     isVisible = this.options.highlightedNotes.some(hn => this.isNotesEqual(noteName, hn));
                     break;
             }
-            
+
             if (isVisible) {
                 noteBadge.classList.add("visible");
             } else {
                 noteBadge.classList.remove("visible");
             }
         });
-        
+
         // Atualiza a Tablatura e Partitura com as notas que ficaram visíveis
         this.updateTabAndSheet();
     }
@@ -628,7 +680,7 @@ export class Fretboard {
         n1 = n1.trim();
         n2 = n2.trim();
         if (n1 === n2) return true;
-        
+
         // Equivalências simples
         const map = {
             "C#": "Db", "Db": "C#",
@@ -650,15 +702,15 @@ export class Fretboard {
     calculateIntervalSymbol(root, target) {
         const sharps = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
         const flats = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
-        
+
         let rIdx = sharps.indexOf(root);
         if (rIdx === -1) rIdx = flats.indexOf(root);
-        
+
         let tIdx = sharps.indexOf(target);
         if (tIdx === -1) tIdx = flats.indexOf(target);
-        
+
         if (rIdx === -1 || tIdx === -1) return "1";
-        
+
         const diff = (tIdx - rIdx + 12) % 12;
         const symbols = {
             0: "1", 1: "b2", 2: "2", 3: "b3", 4: "3", 5: "4", 6: "b5",
@@ -672,10 +724,10 @@ export class Fretboard {
      */
     renderTablatureAndSheetMusicContainers() {
         if (!this.container) return;
-        
+
         let tabContainer = document.getElementById("guitarTablature");
         let sheetContainer = document.getElementById("guitarSheetMusic");
-        
+
         if (!tabContainer) {
             const tabCard = document.createElement("div");
             tabCard.className = "card mb-4 bg-body-tertiary border-0 shadow-sm overflow-hidden mt-4";
@@ -690,7 +742,7 @@ export class Fretboard {
             `;
             this.container.appendChild(tabCard);
         }
-        
+
         if (!sheetContainer) {
             const sheetCard = document.createElement("div");
             sheetCard.className = "card mb-4 bg-body-tertiary border-0 shadow-sm overflow-hidden mt-4";
@@ -713,9 +765,9 @@ export class Fretboard {
     updateTabAndSheet() {
         const tabContainer = document.getElementById("guitarTablature");
         const sheetContainer = document.getElementById("guitarSheetMusic");
-        
+
         if (!tabContainer && !sheetContainer) return;
-        
+
         // 1. Coleta todas as células visíveis ativas do braço
         const activeCells = [];
         if (this.fretboardEl) {
@@ -732,11 +784,11 @@ export class Fretboard {
                 }
             });
         }
-        
+
         // Ordena as notas em ordem crescente de frequência (do grave para o agudo) para que a partitura
         // e tablatura sequenciais fiquem de leitura didática perfeita!
         activeCells.sort((a, b) => a.freq - b.freq);
-        
+
         // -------------------------------------------------------------
         // RENDER 1: TABLATURA DINÂMICA
         // -------------------------------------------------------------
@@ -744,24 +796,24 @@ export class Fretboard {
             tabContainer.innerHTML = "";
             const tabView = document.createElement("div");
             tabView.className = "guitar-tab-view";
-            
+
             const stringNamesMap = {
                 1: "MI", 2: "SI", 3: "SOL", 4: "RÉ", 5: "LÁ", 6: "MI"
             };
-            
+
             // Desenha as 6 linhas da tablatura (Corda 1 aguda no topo, Corda 6 grave embaixo)
             for (let s = 1; s <= 6; s++) {
                 const row = document.createElement("div");
                 row.className = "guitar-tab-row";
-                
+
                 const label = document.createElement("div");
                 label.className = "guitar-tab-label";
                 label.textContent = `${s} - ${stringNamesMap[s]}`;
                 row.appendChild(label);
-                
+
                 const notesContainer = document.createElement("div");
                 notesContainer.className = "guitar-tab-notes-container";
-                
+
                 // Filtra as notas ativas que pertencem a esta corda s
                 const stringNotes = activeCells.filter(c => c.string === s);
                 if (stringNotes.length > 0) {
@@ -769,7 +821,7 @@ export class Fretboard {
                         // Cria o container do número da casa
                         const wrapper = document.createElement("div");
                         wrapper.className = "guitar-tab-number-wrapper";
-                        
+
                         const num = document.createElement("div");
                         num.className = "guitar-tab-number";
                         const isTonic = this.isNotesEqual(c.note, this.options.tonic);
@@ -778,24 +830,24 @@ export class Fretboard {
                         }
                         num.textContent = c.fret === 0 ? "0" : c.fret;
                         wrapper.appendChild(num);
-                        
+
                         notesContainer.appendChild(wrapper);
                     });
                 }
-                
+
                 row.appendChild(notesContainer);
                 tabView.appendChild(row);
             }
             tabContainer.appendChild(tabView);
         }
-        
+
         // -------------------------------------------------------------
         // RENDER 2: PARTITURA DINÂMICA (ABCJS)
         // -------------------------------------------------------------
         if (sheetContainer && typeof abcjs !== "undefined" || typeof ABCJS !== "undefined") {
             // Inicializa o cabeçalho ABC (Clave de sol, Compasso livre, Tom de C neutro)
             let abcString = "X:1\nT:Partitura do Estudo\nM:4/4\nL:1/4\nK:C clef=treble\n";
-            
+
             if (activeCells.length > 0) {
                 const notesAbcList = [];
                 activeCells.forEach(cell => {
@@ -803,24 +855,24 @@ export class Fretboard {
                     // Mapeamento de oitava base das 6 cordas padrão (1=aguda, 6=grave)
                     const indexToOctave = { 1:4, 2:3, 3:3, 4:3, 5:2, 6:2 };
                     const baseOctave = indexToOctave[cell.string] || 3;
-                    
+
                     // Descobre o índice cromático da nota da corda solta
                     const sharps = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
                     const flats = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
-                    
+
                     // Busca a nota de afinação da corda real base
                     const stringNotesMap = { 1:"E", 2:"B", 3:"G", 4:"D", 5:"A", 6:"E" };
                     const openNote = stringNotesMap[cell.string] || "E";
-                    
+
                     let startIdx = sharps.indexOf(openNote);
                     if (startIdx === -1) startIdx = flats.indexOf(openNote);
                     if (startIdx === -1) startIdx = 4;
-                    
+
                     // O violão é um instrumento transpositor de uma oitava inteira para cima na pauta
                     // clássica de clave de sol. Transpomos oitava + 1 para que a pauta fique perfeitamente
                     // limpa e idêntica às partituras tradicionais de conservatório de violão e guitarra!
                     const actualOctave = baseOctave + Math.floor((startIdx + cell.fret) / 12) + 1;
-                    
+
                     // Transcreve para formato ABC
                     let abcNote = cell.note.trim();
                     if (abcNote.includes("#")) {
@@ -828,7 +880,7 @@ export class Fretboard {
                     } else if (abcNote.includes("b")) {
                         abcNote = "_" + abcNote.replace("b", "");
                     }
-                    
+
                     // Aplica as oitavas do ABC
                     let finalAbcNote = abcNote;
                     if (actualOctave === 2) {
@@ -844,7 +896,7 @@ export class Fretboard {
                     }
                     notesAbcList.push(finalAbcNote);
                 });
-                
+
                 // Concatena as notas com compassos a cada 4 notas
                 let groupedNotes = "";
                 notesAbcList.forEach((n, idx) => {
@@ -858,10 +910,10 @@ export class Fretboard {
                 // Pauta vazia se não houver notas
                 abcString += "z4";
             }
-            
+
             // Renderiza o SVG dinâmico responsivo
             const engine = typeof abcjs !== "undefined" ? abcjs : ABCJS;
-            engine.renderAbc("guitarSheetMusic", abcString, { 
+            engine.renderAbc("guitarSheetMusic", abcString, {
                 responsive: "resize",
                 scale: 1.1,
                 add_classes: true,

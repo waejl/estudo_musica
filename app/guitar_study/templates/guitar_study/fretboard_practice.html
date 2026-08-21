@@ -149,7 +149,15 @@
                     <label class="form-check-label" for="linkNotesSwitch">Ligar Notas</label>
                 </div>
 
-                <div id="connectionModeGroup" class="d-flex align-items-center gap-2" style="display: none !important;">
+                <div id="connectionColorPalette" class="d-flex align-items-center gap-1" style="display: none !important;" title="Cor das linhas de conexão">
+                    <button type="button" class="connection-color-btn rounded-circle border-0 p-0" data-color="#06b6d4" style="background:#06b6d4;width:22px;height:22px;outline:2px solid white;flex-shrink:0;"></button>
+                    <button type="button" class="connection-color-btn rounded-circle border-0 p-0" data-color="#8b5cf6" style="background:#8b5cf6;width:22px;height:22px;flex-shrink:0;"></button>
+                    <button type="button" class="connection-color-btn rounded-circle border-0 p-0" data-color="#ffc107" style="background:#ffc107;width:22px;height:22px;flex-shrink:0;"></button>
+                    <button type="button" class="connection-color-btn rounded-circle border-0 p-0" data-color="#10b981" style="background:#10b981;width:22px;height:22px;flex-shrink:0;"></button>
+                    <button type="button" class="connection-color-btn rounded-circle border-0 p-0" data-color="#ef4444" style="background:#ef4444;width:22px;height:22px;flex-shrink:0;"></button>
+                </div>
+
+                <div id="connectionModeGroup" class="d-flex align-items-center gap-2 flex-wrap" style="display: none !important;">
                     <div id="connectionModeToggle" class="btn-group btn-group-sm" role="group">
                         <button type="button" class="btn btn-outline-warning active" data-mode="auto" title="Ligar notas automaticamente na ordem dos cliques">Auto</button>
                         <button type="button" class="btn btn-outline-warning" data-mode="manual" title="Desenhar ligações arrastando de uma nota para outra">Manual</button>
@@ -242,6 +250,7 @@
 
     // Variáveis globais para ligações personalizadas e reprodução
     let connectionMode = "auto";
+    let connectionColor = '#06b6d4';
     let connections = [];
     let blockNextClick = false;
 
@@ -275,6 +284,7 @@
         // Inicializa a parte assíncrona do braço de forma resiliente em try-catch
         try {
             await fretboard.init();
+            fretboard.options.connectionColor = connectionColor;
             fretboard.setViewMode("modo_editor");
             updateAccidentalsToggleUI();
             updateDisplayTypeToggleUI();
@@ -346,6 +356,16 @@
             button.classList.add("active");
 
             updateConnectionModeVisibility();
+            fretboard.renderExecutionPath(collectVisibleNotes(), connections, connectionMode);
+        });
+
+        document.getElementById("connectionColorPalette").addEventListener("click", (event) => {
+            const btn = event.target.closest(".connection-color-btn");
+            if (!btn) return;
+            connectionColor = btn.dataset.color;
+            fretboard.options.connectionColor = connectionColor;
+            document.querySelectorAll(".connection-color-btn").forEach(b => b.style.outline = "none");
+            btn.style.outline = "2px solid white";
             fretboard.renderExecutionPath(collectVisibleNotes(), connections, connectionMode);
         });
 
@@ -933,18 +953,15 @@
     function updateConnectionModeVisibility() {
         const linkNotesSwitch = document.getElementById("linkNotesSwitch");
         const connectionModeGroup = document.getElementById("connectionModeGroup");
-        
+        const colorPalette = document.getElementById("connectionColorPalette");
+        const btnClear = document.getElementById("btnClearConnections");
+
         if (linkNotesSwitch.checked) {
+            colorPalette.style.setProperty("display", "flex", "important");
             connectionModeGroup.style.setProperty("display", "flex", "important");
-            
-            // Exibe o botão de limpar conexões apenas no modo manual
-            const btnClear = document.getElementById("btnClearConnections");
-            if (connectionMode === "manual") {
-                btnClear.style.display = "inline-block";
-            } else {
-                btnClear.style.display = "none";
-            }
+            btnClear.style.display = connectionMode === "manual" ? "inline-flex" : "none";
         } else {
+            colorPalette.style.setProperty("display", "none", "important");
             connectionModeGroup.style.setProperty("display", "none", "important");
         }
     }
@@ -994,7 +1011,7 @@
             blockNextClick = false;
 
             tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            tempLine.setAttribute('stroke', '#ffc107');
+            tempLine.setAttribute('stroke', connectionColor);
             tempLine.setAttribute('stroke-width', '3');
             tempLine.setAttribute('stroke-dasharray', '5,5');
             tempLine.setAttribute('marker-end', 'url(#arrowhead)');
@@ -1064,7 +1081,8 @@
                                     from_string: dragStartNote.string,
                                     from_fret: dragStartNote.fret,
                                     to_string: destNote.string,
-                                    to_fret: destNote.fret
+                                    to_fret: destNote.fret,
+                                    color: connectionColor
                                 });
                                 fretboard.renderExecutionPath(collectVisibleNotes(), connections, connectionMode);
                             }

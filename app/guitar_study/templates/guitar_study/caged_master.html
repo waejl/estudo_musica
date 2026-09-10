@@ -224,11 +224,17 @@
         <!-- Coluna da Direita: Visualizador do Braço Interativo -->
         <div class="col-12 col-xl-6 mb-4">
             <div class="card bg-body-tertiary shadow-sm border border-secondary-subtle h-100 d-flex flex-column justify-content-between">
-                <div class="card-header bg-dark d-flex align-items-center justify-content-between py-3 px-4 border-bottom border-secondary-subtle">
+                <div class="card-header bg-dark d-flex flex-wrap gap-2 align-items-center justify-content-between py-3 px-4 border-bottom border-secondary-subtle">
                     <h5 class="fw-bold mb-0 text-white"><i class="bi bi-eye-fill text-warning me-1"></i> Visualizador do Braço Master</h5>
-                    <div id="displayTypeToggle" class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-warning active" id="btnShowNotes">Notas</button>
-                        <button type="button" class="btn btn-outline-warning" id="btnShowIntervals">Intervalos</button>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="switchSimpleSynth" style="cursor: pointer; border-color: var(--bs-warning);">
+                            <label class="form-check-label fs-8 text-white-50 fw-bold text-uppercase" for="switchSimpleSynth" style="cursor: pointer; user-select: none;">Sintetizador Simples</label>
+                        </div>
+                        <div id="displayTypeToggle" class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-warning active" id="btnShowNotes">Notas</button>
+                            <button type="button" class="btn btn-outline-warning" id="btnShowIntervals">Intervalos</button>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body p-4 d-flex flex-column align-items-center justify-content-center bg-dark bg-opacity-25" style="min-height: 250px;">
@@ -665,6 +671,21 @@
         });
 
         // Controles de Visualização (Notas vs Intervalos)
+        const synthSwitch = document.getElementById("switchSimpleSynth");
+        if (synthSwitch) {
+            const useSimple = localStorage.getItem("useSimpleSynth") === "true";
+            synthSwitch.checked = useSimple;
+
+            synthSwitch.addEventListener("change", (e) => {
+                localStorage.setItem("useSimpleSynth", e.target.checked);
+                if (e.target.checked) {
+                    audioEngine.stop();
+                    // Toca uma nota rápida de teste usando o novo sintetizador de osciladores simples
+                    audioEngine.playNote(261.63); // C4
+                }
+            });
+        }
+
         document.getElementById("btnShowNotes").addEventListener("click", (e) => {
             displayType = "notes";
             document.getElementById("btnShowNotes").classList.add("active");

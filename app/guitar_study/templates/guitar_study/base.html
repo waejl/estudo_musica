@@ -238,6 +238,7 @@
             let currentBeat = 0;           // Contagem de compasso (0 a 3 para 4/4)
             const scheduleAheadTime = 0.1;  // Antecedência de agendamento (100ms)
             let timerInterval = null;
+            const metronomeToneCache = {};
             
             // Elementos do DOM
             const metIcon = document.getElementById("metronomeIcon");
@@ -250,11 +251,16 @@
             const indicatorLight = document.getElementById("metronomeIndicatorLight");
             
             // Inicializa áudio sob demanda (evita restrições do navegador)
-            function initMetronomeAudio() {
+            async function initMetronomeAudio() {
                 if (!metCtx) {
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioContext) return null;
                     metCtx = new AudioContext();
                 }
+                if (metCtx.state === 'suspended') {
+                    await metCtx.resume();
+                }
+                return metCtx.state === 'running' ? metCtx : null;
             }
             
             // Sincroniza displays
@@ -280,12 +286,50 @@
             if (btnBpmPlus) btnBpmPlus.addEventListener("click", () => updateBpm(metBpm + 5));
             
             // Sintetiza o clique clássico de metrônomo
+            function playHtmlClick(isAccent) {
+                const freq = isAccent ? 1000 : 700;
+                const key = String(freq);
+                if (!metronomeToneCache[key]) {
+                    const sampleRate = 22050;
+                    const duration = 0.06;
+                    const sampleCount = Math.floor(sampleRate * duration);
+                    const buffer = new ArrayBuffer(44 + sampleCount * 2);
+                    const view = new DataView(buffer);
+                    const writeString = (offset, value) => {
+                        for (let i = 0; i < value.length; i++) view.setUint8(offset + i, value.charCodeAt(i));
+                    };
+                    writeString(0, "RIFF");
+                    view.setUint32(4, 36 + sampleCount * 2, true);
+                    writeString(8, "WAVE");
+                    writeString(12, "fmt ");
+                    view.setUint32(16, 16, true);
+                    view.setUint16(20, 1, true);
+                    view.setUint16(22, 1, true);
+                    view.setUint32(24, sampleRate, true);
+                    view.setUint32(28, sampleRate * 2, true);
+                    view.setUint16(32, 2, true);
+                    view.setUint16(34, 16, true);
+                    writeString(36, "data");
+                    view.setUint32(40, sampleCount * 2, true);
+                    for (let i = 0; i < sampleCount; i++) {
+                        const t = i / sampleRate;
+                        const env = Math.exp(-45 * t);
+                        view.setInt16(44 + i * 2, Math.sin(2 * Math.PI * freq * t) * env * 32767, true);
+                    }
+                    metronomeToneCache[key] = URL.createObjectURL(new Blob([buffer], { type: "audio/wav" }));
+                }
+                const audio = new Audio(metronomeToneCache[key]);
+                audio.volume = isAccent ? 0.7 : 0.45;
+                audio.play().catch(() => {});
+            }
+
             function playClick(time, beatNumber) {
                 const osc = metCtx.createOscillator();
                 const gainNode = metCtx.createGain();
                 
                 // O tempo 1 (beat 0) recebe acento agudo
                 const isAccent = beatNumber === 0;
+                playHtmlClick(isAccent);
                 osc.frequency.setValueAtTime(isAccent ? 1000 : 700, time);
                 
                 gainNode.gain.setValueAtTime(0, time);
@@ -323,15 +367,13 @@
                 }
             }
             
-            function startMetronome() {
-                initMetronomeAudio();
-                if (metCtx.state === 'suspended') {
-                    metCtx.resume();
-                }
+            async function startMetronome() {
+                const ctx = await initMetronomeAudio();
+                if (!ctx) return;
                 
                 isMetPlaying = true;
                 currentBeat = 0;
-                nextNoteTime = metCtx.currentTime + 0.05;
+                nextNoteTime = ctx.currentTime + 0.05;
                 
                 // Roda o agendador a cada 25ms para agendar as batidas com precisão
                 timerInterval = setInterval(scheduler, 25);

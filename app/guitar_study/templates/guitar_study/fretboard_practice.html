@@ -30,10 +30,31 @@
         --bs-btn-border-color: var(--bs-primary);
         color: var(--bs-white);
     }
-    .fret-note[data-note-type="root"] { background-color: var(--bs-danger); }
-    .fret-note[data-note-type="scale_note"] { background-color: var(--bs-success); }
-    .fret-note[data-note-type="blue_note"] { background-color: #007bff; }
-    .fret-note[data-note-type="passing_note"] { background-color: var(--bs-secondary); }
+    .note-color-btn {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.25);
+        transition: box-shadow 0.15s ease, transform 0.15s ease;
+    }
+    .note-color-btn:hover,
+    .note-color-btn:focus-visible {
+        box-shadow: 0 0 0 2px rgba(255,255,255,0.55);
+    }
+    .note-color-btn:focus {
+        outline: none;
+    }
+    .note-color-btn.is-selected,
+    .note-color-btn.is-selected:hover,
+    .note-color-btn.is-selected:focus,
+    .note-color-btn.is-selected:focus-visible {
+        box-shadow: 0 0 0 3px var(--bs-white), 0 0 0 5px rgba(13,110,253,0.7) !important;
+        transform: scale(1.08) !important;
+    }
+    .fret-note[data-note-type="root"] { background-color: var(--bs-danger) !important; }
+    .fret-note[data-note-type="scale_note"] { background-color: var(--note-color, var(--bs-success)); }
+    .fret-note[data-note-type="blue_note"] { background-color: var(--note-color, #007bff); }
+    .fret-note[data-note-type="passing_note"] { background-color: var(--note-color, var(--bs-secondary)); }
     .fret-note[data-note-type="open"] { 
         background-color: #0ea5e9 !important; 
         box-shadow: 0 0 10px rgba(14, 165, 233, 0.6);
@@ -127,14 +148,15 @@
                     </div>
                 </div>
 
-                <!-- Ferramentas de Pintura e Toggles -->
                 <div class="d-flex flex-wrap row-gap-3 align-items-center gap-3 practice-toolbar rounded-3 p-3 mb-3">
-                    <h5 class="fw-bold fs-7 mb-0 text-primary"><i class="bi bi-palette-fill"></i> Modo Pintura:</h5>
-                    <div id="noteTypePalette" class="d-flex gap-2">
-                        <button type="button" class="btn btn-sm btn-note-type active" data-type="scale_note">Nota da Escala</button>
-                        <button type="button" class="btn btn-sm btn-note-type" data-type="blue_note">Blue Note</button>
-                        <button type="button" class="btn btn-sm btn-note-type" data-type="passing_note">Nota de Passagem</button>
-                        <button type="button" class="btn btn-sm btn-note-type" data-type="barre" title="Pintar ou apagar uma pestana completa na casa clicada"><i class="bi bi-grip-vertical"></i> Pestana</button>
+                    <h5 class="fw-bold fs-7 mb-0 text-primary"><i class="bi bi-palette-fill"></i> Pintura</h5>
+                    <div id="noteTypePalette" class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn-note-type note-color-btn rounded-circle border-0 p-0 is-selected" data-type="scale_note" data-color="#10b981" style="background:#10b981;" title="Verde" aria-label="Verde" aria-pressed="true"></button>
+                        <button type="button" class="btn-note-type note-color-btn rounded-circle border-0 p-0" data-type="scale_note" data-color="#06b6d4" style="background:#06b6d4;" title="Ciano" aria-label="Ciano" aria-pressed="false"></button>
+                        <button type="button" class="btn-note-type note-color-btn rounded-circle border-0 p-0" data-type="scale_note" data-color="#8b5cf6" style="background:#8b5cf6;" title="Roxo" aria-label="Roxo" aria-pressed="false"></button>
+                        <button type="button" class="btn-note-type note-color-btn rounded-circle border-0 p-0" data-type="scale_note" data-color="#ffc107" style="background:#ffc107;" title="Amarelo" aria-label="Amarelo" aria-pressed="false"></button>
+                        <button type="button" class="btn-note-type note-color-btn rounded-circle border-0 p-0" data-type="scale_note" data-color="#64748b" style="background:#64748b;" title="Cinza" aria-label="Cinza" aria-pressed="false"></button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-note-type" data-type="barre" title="Pintar ou apagar uma pestana completa na casa clicada"><i class="bi bi-grip-vertical"></i> Pestana</button>
                     </div>
 
                     <div class="vr mx-1 d-none d-lg-block"></div>
@@ -153,7 +175,7 @@
                         </div>
 
                         <div class="form-check form-switch mb-0">
-                            <input class="form-check-input" type="checkbox" role="switch" id="linkNotesSwitch" checked>
+                            <input class="form-check-input" type="checkbox" role="switch" id="linkNotesSwitch">
                             <label class="form-check-label fw-semibold fs-7" for="linkNotesSwitch">Ligar Notas</label>
                         </div>
 
@@ -358,6 +380,7 @@
     let activeMapId = null;
     let savedMaps = [];
     let currentNoteType = "scale_note";
+    let currentNoteColor = "#10b981";
     let accidentalsPreference = "{{ settings.accidentals_preference if settings else 'sharps' }}";
 
     // Variáveis globais para ligações personalizadas e reprodução
@@ -372,6 +395,7 @@
     let metronomeIntervalId = null;
     let metronomeBeatCount = 0;
     let localAudioCtx = null;
+    const practiceMetronomeToneCache = {};
 
     // Banco de dados de acordes e fôrmas
     let chordsDatabase = null;
@@ -432,8 +456,7 @@
                     const isTonic = selectedTonic && fretboard.isNotesEqual(noteName, selectedTonic);
                     
                     const currentType = badge.getAttribute("data-note-type");
-                    // Só altera se for Tônica (root) ou Nota da Escala (scale_note) para não bagunçar Blue Notes ou Notas de Passagem
-                    if (currentType === 'root' || currentType === 'scale_note') {
+                    if (currentType !== 'open' && currentType !== 'muted') {
                         badge.setAttribute("data-note-type", isTonic ? 'root' : 'scale_note');
                     }
                 }
@@ -443,14 +466,29 @@
             fretboard.renderExecutionPath(collectVisibleNotes(), connections, connectionMode);
         });
 
+        document.getElementById("noteTypePalette").addEventListener("pointerdown", (event) => {
+            if (event.target.closest(".note-color-btn")) {
+                event.preventDefault();
+            }
+        });
+
         document.getElementById("noteTypePalette").addEventListener("click", (event) => {
             const button = event.target.closest(".btn-note-type");
             if (!button) return;
 
             currentNoteType = button.dataset.type;
+            if (button.dataset.color) {
+                currentNoteColor = button.dataset.color;
+                document.querySelectorAll(".note-color-btn").forEach(btn => {
+                    btn.classList.toggle("is-selected", btn === button);
+                    btn.setAttribute("aria-pressed", btn === button ? "true" : "false");
+                });
+            }
 
-            document.querySelectorAll(".btn-note-type").forEach(btn => btn.classList.remove("active"));
-            button.classList.add("active");
+            document.querySelectorAll("#noteTypePalette .btn-note-type:not(.note-color-btn)").forEach(btn => btn.classList.remove("active"));
+            if (!button.dataset.color) {
+                button.classList.add("active");
+            }
         });
 
         document.getElementById("accidentalsToggle").addEventListener("click", handleAccidentalsChange);
@@ -705,6 +743,8 @@
                 setBadgeVisible(noteBadge, false);
                 noteBadge.removeAttribute("data-note-type");
                 noteBadge.removeAttribute("data-sequence");
+                noteBadge.removeAttribute("data-note-color");
+                noteBadge.style.removeProperty("--note-color");
             }
             fretboard.renderExecutionPath(collectVisibleNotes(), connections, connectionMode);
             fretboard.updateTabAndSheet();
@@ -728,6 +768,7 @@
                         const noteName = cell.getAttribute("data-note");
                         const isTonic = selectedTonic && fretboard.isNotesEqual(noteName, selectedTonic);
                         badge.setAttribute("data-note-type", isTonic ? 'root' : 'scale_note');
+                        applyBadgeColor(badge, currentNoteColor);
 
                         const existingNotes = collectVisibleNotes();
                         const maxSequence = existingNotes.reduce((max, note) => Math.max(max, note.sequence || 0), 0);
@@ -736,6 +777,8 @@
                         setBadgeVisible(badge, false);
                         badge.removeAttribute("data-note-type");
                         badge.removeAttribute("data-sequence");
+                        badge.removeAttribute("data-note-color");
+                        badge.style.removeProperty("--note-color");
 
                         // Limpa conexões
                         connections = connections.filter(c =>
@@ -756,6 +799,8 @@
             setBadgeVisible(noteBadge, false);
             noteBadge.removeAttribute("data-note-type");
             noteBadge.removeAttribute("data-sequence");
+            noteBadge.removeAttribute("data-note-color");
+            noteBadge.style.removeProperty("--note-color");
 
             // Remove as conexões associadas a esta nota desativada
             connections = connections.filter(c =>
@@ -773,6 +818,7 @@
             const resolvedType = isTonic ? 'root' : currentNoteType;
 
             noteBadge.setAttribute("data-note-type", resolvedType);
+            applyBadgeColor(noteBadge, currentNoteColor);
             const existingNotes = collectVisibleNotes();
             const maxSequence = existingNotes.reduce((max, note) => Math.max(max, note.sequence || 0), 0);
             noteBadge.setAttribute("data-sequence", maxSequence + 1);
@@ -820,6 +866,7 @@
                     const noteType = isRoot ? 'root' : 'scale_note';
 
                     badge.setAttribute("data-note-type", noteType);
+                    applyBadgeColor(badge, currentNoteColor);
                     badge.setAttribute("data-sequence", sequence++);
                     setBadgeVisible(badge, true);
                 }
@@ -837,6 +884,8 @@
                 setBadgeVisible(badge, false);
                 badge.removeAttribute("data-note-type");
                 badge.removeAttribute("data-sequence");
+                badge.removeAttribute("data-note-color");
+                badge.style.removeProperty("--note-color");
             }
         });
         connections = []; // Limpa conexões manuais ao limpar o braço completo
@@ -863,6 +912,7 @@
                     fret: Number(cell.getAttribute("data-fret")),
                     note: cell.getAttribute("data-note"),
                     type: badge.getAttribute("data-note-type") || 'scale_note',
+                    color: badge.getAttribute("data-note-color") || "",
                     sequence: Number(badge.getAttribute("data-sequence") || 0)
                 });
             }
@@ -1016,6 +1066,7 @@
             if (badge) {
                 setBadgeVisible(badge, true);
                 badge.setAttribute("data-note-type", note.type || 'scale_note');
+                applyBadgeColor(badge, note.color || currentNoteColor);
                 if (note.sequence) {
                     badge.setAttribute("data-sequence", note.sequence);
                 }
@@ -1033,8 +1084,16 @@
                 setBadgeVisible(badge, false);
                 badge.removeAttribute("data-note-type");
                 badge.removeAttribute("data-sequence");
+                badge.removeAttribute("data-note-color");
+                badge.style.removeProperty("--note-color");
             }
         });
+    }
+
+    function applyBadgeColor(badge, color) {
+        if (!badge || !color) return;
+        badge.setAttribute("data-note-color", color);
+        badge.style.setProperty("--note-color", color);
     }
 
     function resetEditor() {
@@ -1045,6 +1104,7 @@
         fretboard.options.tonic = "";
         connectionMode = "auto";
         connections = [];
+        document.getElementById("linkNotesSwitch").checked = false;
         updateConnectionModeUI();
         fretboard.renderNotesContent();
         clearFretboard();
@@ -1083,6 +1143,7 @@
         } else {
             colorPalette.style.setProperty("display", "none", "important");
             connectionModeGroup.style.setProperty("display", "none", "important");
+            btnClear.style.display = "none";
         }
     }
 
@@ -1350,23 +1411,26 @@
         }
     }
 
-    function getLocalAudioContext() {
+    async function getLocalAudioContext() {
         if (!localAudioCtx) {
             const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return null;
             localAudioCtx = new AC();
         }
         if (localAudioCtx.state === 'suspended') {
-            localAudioCtx.resume();
+            await localAudioCtx.resume();
         }
-        return localAudioCtx;
+        return localAudioCtx.state === 'running' ? localAudioCtx : null;
     }
 
-    function toggleMetronome() {
+    async function toggleMetronome() {
         // Inicializa/Resume o contexto de áudio local dedicado imediatamente no clique
         try {
-            getLocalAudioContext();
+            const ctx = await getLocalAudioContext();
+            if (!ctx) return;
         } catch (e) {
             console.error("Erro ao iniciar contexto de áudio local:", e);
+            return;
         }
 
         const btn = document.getElementById("btnTogglePracticeMetronome");
@@ -1432,7 +1496,8 @@
 
     function playMetronomeClick(accented = false) {
         try {
-            const ctx = getLocalAudioContext();
+            playPracticeHtmlClick(accented);
+            const ctx = localAudioCtx;
             if (!ctx) return;
 
             const osc = ctx.createOscillator();
@@ -1452,6 +1517,46 @@
         } catch (error) {
             console.error("Erro ao tocar clique do metrônomo:", error);
         }
+    }
+
+    function playPracticeHtmlClick(accented = false) {
+        const freq = accented ? 1200 : 800;
+        const key = String(freq);
+        if (!practiceMetronomeToneCache[key]) {
+            const sampleRate = 22050;
+            const duration = 0.07;
+            const sampleCount = Math.floor(sampleRate * duration);
+            const buffer = new ArrayBuffer(44 + sampleCount * 2);
+            const view = new DataView(buffer);
+            const writeString = (offset, value) => {
+                for (let i = 0; i < value.length; i++) view.setUint8(offset + i, value.charCodeAt(i));
+            };
+
+            writeString(0, "RIFF");
+            view.setUint32(4, 36 + sampleCount * 2, true);
+            writeString(8, "WAVE");
+            writeString(12, "fmt ");
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, "data");
+            view.setUint32(40, sampleCount * 2, true);
+
+            for (let i = 0; i < sampleCount; i++) {
+                const t = i / sampleRate;
+                const env = Math.exp(-42 * t);
+                view.setInt16(44 + i * 2, Math.sin(2 * Math.PI * freq * t) * env * 32767, true);
+            }
+            practiceMetronomeToneCache[key] = URL.createObjectURL(new Blob([buffer], { type: "audio/wav" }));
+        }
+
+        const audio = new Audio(practiceMetronomeToneCache[key]);
+        audio.volume = accented ? 0.7 : 0.45;
+        audio.play().catch(() => {});
     }
 
     // =========================================================================

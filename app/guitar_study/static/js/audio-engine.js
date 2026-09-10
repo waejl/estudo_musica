@@ -20,28 +20,9 @@ class AudioEngine {
         this.activeNodes = [];
         this.volume      = 0.5;
 
-        this.samplesCache  = {};
-        this.isPreloading  = false;
         this._cabinetIRs   = {};
         this._cabinetReady = {};
-
-        this.sampleUrls = {
-            1: `${window.APP_PREFIX || ""}/guitar-study/static/audio/E4.mp3`,
-            2: `${window.APP_PREFIX || ""}/guitar-study/static/audio/B3.mp3`,
-            3: `${window.APP_PREFIX || ""}/guitar-study/static/audio/G3.mp3`,
-            4: `${window.APP_PREFIX || ""}/guitar-study/static/audio/D3.mp3`,
-            5: `${window.APP_PREFIX || ""}/guitar-study/static/audio/A2.mp3`,
-            6: `${window.APP_PREFIX || ""}/guitar-study/static/audio/E2.mp3`
-        };
-
-        this.stringBaseFreqs = [
-            { id: 1, freq: 329.63 },
-            { id: 2, freq: 246.94 },
-            { id: 3, freq: 196.00 },
-            { id: 4, freq: 146.83 },
-            { id: 5, freq: 110.00 },
-            { id: 6, freq:  82.41 }
-        ];
+        this._toneUrlCache = {};
     }
 
     // -----------------------------------------------------------------------
@@ -50,18 +31,24 @@ class AudioEngine {
     initContext() {
         if (!this.ctx) {
             const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return null;
             this.ctx = new AC();
-            this.preloadSamples();
-            this._warmCabinet('crunch');
-            this._warmCabinet('drive');
+            this._warmCabinet('crunch').catch(() => {});
+            this._warmCabinet('drive').catch(() => {});
         }
         if (this.ctx.state === 'suspended') this.ctx.resume();
+        return this.ctx;
     }
 
-    async preloadSamples() {
-        // Desativado para evitar requisições 404 de arquivos MP3 inexistentes.
-        // O motor de áudio utiliza a síntese física matemática (Karplus-Strong) em tempo real via Web Audio API.
-        return;
+    async unlock() {
+        const ctx = this.initContext();
+        if (!ctx) return null;
+
+        if (ctx.state === "suspended") {
+            await ctx.resume();
+        }
+
+        return ctx.state === "running" ? ctx : null;
     }
 
     // -----------------------------------------------------------------------
@@ -283,37 +270,15 @@ class AudioEngine {
     }
 
     // -----------------------------------------------------------------------
-    // Seleção de amostra MP3
-    // -----------------------------------------------------------------------
-    _bestSample(freq) {
-        let best = null, bestFreq = 0;
-        for (const item of this.stringBaseFreqs) {
-            if (this.samplesCache[item.id] && freq >= item.freq * 0.88 && item.freq > bestFreq) {
-                best = { buffer: this.samplesCache[item.id], baseFreq: item.freq };
-                bestFreq = item.freq;
-            }
-        }
-        if (!best) {
-            for (let n = 6; n >= 1; n--) {
-                if (this.samplesCache[n]) {
-                    best = { buffer: this.samplesCache[n], baseFreq: this.stringBaseFreqs[n - 1].freq };
-                    break;
-                }
-            }
-        }
-        return best;
-    }
-
-    // -----------------------------------------------------------------------
     // playFreq — reproduz uma frequência com a cadeia correta por timbre
     // -----------------------------------------------------------------------
-    playFreq(freq, duration = 1.8, delay = 0) {
+    async playFreq(freq, duration = 1.8, delay = 0) {
         if (!freq || freq <= 0) return;
-        this.initContext();
+        const ctx = await this.unlock();
+        if (!ctx) return;
 
         const now    = this.ctx.currentTime + delay;
         const timbre = localStorage.getItem("guitarTimbre") || "default";
-        const ctx    = this.ctx;
 
         // Envelope de amplitude master
         const gainNode = ctx.createGain();
@@ -330,17 +295,9 @@ class AudioEngine {
             this._buildElectricChain(timbre, hybrid.outputNode, gainNode, now);
 
         } else {
-            // Fonte única: amostra MP3 ou KS puro
-            const sample = this._bestSample(freq);
-            let srcNode;
-            if (sample) {
-                srcNode = ctx.createBufferSource();
-                srcNode.buffer = sample.buffer;
-                srcNode.playbackRate.setValueAtTime(freq / sample.baseFreq, now);
-            } else {
-                srcNode = ctx.createBufferSource();
-                srcNode.buffer = this._ksBuffer(freq, timbre);
-            }
+            // Fonte única: síntese física Karplus-Strong em tempo real.
+            const srcNode = ctx.createBufferSource();
+            srcNode.buffer = this._ksBuffer(freq, timbre);
             srcNode.start(now);
             stopNodes = [srcNode];
             this._buildAcousticChain(timbre, srcNode, gainNode, now);
@@ -468,7 +425,133 @@ class AudioEngine {
     // -----------------------------------------------------------------------
     // API pública
     // -----------------------------------------------------------------------
-    playNote(freq) { this.playFreq(freq, 1.8, 0); }
+    async _playSimpleNote(freq, duration = 1.2) {
+        if (!freq || freq <= 0) return;
+        const ctx = await this.unlock();
+        if (!ctx) return;
+
+        const now = ctx.currentTime;
+        const output = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+        const osc = ctx.createOscillator();
+        const overtone = ctx.createOscillator();
+        const overtoneGain = ctx.createGain();
+
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(2600, now);
+        filter.frequency.exponentialRampToValueAtTime(900, now + duration);
+
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, now);
+
+        overtone.type = "sine";
+        overtone.frequency.setValueAtTime(freq * 2, now);
+        overtoneGain.gain.setValueAtTime(0.18, now);
+
+        output.gain.setValueAtTime(0.0001, now);
+        output.gain.exponentialRampToValueAtTime(Math.max(0.12, this.volume * 0.8), now + 0.01);
+        output.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+        osc.connect(filter);
+        overtone.connect(overtoneGain);
+        overtoneGain.connect(filter);
+        filter.connect(output);
+        output.connect(ctx.destination);
+
+        osc.start(now);
+        overtone.start(now);
+        osc.stop(now + duration + 0.05);
+        overtone.stop(now + duration + 0.05);
+
+        const nodeRef = { gainNode: output, stopNodes: [osc, overtone] };
+        this.activeNodes.push(nodeRef);
+        setTimeout(() => {
+            const i = this.activeNodes.indexOf(nodeRef);
+            if (i > -1) this.activeNodes.splice(i, 1);
+        }, (duration + 0.5) * 1000);
+    }
+
+    _buildToneUrl(freq, duration = 1.4) {
+        const timbre = localStorage.getItem("guitarTimbre") || "default";
+        const key = `${Math.round(freq)}:${duration}:${timbre}`;
+        if (this._toneUrlCache[key]) return this._toneUrlCache[key];
+
+        const sampleRate = 44100;
+        const sampleCount = Math.floor(sampleRate * duration);
+        const headerSize = 44;
+        const buffer = new ArrayBuffer(headerSize + sampleCount * 2);
+        const view = new DataView(buffer);
+        const timbreConfig = {
+            violao_classico: { damping: 0.996, brightness: 0.62, pick: 0.9, drive: 1.0 },
+            les_paul_clean: { damping: 0.997, brightness: 0.50, pick: 1.1, drive: 1.2 },
+            les_paul_crunch: { damping: 0.998, brightness: 0.46, pick: 1.2, drive: 2.0 },
+            les_paul_drive: { damping: 0.9985, brightness: 0.42, pick: 1.3, drive: 3.2 },
+            default: { damping: 0.997, brightness: 0.52, pick: 1.0, drive: 1.1 }
+        };
+        const cfg = timbreConfig[timbre] || timbreConfig.default;
+        const delaySize = Math.max(2, Math.round(sampleRate / freq));
+        const delay = new Float32Array(delaySize);
+
+        for (let i = 0; i < delaySize; i++) {
+            const pickNoise = (Math.random() * 2 - 1) * cfg.pick;
+            const initialShape = Math.sin((Math.PI * i) / delaySize) * 0.35;
+            delay[i] = pickNoise + initialShape;
+        }
+
+        const writeString = (offset, value) => {
+            for (let i = 0; i < value.length; i++) {
+                view.setUint8(offset + i, value.charCodeAt(i));
+            }
+        };
+
+        writeString(0, "RIFF");
+        view.setUint32(4, 36 + sampleCount * 2, true);
+        writeString(8, "WAVE");
+        writeString(12, "fmt ");
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeString(36, "data");
+        view.setUint32(40, sampleCount * 2, true);
+
+        let ptr = 0;
+        let previous = 0;
+        for (let i = 0; i < sampleCount; i++) {
+            const t = i / sampleRate;
+            const current = delay[ptr];
+            const next = delay[(ptr + 1) % delaySize];
+            const filtered = cfg.damping * ((cfg.brightness * current) + ((1 - cfg.brightness) * next));
+            delay[ptr] = filtered;
+            ptr = (ptr + 1) % delaySize;
+
+            const pickAttack = i < 120 ? (Math.random() * 2 - 1) * (1 - i / 120) * 0.18 : 0;
+            const body = current * 0.82 + previous * 0.18;
+            const driven = Math.tanh((body + pickAttack) * cfg.drive) / Math.tanh(cfg.drive);
+            const env = Math.min(1, i / 90) * Math.exp(-1.6 * t / duration);
+            const sample = driven * env * 0.72;
+            previous = current;
+
+            view.setInt16(headerSize + i * 2, Math.max(-1, Math.min(1, sample)) * 32767, true);
+        }
+
+        const url = URL.createObjectURL(new Blob([buffer], { type: "audio/wav" }));
+        this._toneUrlCache[key] = url;
+        return url;
+    }
+
+    _playHtmlTone(freq, duration = 1.4) {
+        const audio = new Audio(this._buildToneUrl(freq, duration));
+        audio.volume = Math.max(0.25, this.volume);
+        audio.play().catch(error => console.error("Erro ao tocar fallback HTMLAudio:", error));
+    }
+
+    playNote(freq) {
+        this._playHtmlTone(freq);
+    }
 
     playChord(freqs) {
         if (!freqs?.length) return;

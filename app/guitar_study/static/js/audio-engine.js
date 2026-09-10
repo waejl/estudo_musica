@@ -59,16 +59,9 @@ class AudioEngine {
     }
 
     async preloadSamples() {
-        if (this.isPreloading) return;
-        this.isPreloading = true;
-        for (let n = 1; n <= 6; n++) {
-            try {
-                const r = await fetch(this.sampleUrls[n]);
-                if (!r.ok) continue;
-                const ab = await r.arrayBuffer();
-                this.ctx.decodeAudioData(ab, buf => { this.samplesCache[n] = buf; });
-            } catch (_) {}
-        }
+        // Desativado para evitar requisições 404 de arquivos MP3 inexistentes.
+        // O motor de áudio utiliza a síntese física matemática (Karplus-Strong) em tempo real via Web Audio API.
+        return;
     }
 
     // -----------------------------------------------------------------------

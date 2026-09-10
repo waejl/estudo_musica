@@ -95,6 +95,12 @@
             <span>Tríades & Arpejos CAGED</span>
         </a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'guitar_study.caged_master' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.caged_master') }}">
+            <i class="bi bi-mortarboard-fill fs-5 text-warning"></i>
+            <span>Método CAGED Master</span>
+        </a>
+    </li>
 
     <li class="nav-item my-2 border-top border-secondary-subtle"></li>
     

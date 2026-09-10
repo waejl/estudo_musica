@@ -334,6 +334,15 @@ def partitura():
     return render_template("guitar_study/sheet_music.html", settings=settings, current_user=current_user)
 
 
+@guitar_study.route("/caged-master")
+@login_required
+def caged_master():
+    """Renderiza a página do Método CAGED Master."""
+    settings = current_user.settings
+    from app.guitar_study.services.music_theory import SHARPS_SCALE
+    return render_template("guitar_study/caged_master.html", settings=settings, chromatic_notes=SHARPS_SCALE)
+
+
 # --- Rotas de Aulas ---
 
 @guitar_study.route("/lessons")

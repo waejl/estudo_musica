@@ -96,8 +96,12 @@
                 <p class="text-muted fs-7 mb-0 text-truncate">{{ song.artist }}</p>
                 <div class="mt-auto pt-3 d-flex gap-2">
                     <a href="{{ url_for('guitar_study.song_view', song_id=song.id) }}"
-                       class="btn btn-sm btn-primary flex-fill fw-bold">
-                        <i class="bi bi-play-circle"></i> Ver Cifra
+                       class="btn btn-sm btn-primary flex-fill fw-bold" style="font-size: 11px;">
+                        <i class="bi bi-play-circle"></i> Cifra
+                    </a>
+                    <a href="{{ url_for('guitar_study.song_view_plus', song_id=song.id) }}"
+                       class="btn btn-sm btn-warning flex-fill fw-bold text-dark d-flex align-items-center justify-content-center gap-1 shadow-sm" style="font-size: 11px;" title="Abrir no modo avançado Cifra Plus">
+                        <i class="bi bi-rocket-takeoff-fill"></i> Plus 🚀
                     </a>
                     <button class="btn btn-sm btn-outline-danger"
                             onclick="deleteSong({{ song.id }}, '{{ song.title|e }}')"

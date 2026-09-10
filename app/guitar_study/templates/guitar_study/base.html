@@ -69,7 +69,7 @@
                 <div class="dropdown" id="globalMetronomeContainer">
                     <button class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2 px-3 rounded-pill shadow-sm position-relative" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Metrônomo de Estudo">
                         <i class="bi bi-metronome fs-6" id="metronomeIcon"></i>
-                        <span id="navbarBpmDisplay" class="fw-bold font-monospace">120 <span class="fs-8 fw-normal text-muted">BPM</span></span>
+                        <span id="navbarBpmDisplay" class="fw-bold font-monospace">94 <span class="fs-8 fw-normal text-muted">BPM</span></span>
                         <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle d-none" id="metronomeIndicatorLight" style="width: 10px; height: 10px;"></span>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end p-3 shadow-lg border border-primary-subtle" style="width: 250px; z-index: 1060; border-radius: 12px;">
@@ -78,12 +78,12 @@
                         </h6>
                         
                         <div class="text-center mb-3 p-3 bg-body-secondary rounded-3 border">
-                            <h2 class="fw-extrabold mb-0 text-body font-monospace" id="menuBpmNumber">120</h2>
+                            <h2 class="fw-extrabold mb-0 text-body font-monospace" id="menuBpmNumber">94</h2>
                             <span class="fs-8 text-muted fw-bold">BATIDAS POR MINUTO</span>
                         </div>
                         
                         <div class="mb-3">
-                            <input type="range" class="form-range" id="metronomeBpmSlider" min="40" max="240" step="1" value="120">
+                            <input type="range" class="form-range" id="metronomeBpmSlider" min="40" max="240" step="1" value="94">
                             <div class="d-flex justify-content-between fs-8 text-muted mt-1 font-monospace">
                                 <span>40</span>
                                 <span>140</span>
@@ -128,7 +128,9 @@
         {% if current_user.is_authenticated %}
         <aside class="sidebar-desktop d-none d-lg-flex flex-column border-end flex-shrink-0 bg-body-tertiary" style="width: 260px;">
             <div class="p-3 flex-grow-1 overflow-y-auto">
+                {% block menu %}
                 {% include 'guitar_study/_menu.html' %}
+                {% endblock %}
             </div>
             <div class="p-3 border-top bg-body-secondary d-flex align-items-center justify-content-between">
                 <span class="fs-7 text-muted">Versão 1.0.0</span>
@@ -148,7 +150,9 @@
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body p-3">
+                {% block menu_mobile %}
                 {% include 'guitar_study/_menu.html' %}
+                {% endblock %}
             </div>
             <div class="p-3 border-top bg-body-secondary d-flex align-items-center justify-content-between">
                 <span class="fs-7 text-muted">Versão 1.0.0</span>
@@ -229,7 +233,7 @@
         document.addEventListener("DOMContentLoaded", () => {
             let metCtx = null;
             let isMetPlaying = false;
-            let metBpm = 120;
+            let metBpm = 94;
             let nextNoteTime = 0.0;        // Quando tocar o próximo beat
             let currentBeat = 0;           // Contagem de compasso (0 a 3 para 4/4)
             const scheduleAheadTime = 0.1;  // Antecedência de agendamento (100ms)
@@ -267,7 +271,7 @@
             if (savedBpm) {
                 updateBpm(savedBpm);
             } else {
-                updateBpm(120);
+                updateBpm(94);
             }
             
             // Listeners de ajuste

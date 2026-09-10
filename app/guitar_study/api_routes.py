@@ -6,7 +6,7 @@ from app.guitar_study import guitar_study
 from app.guitar_study.models import (
     UserSettings, CustomTuning, Favorite, StudySession,
     ExerciseAttempt, StudyGoal, RecentItem, Song, Lesson, LessonResource, LessonProgress,
-    SavedFretboardMap
+    SavedFretboardMap, SheetMusic
 )
 from app.guitar_study.services.lesson_flow import complete_progress_if_ready, get_or_create_progress
 from app.guitar_study.services.music_theory import MusicTheoryService, TUNINGS
@@ -1036,3 +1036,82 @@ def api_get_harmony():
             "success": False,
             "error": {"code": "SERVER_ERROR", "message": f"Erro ao calcular dados de harmonia: {str(e)}"}
         }), 500
+
+
+# =====================================================================
+# API: PARTITURAS (SHEET MUSIC)
+# =====================================================================
+@guitar_study.route("/api/v1/sheet-music", methods=["GET", "POST"])
+@login_required
+def api_sheet_music():
+    """Cria ou lista partituras para o usuário."""
+    if request.method == "POST":
+        data = request.get_json() or {}
+        title = (data.get("title") or "").strip()
+        score_data = data.get("data")
+
+        if not title:
+            return jsonify({"success": False, "error": {"code": "MISSING_TITLE", "message": "O título é obrigatório."}}), 400
+        if not score_data or not isinstance(score_data, list):
+            return jsonify({"success": False, "error": {"code": "INVALID_DATA", "message": "Dados da partitura inválidos."}}), 400
+
+        try:
+            import json
+            sheet = SheetMusic(user_id=current_user.id, title=title, data=json.dumps(score_data))
+            db.session.add(sheet)
+            db.session.commit()
+            return jsonify({"success": True, "data": {"id": sheet.id, "title": sheet.title, "updated_at": sheet.updated_at.isoformat()}}), 201
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Erro ao salvar partitura: {e}")
+            return jsonify({"success": False, "error": {"code": "DATABASE_ERROR", "message": "Erro ao salvar partitura."}}), 500
+
+    # GET
+    try:
+        sheets = SheetMusic.query.filter_by(user_id=current_user.id).order_by(SheetMusic.updated_at.desc()).all()
+        return jsonify({"success": True, "data": {"scores": [{"id": s.id, "title": s.title, "updated_at": s.updated_at.isoformat()} for s in sheets]}})
+    except Exception as e:
+        current_app.logger.error(f"Erro ao listar partituras: {e}")
+        return jsonify({"success": False, "error": {"code": "SERVER_ERROR", "message": "Erro ao buscar partituras."}}), 500
+
+
+@guitar_study.route("/api/v1/sheet-music/<int:sheet_id>", methods=["GET", "PUT", "DELETE"])
+@login_required
+def api_sheet_music_detail(sheet_id):
+    """Gerencia uma partitura específica."""
+    sheet = SheetMusic.query.filter_by(id=sheet_id, user_id=current_user.id).first_or_404()
+
+    if request.method == "GET":
+        import json
+        return jsonify({"success": True, "data": {"id": sheet.id, "title": sheet.title, "data": json.loads(sheet.data or '[]')}})
+
+    if request.method == "DELETE":
+        try:
+            db.session.delete(sheet)
+            db.session.commit()
+            return jsonify({"success": True, "message": "Partitura excluída."})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"success": False, "error": {"code": "DATABASE_ERROR", "message": "Erro ao excluir partitura."}}), 500
+
+    if request.method == "PUT":
+        data = request.get_json() or {}
+        title = (data.get("title") or "").strip()
+        score_data = data.get("data")
+
+        if not title:
+            return jsonify({"success": False, "error": {"code": "MISSING_TITLE", "message": "O título é obrigatório."}}), 400
+        if not score_data or not isinstance(score_data, list):
+            return jsonify({"success": False, "error": {"code": "INVALID_DATA", "message": "Dados da partitura inválidos."}}), 400
+        
+        try:
+            import json
+            sheet.title = title
+            sheet.data = json.dumps(score_data)
+            sheet.updated_at = datetime.utcnow()
+            db.session.commit()
+            return jsonify({"success": True, "data": {"id": sheet.id, "title": sheet.title, "updated_at": sheet.updated_at.isoformat()}})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"success": False, "error": {"code": "DATABASE_ERROR", "message": "Erro ao atualizar partitura."}}), 500
+

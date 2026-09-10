@@ -27,6 +27,19 @@ body {
     z-index: 100;
 }
 
+/* Estilos específicos para Menus Laterais (Sidebar e Offcanvas) */
+.sidebar-desktop .nav-link,
+.offcanvas-body .nav-link {
+    font-size: 0.875rem !important; /* 14px - Fonte mais elegante e compacta */
+    padding: 6px 12px !important;   /* Espaçamento vertical reduzido para otimizar espaço */
+}
+
+/* Ajustar ícones no menu lateral para ficarem proporcionais */
+.sidebar-desktop .nav-link i,
+.offcanvas-body .nav-link i {
+    font-size: 1.1rem !important; /* Ícone equilibrado entre fs-5 e fs-6 */
+}
+
 /* Ajustes de Nav-Pills */
 .nav-pills .nav-link {
     color: var(--bs-body-color);
@@ -91,7 +104,7 @@ body {
     flex-direction: column;
     position: relative;
     background-color: var(--fretboard-wood);
-    min-width: 1100px; /* Garante que caiba todas as 22 casas com folga horizontal */
+    min-width: 1200px; /* Garante que caiba todas as 22 casas com folga horizontal */
     height: 220px;
     border-radius: 4px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
@@ -290,7 +303,7 @@ body {
 /* Números das casas abaixo do braço */
 .fretboard-numbers {
     display: flex;
-    min-width: 1100px;
+    min-width: 1200px;
     padding-left: 0; /* Alinhamento matemático perfeito via spacer de 60px no JS */
     margin-top: 8px;
     color: var(--bs-text-muted);
@@ -665,5 +678,15 @@ text.abcjs-text {
     margin: 0;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+}
+
+/* Ocultar spinners nativos de input number no metrônomo */
+#inputBpmPractice::-webkit-outer-spin-button,
+#inputBpmPractice::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+#inputBpmPractice {
+    -moz-appearance: textfield;
 }
 

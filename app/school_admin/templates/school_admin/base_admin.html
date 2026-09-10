@@ -6,6 +6,10 @@
     {% include 'school_admin/_menu_admin.html' %}
 {% endblock %}
 
+{% block menu_mobile %}
+    {% include 'school_admin/_menu_admin.html' %}
+{% endblock %}
+
 {# Adiciona um prefixo ao título da página para identificar a área de admin #}
 {% block title %}Admin - {% block admin_title %}{% endblock %}{% endblock %}
 

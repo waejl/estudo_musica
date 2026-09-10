@@ -1,0 +1,360 @@
+{% extends "guitar_study/base.html" %}
+
+{% block title %}Editor de Partitura - {{ super() }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Estilos Exclusivos para a Grande Pauta em HTML5 Real (Fundo Branco Papel) */
+.pauta-container {
+    display: flex;
+    overflow-x: auto;
+    padding: 25px 15px;
+    background-color: #ffffff !important; /* Fundo papel branco clássico de partitura */
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    min-height: 290px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Claves Estáticas na Lateral Esquerda */
+.pauta-claves-lateral {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 50px;
+    height: 220px;
+    padding-right: 12px;
+    border-right: 2px solid #1a1a1a; /* Linha preta divisória */
+}
+
+.pauta-clave-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100px;
+    font-size: 2.2rem;
+    color: #1a1a1a !important; /* Claves pretas sólidas */
+    font-weight: bold;
+}
+
+/* Grid de Tempos da Música (Esquerda para a Direita) */
+.pauta-grid {
+    display: flex;
+    gap: 0;
+    flex-grow: 1;
+}
+
+.pauta-coluna {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 65px; /* Largura confortável de cada batida */
+    height: 220px;
+    border-right: 1px dashed rgba(0, 0, 0, 0.15); /* Divisor cinza discreto de tempo */
+    transition: background-color 0.15s;
+}
+
+.pauta-coluna:hover {
+    background-color: rgba(25, 135, 84, 0.04); /* Destaque verde suave no hover de tempo */
+}
+
+/* Linha de Compasso Vertical clássica preta sólida | */
+.pauta-coluna.fim-compasso {
+    border-right: 2px solid #1a1a1a !important;
+}
+
+/* Sistemas de Claves */
+.pauta-sistema-sol, .pauta-sistema-fa {
+    display: flex;
+    flex-direction: column;
+    height: 100px;
+    position: relative;
+}
+
+.pauta-divisor-espaco {
+    height: 20px;
+    position: relative;
+    border-right: 1px dashed rgba(0, 0, 0, 0.15);
+}
+
+/* Cada degrau (Linha ou Espaço) representa uma nota diatônica */
+.pauta-degrau {
+    position: relative;
+    height: 10px; /* 10px por nota */
+    width: 100%;
+}
+
+/* Desenha as 5 linhas pretas clássicas da pauta */
+.pauta-degrau.pauta-linha::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 4px;
+    height: 2px;
+    background-color: #1a1a1a; /* Linhas pretas de alta opacidade */
+    opacity: 0.9;
+    pointer-events: none;
+}
+
+/* Desenha a nota real elíptica clássica preta no papel */
+.pauta-degrau .nota-musica-real {
+    position: absolute;
+    left: 50%;
+    top: 0px;
+    transform: translateX(-50%);
+    width: 14px;
+    height: 10px;
+    border-radius: 50% / 50%; /* Elipse de nota clássica */
+    background-color: #1a1a1a !important; /* Notas pretas sólidas */
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Haste Vertical da Nota Real (Preta) */
+.pauta-degrau .nota-musica-real::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 50%;
+    width: 2px;
+    height: 24px;
+    background-color: #1a1a1a;
+}
+
+/* Símbolo do Acidente (Sustenido ou Bemol) posicionado à esquerda da nota */
+.pauta-degrau .nota-musica-real .acidente-visual-pauta {
+    position: absolute;
+    left: -12px;
+    top: -5px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: #1a1a1a !important;
+    user-select: none;
+    z-index: 12;
+}
+
+/* Linha Suplementar Curta e Realista (Dó central, notas mais graves etc.) */
+/* Ela desenha apenas um traço horizontal curto por trás da bolinha da nota, sem poluir a pauta */
+.pauta-degrau.suplementar .nota-musica-real::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    right: -5px;
+    top: 4px;
+    height: 2px;
+    background-color: #1a1a1a;
+    z-index: -1;
+}
+
+/* Nota de prévia vermelha translúcida (Hover) que segue a mira do mouse */
+.pauta-degrau:hover::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0px;
+    transform: translateX(-50%);
+    width: 14px;
+    height: 10px;
+    border-radius: 50% / 50%;
+    background-color: rgba(220, 53, 69, 0.65); /* Vermelho translúcido de mira */
+    z-index: 5;
+    pointer-events: none;
+}
+
+.pauta-degrau:hover::after {
+    content: '';
+    position: absolute;
+    right: 25px;
+    bottom: 50%;
+    width: 2px;
+    height: 24px;
+    background-color: rgba(220, 53, 69, 0.65);
+    z-index: 5;
+    pointer-events: none;
+}
+
+/* --- FORÇAR VISIBILIDADE DAS NOTAS SOLTAS (CASA 0 / PESTANA) NO BRAÇO --- */
+.fretboard-cell.cell-open {
+    position: relative !important;
+}
+
+.fretboard-cell.cell-open .fret-note {
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) scale(0.6) !important;
+    width: 20px !important; /* Ligeiramente menor para caber perfeitamente no Nut */
+    height: 20px !important;
+    font-size: 10px !important;
+    z-index: 99999 !important; /* Força flutuação acima das cordas e da pestana */
+    transition: all 0.15s ease;
+    display: none !important; /* Oculto por padrão no modo editor */
+}
+
+/* Exibe a trilha de notas soltas em azul royal */
+.fretboard-cell.cell-open .fret-note.visible {
+    opacity: 1 !important;
+    transform: translate(-50%, -50%) scale(1.1) !important;
+    background-color: #0d6efd !important; 
+    display: flex !important;
+}
+
+/* Exibe a nota solta ativa em verde brilhante */
+.fretboard-cell.cell-open .fret-note.visible-ativa {
+    opacity: 1 !important;
+    transform: translate(-50%, -50%) scale(1.3) !important;
+    background-color: #198754 !important; 
+    box-shadow: 0 0 10px #198754 !important;
+    display: flex !important;
+    z-index: 100000 !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3 px-md-4" style="background-color: var(--bs-body-bg);">
+    
+    <!-- Cabeçalho Compacto -->
+    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2 border-secondary-subtle">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-music-note-list fs-4 text-success"></i>
+            <h1 class="h4 mb-0 fw-bold text-white">Editor de Partitura Interativo (HTML5)</h1>
+        </div>
+        <div>
+            <button id="save-score-btn" class="btn btn-sm btn-success px-3 fw-bold shadow-sm"><i class="bi bi-save me-1"></i>Salvar</button>
+        </div>
+    </div>
+
+    <!-- Barra de Ferramentas Compacta -->
+    <div id="sheet-music-toolbar" class="mb-3 p-3 bg-body-tertiary border border-secondary-subtle rounded-3 shadow-sm">
+        <div class="d-flex flex-wrap align-items-center gap-3">
+            
+            <!-- Grupo: Configurações de Pauta -->
+            <div class="d-flex align-items-center gap-2 border-end pe-3 border-secondary-subtle">
+                <span class="fs-8 text-uppercase text-muted fw-bold">Compasso:</span>
+                <select id="time-signature-select" class="form-select form-select-sm py-0 font-monospace" style="font-size: 0.75rem; width: auto; height: 26px;">
+                    <option value="4/4" selected>4/4</option>
+                    <option value="3/4">3/4</option>
+                    <option value="2/4">2/4</option>
+                </select>
+            </div>
+
+            <!-- Grupo: Tipo de Notas -->
+            <div class="d-flex align-items-center gap-2 border-end pe-3 border-secondary-subtle">
+                <span class="fs-8 text-uppercase text-muted fw-bold">Notas:</span>
+                <div id="add-note-buttons" class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-primary py-0" data-duration="w" style="font-size: 0.75rem; height: 26px;">Semibreve</button>
+                    <button type="button" class="btn btn-outline-primary py-0" data-duration="h" style="font-size: 0.75rem; height: 26px;">Mínima</button>
+                    <button type="button" class="btn btn-outline-primary py-0" data-duration="q" style="font-size: 0.75rem; height: 26px;">Semínima</button>
+                    <button type="button" class="btn btn-outline-primary py-0" data-duration="8" style="font-size: 0.75rem; height: 26px;">Colcheia</button>
+                </div>
+            </div>
+
+            <!-- Grupo: Acidentes (Alterações) -->
+            <div class="d-flex align-items-center gap-2 border-end pe-3 border-secondary-subtle">
+                <span class="fs-8 text-uppercase text-muted fw-bold">Alterar:</span>
+                <div id="accidental-buttons" class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-info py-0 active" data-accidental="none" style="font-size: 0.75rem; height: 26px;" title="Nota Natural">♮ Natural</button>
+                    <button type="button" class="btn btn-outline-info py-0" data-accidental="sharp" style="font-size: 0.75rem; height: 26px;" title="Nota Sustenida">♯ Sustenido</button>
+                    <button type="button" class="btn btn-outline-info py-0" data-accidental="flat" style="font-size: 0.75rem; height: 26px;" title="Nota Bemol">♭ Bemol</button>
+                </div>
+            </div>
+
+            <!-- Grupo: Pausas -->
+            <div class="d-flex align-items-center gap-2 border-end pe-3 border-secondary-subtle">
+                <span class="fs-8 text-uppercase text-muted fw-bold">Pausas:</span>
+                <div id="add-rest-buttons" class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-secondary py-0 fw-bold" data-duration="w" data-type="rest" style="font-size: 0.75rem; height: 26px; width: 26px;">w</button>
+                    <button type="button" class="btn btn-outline-secondary py-0 fw-bold" data-duration="h" data-type="rest" style="font-size: 0.75rem; height: 26px; width: 26px;">h</button>
+                    <button type="button" class="btn btn-outline-secondary py-0 fw-bold" data-duration="q" data-type="rest" style="font-size: 0.75rem; height: 26px; width: 26px;">q</button>
+                    <button type="button" class="btn btn-outline-secondary py-0 fw-bold" data-duration="8" data-type="rest" style="font-size: 0.75rem; height: 26px; width: 26px;">8</button>
+                </div>
+            </div>
+
+            <!-- Grupo: Reprodução e Sons -->
+            <div class="d-flex align-items-center gap-2">
+                <span class="fs-8 text-uppercase text-muted fw-bold">Som:</span>
+                <button id="play-pause-btn" class="btn btn-sm btn-outline-success py-0 px-3 fw-bold d-flex align-items-center justify-content-center" style="font-size: 0.75rem; height: 26px;"><i class="bi bi-play-fill me-1"></i>Play</button>
+                <div class="d-flex align-items-center gap-1">
+                    <span class="fs-8 text-muted font-monospace">BPM:</span>
+                    <input type="number" id="bpm-input" class="form-control form-control-sm py-0 font-monospace text-center" value="94" style="width: 55px; height: 26px; font-size: 0.75rem;">
+                </div>
+                <div id="metronome-indicator" class="rounded-circle border border-secondary" style="width: 14px; height: 14px; background-color: #6c757d; transition: background-color 0.1s;"></div>
+            </div>
+
+            <!-- Ação: Limpar -->
+            <div class="ms-sm-auto">
+                 <button id="clear-score-btn" class="btn btn-sm btn-outline-danger py-0 d-flex align-items-center" style="font-size: 0.75rem; height: 26px;"><i class="bi bi-trash-fill me-1"></i>Limpar Pauta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Área da Partitura - Grande Pauta HTML5 Real (Fundo Branco Papel) -->
+    <div class="card mb-4 border border-secondary-subtle bg-body-tertiary shadow-sm overflow-hidden">
+        <div class="card-header bg-dark border-bottom border-secondary-subtle text-white-50 fs-8 fw-bold text-uppercase py-1 d-flex justify-content-between align-items-center">
+            <span>Pauta Musical Clássica</span>
+            <span id="hover-note-display" class="badge bg-danger font-monospace">Mira: --</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="pauta-container" id="sheet-music-container">
+                
+                <!-- Claves Fixas Laterais Pretas (Geradas via HTML) -->
+                <div class="pauta-claves-lateral">
+                    <div class="pauta-clave-box" title="Clave de Sol">𝄞</div>
+                    <div class="pauta-clave-box" title="Clave de Fá">𝄢</div>
+                </div>
+                
+                <!-- Grid de Tempos (Preenchido com 16 colunas/4 compassos por padrão via JS) -->
+                <div class="pauta-grid" id="pauta-html-grid">
+                    <!-- As colunas de tempo entrarão aqui -->
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Grade Inferior: Braço da Guitarra (Largura Inteira) -->
+    <div class="row g-3 mb-3">
+        <div class="col-12">
+            <div class="card border border-secondary-subtle bg-body-tertiary shadow-sm">
+                <div class="card-header bg-dark border-bottom border-secondary-subtle text-white-50 fs-8 fw-bold text-uppercase py-1">
+                    <i class="bi bi-guitar me-1 text-success"></i>Braço da Guitarra (Visão de leitura recomendada)
+                </div>
+                <div class="card-body p-3 d-flex justify-content-center align-items-center">
+                    <!-- O braço agora ocupa a largura inteira de forma fluida e sem barra de rolagem -->
+                    <div class="w-100">
+                        {% include 'guitar_study/_fretboard_component.html' %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bloco de Partituras Salvas (Largura Inteira, Abaixo do Braço) -->
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="card border border-secondary-subtle bg-body-tertiary shadow-sm">
+                <div class="card-header bg-dark border-bottom border-secondary-subtle text-white-50 fs-8 fw-bold text-uppercase py-1">
+                    <i class="bi bi-folder-fill me-1 text-warning"></i>Minhas Composições
+                </div>
+                <div id="saved-scores-list" class="list-group list-group-flush overflow-y-auto" style="max-height: 180px;">
+                    <!-- Preenchido dinamicamente via API -->
+                    <div class="p-4 text-center text-muted fs-8">
+                        <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                        <div>Carregando partituras...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <input type="hidden" id="current-score-id" value="">
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Custom script for the HTML editor (Não depende mais do VexFlow!) -->
+<script type="module" src="{{ url_for('guitar_study.static', filename='js/sheet-music-editor.js') }}?v={{ range(1, 999999) | random }}"></script>
+{% endblock %}

@@ -409,11 +409,12 @@ export class Fretboard {
         nut.style.zIndex = "2";
         this.fretboardEl.appendChild(nut);
 
-        // Casas
+        // Casas (proporção física exponencial realista baseada na raiz duodécima de 2)
         for (let f = 1; f <= this.options.fretCount; f++) {
             const fretEl = document.createElement("div");
             fretEl.className = "fretboard-fret";
-            fretEl.style.flex = "1";
+            const factor = Math.pow(2, -(f - 1) / 12);
+            fretEl.style.flex = `${factor} 1 0%`;
             fretEl.style.height = "100%";
             fretEl.style.position = "relative";
 
@@ -475,6 +476,10 @@ export class Fretboard {
                 cell.className = "fretboard-cell";
                 if (fretData.fret === 0) {
                     cell.classList.add("cell-open");
+                    cell.style.flex = "0 0 25px";
+                } else {
+                    const factor = Math.pow(2, -(fretData.fret - 1) / 12);
+                    cell.style.flex = `${factor} 1 0%`;
                 }
 
                 cell.setAttribute("data-string", strIdx + 1);
@@ -499,10 +504,31 @@ export class Fretboard {
 
                     // Callback externo de clique
                     if (this.options.onNoteClick) {
+                        // --- Início da Lógica de Cálculo de Oitava ---
+                        const stringNotesMap = { 1: "E", 2: "B", 3: "G", 4: "D", 5: "A", 6: "E" };
+                        const openNote = stringNotesMap[strIdx + 1] || "E";
+                        const baseOctave = { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 2 }[strIdx + 1] || 3;
+                        
+                        const sharps = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+                        let startIdx = sharps.indexOf(openNote);
+                        if (startIdx === -1) startIdx = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"].indexOf(openNote);
+                        
+                        // A oitava real da nota tocada
+                        const actualOctave = baseOctave + Math.floor((startIdx + fretData.fret) / 12);
+                        
+                        // A partitura de guitarra é escrita uma oitava acima do som real.
+                        // Para corresponder à notação padrão do VexFlow/Partituras, adicionamos 1.
+                        const vexflowOctave = actualOctave + 1;
+                        
+                        // Formato VexFlow: "nota/oitava" (ex: "c#/4"), tudo em minúsculas
+                        const vexflowNote = `${fretData.note.toLowerCase().replace(/\s+/g, '')}/${vexflowOctave}`;
+                        // --- Fim da Lógica ---
+
                         this.options.onNoteClick({
                             string: strIdx + 1,
                             fret: fretData.fret,
                             note: fretData.note,
+                            vexflowNote: vexflowNote, // Campo adicionado para VexFlow
                             frequency: fretData.frequency,
                             openString: strData.open_note,
                             cell: cell,
@@ -564,6 +590,8 @@ export class Fretboard {
             if ([0, 1, 3, 5, 7, 9, 12, 15, 17, 19, 21, 24].includes(f)) {
                 numberEl.textContent = f;
             }
+            const factor = Math.pow(2, -(f - 1) / 12);
+            numberEl.style.flex = `${factor} 1 0%`;
             numbersRow.appendChild(numberEl);
         }
         outerWrapper.appendChild(numbersRow);

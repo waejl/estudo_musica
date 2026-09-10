@@ -1,5 +1,5 @@
 <ul class="nav nav-pills flex-column gap-1">
-    <li class="nav-item mb-2 text-center px-3">
+    <li class="nav-item mb-2 text-center px-3 d-lg-none">
         <span class="text-white-50 small">Olá, <strong>{{ current_user.name }}</strong></span>
     </li>
     <li class="nav-item">
@@ -60,9 +60,12 @@
         <span class="text-white-50 text-uppercase small fw-bold" style="font-size: 10px;">Repertório</span>
     </li>
     <li class="nav-item">
-        <a class="nav-link {% if request.endpoint in ('guitar_study.songs', 'guitar_study.song_view') %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.songs') }}">
-            <i class="bi bi-music-note-beamed fs-5"></i>
-            <span>Cifras</span>
+        <a class="nav-link {% if request.endpoint in ('guitar_study.songs', 'guitar_study.song_view', 'guitar_study.song_view_plus') %}active{% endif %} d-flex align-items-center justify-content-between py-2 px-3 rounded-3" href="{{ url_for('guitar_study.songs') }}">
+            <div class="d-flex align-items-center gap-3">
+                <i class="bi bi-music-note-beamed fs-5"></i>
+                <span>Cifras</span>
+            </div>
+            <span class="badge bg-warning text-dark fw-black px-2 py-0.5 rounded-pill shadow-sm" style="font-size: 9px; letter-spacing: 0.05em;">PLUS</span>
         </a>
     </li>
     <li class="nav-item mt-2 px-3">
@@ -78,6 +81,12 @@
         <a class="nav-link {% if request.endpoint == 'guitar_study.circle_of_fifths' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.circle_of_fifths') }}">
             <i class="bi bi-arrow-repeat fs-5 text-warning"></i>
             <span>Círculo de Quintas</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'guitar_study.partitura' %}active{% endif %} d-flex align-items-center gap-3 py-2 px-3 rounded-3" href="{{ url_for('guitar_study.partitura') }}">
+            <i class="bi bi-music-note fs-5 text-success"></i>
+            <span>Editor de Partitura</span>
         </a>
     </li>
     <li class="nav-item">

@@ -60,174 +60,286 @@
     </div>
 </div>
 
-<fieldset class="card bg-body-tertiary">
-    <div class="card-body">
-        <div class="mb-4">
-            <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
-                <h5 class="fw-bold mb-0"><i class="bi bi-collection text-primary"></i> Braços Salvos</h5>
-                <div class="d-flex gap-2">
-                    <button id="btnUpdateMap" class="btn btn-sm btn-outline-primary fw-bold" disabled><i class="bi bi-pencil-square"></i> Atualizar selecionado</button>
-                    <button id="btnDeleteMap" class="btn btn-sm btn-outline-danger fw-bold" disabled><i class="bi bi-trash"></i> Excluir selecionado</button>
-                </div>
-            </div>
-            <div class="row g-3">
-                <div class="col-12 col-lg-4">
-                    <input id="mapTitle" type="text" class="form-control form-control-sm" maxlength="150" placeholder="Nome do estudo">
-                </div>
-                <div class="col-12 col-lg-8">
-                    <input id="mapDescription" type="text" class="form-control form-control-sm" placeholder="Observação opcional">
-                </div>
-            </div>
-            <div id="savedMapsList" class="saved-map-list d-grid gap-2 mt-3">
-                <div class="text-muted fs-7">Nenhum braço salvo ainda.</div>
-            </div>
-        </div>
+<fieldset class="card bg-body-tertiary shadow-sm">
+    <div class="card-body p-4">
+        <!-- Navegação por Abas para reduzir a poluição visual -->
+        <ul class="nav nav-tabs mb-4" id="practiceTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-bold text-uppercase fs-7 px-3 py-2.5" id="paint-tab" data-bs-toggle="tab" data-bs-target="#paint-content" type="button" role="tab" aria-controls="paint-content" aria-selected="true">
+                    <i class="bi bi-palette-fill text-primary me-1"></i> Desenhar & Escalas
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold text-uppercase fs-7 px-3 py-2.5" id="chord-tab" data-bs-toggle="tab" data-bs-target="#chord-content" type="button" role="tab" aria-controls="chord-content" aria-selected="false">
+                    <i class="bi bi-search text-success me-1"></i> Montar Acordes
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold text-uppercase fs-7 px-3 py-2.5" id="game-tab" data-bs-toggle="tab" data-bs-target="#game-content" type="button" role="tab" aria-controls="game-content" aria-selected="false">
+                    <i class="bi bi-controller text-warning me-1"></i> Treino do Braço (Quiz)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold text-uppercase fs-7 px-3 py-2.5" id="saved-tab" data-bs-toggle="tab" data-bs-target="#saved-content" type="button" role="tab" aria-controls="saved-content" aria-selected="false">
+                    <i class="bi bi-collection-fill text-info me-1"></i> Meus Braços Salvos
+                </button>
+            </li>
+        </ul>
 
-        <div class="row g-3 align-items-end practice-toolbar rounded-3 p-3 mb-4">
-            <div class="col-12 col-md-3 col-lg-2">
-                <label for="tonicSelect" class="form-label fw-bold fs-7 text-danger"><i class="bi bi-geo-alt-fill"></i> Tônica</label>
-                <select id="tonicSelect" class="form-select form-select-sm">
-                    <option value="">Nenhuma</option>
-                    {% for note in chromatic_notes %}
-                    <option value="{{ note }}">{{ note }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-6 col-md-3 col-lg-2">
-                <label for="scaleRoot" class="form-label fw-bold fs-7 text-success">Nota</label>
-                <select id="scaleRoot" class="form-select form-select-sm">
-                    {% for note in chromatic_notes %}
-                    <option value="{{ note }}">{{ note }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-6 col-md-3 col-lg-3">
-                <label for="scaleType" class="form-label fw-bold fs-7 text-success">Escala</label>
-                <select id="scaleType" class="form-select form-select-sm">
-                    <option value="major">Maior Natural</option>
-                    <option value="minor">Menor Natural</option>
-                    <option value="pentatonic_major">Pentatônica Maior</option>
-                    <option value="pentatonic_minor">Pentatônica Menor</option>
-                    <option value="blues_major">Blues Maior</option>
-                    <option value="blues_minor">Blues Menor</option>
-                </select>
-            </div>
-            <div class="col-12 col-md-3 col-lg-auto">
-                <button id="btnLoadScale" class="btn btn-sm btn-success fw-bold w-100"><i class="bi bi-play-fill"></i> Carregar Escala</button>
-            </div>
-            <div class="col-12 col-lg-auto ms-lg-auto">
-                <button id="btnClearFretboard" class="btn btn-sm btn-outline-danger fw-bold w-100"><i class="bi bi-trash"></i> Limpar Braço</button>
-            </div>
-        </div>
-
-        <div class="d-flex flex-wrap row-gap-3 align-items-center gap-3 practice-toolbar rounded-3 p-3 mb-4">
-            <h5 class="fw-bold fs-7 mb-0 text-primary"><i class="bi bi-palette-fill"></i> Pintar Notas</h5>
-            <div id="noteTypePalette" class="d-flex gap-2">
-                <button type="button" class="btn btn-sm btn-note-type active" data-type="scale_note">Nota da Escala</button>
-                <button type="button" class="btn btn-sm btn-note-type" data-type="blue_note">Blue Note</button>
-                <button type="button" class="btn btn-sm btn-note-type" data-type="passing_note">Nota de Passagem</button>
-                <button type="button" class="btn btn-sm btn-note-type" data-type="barre" title="Pintar ou apagar uma pestana completa na casa clicada"><i class="bi bi-grip-vertical"></i> Pestana</button>
-            </div>
-
-            <div class="vr mx-2 d-none d-lg-block"></div>
-
-            <div class="ms-lg-auto d-flex flex-wrap row-gap-2 align-items-center gap-3">
-                <div id="displayTypeToggle" class="btn-group btn-group-sm" role="group">
-                    <button type="button" class="btn btn-outline-primary" data-type="notes">Notas</button>
-                    <button type="button" class="btn btn-outline-primary" data-type="intervals">Intervalos</button>
-                </div>
-
-                <div class="vr d-none d-lg-block"></div>
-
-                <div id="accidentalsToggle" class="btn-group btn-group-sm" role="group">
-                    <button type="button" class="btn btn-outline-primary" data-preference="sharps">Sustenidos (#)</button>
-                    <button type="button" class="btn btn-outline-primary" data-preference="flats">Bemóis (b)</button>
-                </div>
-
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="linkNotesSwitch" checked>
-                    <label class="form-check-label" for="linkNotesSwitch">Ligar Notas</label>
-                </div>
-
-                <div id="connectionColorPalette" class="d-flex align-items-center gap-1" style="display: none !important;" title="Cor das linhas de conexão">
-                    <button type="button" class="connection-color-btn rounded-circle border-0 p-0" data-color="#06b6d4" style="background:#06b6d4;width:22px;height:22px;outline:2px solid white;flex-shrink:0;"></button>
-                    <button type="button" class="connection-color-btn rounded-circle border-0 p-0" data-color="#8b5cf6" style="background:#8b5cf6;width:22px;height:22px;flex-shrink:0;"></button>
-                    <button type="button" class="connection-color-btn rounded-circle border-0 p-0" data-color="#ffc107" style="background:#ffc107;width:22px;height:22px;flex-shrink:0;"></button>
-                    <button type="button" class="connection-color-btn rounded-circle border-0 p-0" data-color="#10b981" style="background:#10b981;width:22px;height:22px;flex-shrink:0;"></button>
-                    <button type="button" class="connection-color-btn rounded-circle border-0 p-0" data-color="#ef4444" style="background:#ef4444;width:22px;height:22px;flex-shrink:0;"></button>
-                </div>
-
-                <div id="connectionModeGroup" class="d-flex align-items-center gap-2 flex-wrap" style="display: none !important;">
-                    <div id="connectionModeToggle" class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-warning active" data-mode="auto" title="Ligar notas automaticamente na ordem dos cliques">Auto</button>
-                        <button type="button" class="btn btn-outline-warning" data-mode="manual" title="Desenhar ligações arrastando de uma nota para outra">Manual</button>
+        <div class="tab-content" id="practiceTabsContent">
+            <!-- ABA 1: DESENHAR & ESCALAS -->
+            <div class="tab-pane fade show active" id="paint-content" role="tabpanel" aria-labelledby="paint-tab">
+                <!-- Configuração de Escalas -->
+                <div class="row g-3 align-items-end practice-toolbar rounded-3 p-3 mb-4">
+                    <div class="col-12 col-md-3 col-lg-2">
+                        <label for="tonicSelect" class="form-label fw-bold fs-7 text-danger"><i class="bi bi-geo-alt-fill"></i> Tônica de Destaque</label>
+                        <select id="tonicSelect" class="form-select form-select-sm">
+                            <option value="">Nenhuma</option>
+                            {% for note in chromatic_notes %}
+                            <option value="{{ note }}">{{ note }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
-                    <button type="button" id="btnClearConnections" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" title="Limpar todas as ligações manuais" style="display: none;">
-                        <i class="bi bi-eraser-fill"></i> Limpar Ligações
-                    </button>
-                </div>
-
-                <button type="button" id="btnPlaySequence" class="btn btn-sm btn-success fw-bold d-flex align-items-center gap-1" title="Tocar sequência de notas de forma individual">
-                    <i class="bi bi-play-circle-fill"></i> Tocar
-                </button>
-
-                <button type="button" id="btnPlayChord" class="btn btn-sm btn-primary fw-bold d-flex align-items-center gap-1" title="Tocar todas as notas juntas como um acorde polifônico">
-                    <i class="bi bi-music-note-list"></i> Acorde
-                </button>
-
-                <div class="vr d-none d-lg-block"></div>
-
-                <!-- Metrônomo Dedicado da Tela -->
-                <div class="d-flex align-items-center gap-2 bg-dark-subtle rounded px-3 py-1 border border-secondary-subtle">
-                    <!-- LED visual de batida -->
-                    <div id="practiceMetronomeLed" class="rounded-circle bg-secondary" style="width: 10px; height: 10px; transition: background-color 0.1s;" title="LED indicador de batida do metrônomo"></div>
-
-                    <button type="button" id="btnTogglePracticeMetronome" class="btn btn-sm btn-warning text-dark d-flex align-items-center gap-1" title="Ligar/Desligar clique sonoro do metrônomo">
-                        <i class="bi bi-play-fill"></i> Play Metrônomo
-                    </button>
-                    <button type="button" id="btnBpmMinusPractice" class="btn btn-sm btn-outline-secondary px-2 py-0 fw-bold">-</button>
-                    <input type="number" id="inputBpmPractice" class="form-control form-control-sm text-center fw-bold bg-transparent text-light border-0 p-0" value="100" min="40" max="440" style="width: 40px; box-shadow: none;">
-                    <span class="fs-7 text-muted fw-semibold me-1">BPM</span>
-                    <button type="button" id="btnBpmPlusPractice" class="btn btn-sm btn-outline-secondary px-2 py-0 fw-bold">+</button>
-                    <input type="range" id="sliderBpmPractice" class="form-range d-none d-md-block ms-1" min="40" max="440" value="100" style="width: 90px;">
-                </div>
-            </div>
-        </div>
-
-        <!-- Montador de Acordes Inteligente -->
-        <div class="practice-toolbar rounded-3 p-3 mb-4">
-            <div class="row g-3 align-items-center">
-                <div class="col-12 col-md-5 col-lg-4">
-                    <label for="inputChordSearch" class="form-label fw-bold fs-7 text-primary mb-1"><i class="bi bi-search"></i> Montador de Acordes (ex: C, Am, G/B, F#m)</label>
-                    <div class="input-group input-group-sm">
-                        <input type="text" id="inputChordSearch" class="form-control fw-bold bg-dark text-white border-secondary" placeholder="Digite ex: C, Am, G/B, F#m...">
-                        <button type="button" id="btnSearchChord" class="btn btn-primary fw-bold">Montar</button>
+                    <div class="col-6 col-md-3 col-lg-2">
+                        <label for="scaleRoot" class="form-label fw-bold fs-7 text-success">Tom da Escala</label>
+                        <select id="scaleRoot" class="form-select form-select-sm">
+                            {% for note in chromatic_notes %}
+                            <option value="{{ note }}">{{ note }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-3 col-lg-3">
+                        <label for="scaleType" class="form-label fw-bold fs-7 text-success">Tipo da Escala</label>
+                        <select id="scaleType" class="form-select form-select-sm">
+                            <option value="major">Maior Natural</option>
+                            <option value="minor">Menor Natural</option>
+                            <option value="pentatonic_major">Pentatônica Maior</option>
+                            <option value="pentatonic_minor">Pentatônica Menor</option>
+                            <option value="blues_major">Blues Maior</option>
+                            <option value="blues_minor">Blues Menor</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-3 col-lg-auto">
+                        <button id="btnLoadScale" class="btn btn-sm btn-success fw-bold w-100"><i class="bi bi-play-fill"></i> Carregar Escala</button>
+                    </div>
+                    <div class="col-12 col-lg-auto ms-lg-auto">
+                        <button id="btnClearFretboard" class="btn btn-sm btn-outline-danger fw-bold w-100"><i class="bi bi-trash"></i> Limpar Braço</button>
                     </div>
                 </div>
-                <div class="col-12 col-md-7 col-lg-8 d-flex flex-wrap align-items-center gap-2 mt-md-4" id="chordPositionsPanel" style="display: none !important;">
-                    <span class="fs-7 fw-bold text-light me-1"><i class="bi bi-geo-alt-fill text-warning"></i> Regiões:</span>
-                    <div id="chordPositionsList" class="d-flex flex-wrap gap-2"></div>
+
+                <!-- Ferramentas de Pintura e Toggles -->
+                <div class="d-flex flex-wrap row-gap-3 align-items-center gap-3 practice-toolbar rounded-3 p-3 mb-3">
+                    <h5 class="fw-bold fs-7 mb-0 text-primary"><i class="bi bi-palette-fill"></i> Modo Pintura:</h5>
+                    <div id="noteTypePalette" class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-note-type active" data-type="scale_note">Nota da Escala</button>
+                        <button type="button" class="btn btn-sm btn-note-type" data-type="blue_note">Blue Note</button>
+                        <button type="button" class="btn btn-sm btn-note-type" data-type="passing_note">Nota de Passagem</button>
+                        <button type="button" class="btn btn-sm btn-note-type" data-type="barre" title="Pintar ou apagar uma pestana completa na casa clicada"><i class="bi bi-grip-vertical"></i> Pestana</button>
+                    </div>
+
+                    <div class="vr mx-1 d-none d-lg-block"></div>
+
+                    <div class="ms-lg-auto d-flex flex-wrap row-gap-2 align-items-center gap-3">
+                        <div id="displayTypeToggle" class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary" data-type="notes">Notas</button>
+                            <button type="button" class="btn btn-outline-primary" data-type="intervals">Intervalos</button>
+                        </div>
+
+                        <div class="vr d-none d-lg-block"></div>
+
+                        <div id="accidentalsToggle" class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary" data-preference="sharps">Sustenidos (#)</button>
+                            <button type="button" class="btn btn-outline-primary" data-preference="flats">Bemóis (b)</button>
+                        </div>
+
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" role="switch" id="linkNotesSwitch" checked>
+                            <label class="form-check-label fw-semibold fs-7" for="linkNotesSwitch">Ligar Notas</label>
+                        </div>
+
+                        <div id="connectionColorPalette" class="d-flex align-items-center gap-1" style="display: none !important;" title="Cor das linhas de conexão">
+                            <button type="button" class="connection-color-btn rounded-circle border-0 p-0" data-color="#06b6d4" style="background:#06b6d4;width:22px;height:22px;outline:2px solid white;flex-shrink:0;"></button>
+                            <button type="button" class="connection-color-btn rounded-circle border-0 p-0" data-color="#8b5cf6" style="background:#8b5cf6;width:22px;height:22px;flex-shrink:0;"></button>
+                            <button type="button" class="connection-color-btn rounded-circle border-0 p-0" data-color="#ffc107" style="background:#ffc107;width:22px;height:22px;flex-shrink:0;"></button>
+                            <button type="button" class="connection-color-btn rounded-circle border-0 p-0" data-color="#10b981" style="background:#10b981;width:22px;height:22px;flex-shrink:0;"></button>
+                            <button type="button" class="connection-color-btn rounded-circle border-0 p-0" data-color="#ef4444" style="background:#ef4444;width:22px;height:22px;flex-shrink:0;"></button>
+                        </div>
+
+                        <div id="connectionModeGroup" class="d-flex align-items-center gap-2 flex-wrap" style="display: none !important;">
+                            <div id="connectionModeToggle" class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-warning active" data-mode="auto" title="Ligar notas automaticamente na ordem dos cliques">Auto</button>
+                                <button type="button" class="btn btn-outline-warning" data-mode="manual" title="Desenhar ligações arrastando de uma nota para outra">Manual</button>
+                            </div>
+                            <button type="button" id="btnClearConnections" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" title="Limpar todas as ligações manuais" style="display: none;">
+                                <i class="bi bi-eraser-fill"></i> Limpar Ligações
+                            </button>
+                        </div>
+
+                        <div class="vr d-none d-lg-block"></div>
+
+                        <button type="button" id="btnPlaySequence" class="btn btn-sm btn-success fw-bold d-flex align-items-center gap-1" title="Tocar sequência de notas de forma individual">
+                            <i class="bi bi-play-circle-fill"></i> Tocar
+                        </button>
+
+                        <button type="button" id="btnPlayChord" class="btn btn-sm btn-primary fw-bold d-flex align-items-center gap-1" title="Tocar todas as notas juntas como um acorde polifônico">
+                            <i class="bi bi-music-note-list"></i> Acorde
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Metrônomo Dedicado (Menor e mais elegante) -->
+                <div class="d-flex justify-content-end mb-4">
+                    <div class="d-flex align-items-center gap-2 bg-dark-subtle rounded-3 px-3 py-1.5 border border-secondary-subtle" style="max-width: fit-content;">
+                        <div id="practiceMetronomeLed" class="rounded-circle bg-secondary" style="width: 10px; height: 10px; transition: background-color 0.1s;" title="LED indicador de batida do metrônomo"></div>
+                        <button type="button" id="btnTogglePracticeMetronome" class="btn btn-sm btn-warning text-dark d-flex align-items-center gap-1 fw-bold py-1 px-2" title="Ligar/Desligar clique sonoro do metrônomo" style="font-size: 11px;">
+                            <i class="bi bi-play-fill"></i> Metrônomo
+                        </button>
+                        <button type="button" id="btnBpmMinusPractice" class="btn btn-sm btn-outline-secondary px-1.5 py-0 fw-bold border-0">-</button>
+                        <input type="number" id="inputBpmPractice" class="form-control form-control-sm text-center fw-bold bg-transparent text-light border-0 p-0" value="94" min="40" max="440" style="width: 44px; box-shadow: none; font-size: 14px;">
+                        <span class="text-muted fw-bold" style="font-size: 11px;">BPM</span>
+                        <button type="button" id="btnBpmPlusPractice" class="btn btn-sm btn-outline-secondary px-1.5 py-0 fw-bold border-0">+</button>
+                        <input type="range" id="sliderBpmPractice" class="form-range d-none d-md-block ms-1" min="40" max="440" value="94" style="width: 70px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 2: MONTAR ACORDES -->
+            <div class="tab-pane fade" id="chord-content" role="tabpanel" aria-labelledby="chord-tab">
+                <div class="practice-toolbar rounded-3 p-4 mb-4">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-12 col-md-5 col-lg-4">
+                            <label for="inputChordSearch" class="form-label fw-bold fs-7 text-primary mb-1"><i class="bi bi-search"></i> Montador Inteligente</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" id="inputChordSearch" class="form-control fw-bold bg-dark text-white border-secondary" placeholder="Digite ex: C, Am, G/B, F#m...">
+                                <button type="button" id="btnSearchChord" class="btn btn-primary fw-bold px-3">Montar</button>
+                            </div>
+                            <span class="fs-8 text-muted d-block mt-1">Busque um acorde para desenhar automaticamente as formas no braço.</span>
+                        </div>
+                        <div class="col-12 col-md-7 col-lg-8 d-flex flex-wrap align-items-center gap-2 mt-md-4" id="chordPositionsPanel" style="display: none !important;">
+                            <span class="fs-7 fw-bold text-light me-1"><i class="bi bi-geo-alt-fill text-warning"></i> Formas/Regiões Disponíveis:</span>
+                            <div id="chordPositionsList" class="d-flex flex-wrap gap-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 3: DESAFIO DO BRAÇO (QUIZ) -->
+            <div class="tab-pane fade" id="game-content" role="tabpanel" aria-labelledby="game-tab">
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-md-4">
+                        <div class="p-3 border rounded-3 bg-body-secondary h-100 shadow-inner">
+                            <h6 class="fw-bold mb-3 text-warning"><i class="bi bi-trophy-fill"></i> Modo de Treino Mental</h6>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold fs-8 text-muted text-uppercase">Escolha o Desafio</label>
+                                <select id="gameTypeSelect" class="form-select form-select-sm fw-bold">
+                                    <option value="find-note">Achar a Nota no Braço</option>
+                                    <option value="name-note">Adivinhar Nome da Nota Exibida</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold fs-8 text-muted text-uppercase">Dificuldade</label>
+                                <select id="gameDifficulty" class="form-select form-select-sm">
+                                    <option value="naturals">Apenas Notas Naturais (C, D, E, F, G, A, B)</option>
+                                    <option value="all">Notas Cromáticas Completas (com # / b)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold fs-8 text-muted text-uppercase">Casas Ativas (Região)</label>
+                                <select id="gameRange" class="form-select form-select-sm">
+                                    <option value="basic">Casas 0 a 5 (Iniciante)</option>
+                                    <option value="medium">Casas 0 a 12 (Intermediário)</option>
+                                    <option value="full">Braço Inteiro (0 a 22)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="d-grid mt-4">
+                                <button type="button" id="btnToggleGame" class="btn btn-warning fw-extrabold text-dark shadow-sm"><i class="bi bi-play-fill"></i> Iniciar Desafio</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 col-md-8">
+                        <div class="p-4 border rounded-3 bg-body-secondary d-flex flex-column justify-content-center align-items-center text-center h-100 position-relative" style="min-height: 220px; border-style: dashed !important;">
+                            <div id="gameStartPrompt" class="my-auto">
+                                <i class="bi bi-controller text-muted" style="font-size: 3rem;"></i>
+                                <h5 class="fw-bold mt-2">Pronto para Dominar as Notas?</h5>
+                                <p class="text-muted fs-7 mx-auto" style="max-width: 450px;">O treino auditivo e visual ajuda você a memorizar e reconhecer as notas no braço rapidamente. Configure o desafio à esquerda e comece!</p>
+                            </div>
+                            
+                            <!-- Painel de Jogo Ativo -->
+                            <div id="gameActivePanel" class="w-100 d-none my-auto">
+                                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                                    <span class="badge bg-warning text-dark fw-bold fs-8" id="gameModeBadge">Modo: Achar a Nota</span>
+                                    <div class="fs-7 fw-bold text-body">
+                                        Pontuação: <span id="gameScore" class="text-success fw-black">0</span> | Acertos: <span id="gameHits" class="text-success">0</span> | Erros: <span id="gameMisses" class="text-danger">0</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Pergunta do Modo Achar Nota -->
+                                <div id="gameFindNoteQuestion" class="my-4 d-none">
+                                    <span class="text-muted text-uppercase fs-8 fw-bold">Encontre e clique no braço de guitarra abaixo a nota:</span>
+                                    <h1 class="display-3 fw-black text-warning my-2" id="targetNoteDisplay" style="text-shadow: 0 0 15px rgba(255, 193, 7, 0.3);">C</h1>
+                                    <p class="text-muted fs-8 mb-0" id="targetNoteDetail">Dica: clique em qualquer casa que possua essa nota.</p>
+                                </div>
+                                
+                                <!-- Pergunta do Modo Identificar Nota -->
+                                <div id="gameIdentifyNoteQuestion" class="my-3 d-none">
+                                    <span class="text-muted text-uppercase fs-8 fw-bold">Qual é a nota do ponto brilhante dourado no braço abaixo?</span>
+                                    <h5 class="fw-bold text-info my-2" id="targetCellDetail">Corda 5, Casa 3</h5>
+                                    
+                                    <!-- Botões de múltipla escolha -->
+                                    <div class="row g-2 justify-content-center mt-3" id="gameOptionsContainer" style="max-width: 420px; margin: 0 auto;">
+                                        <!-- Botões de opção colocados dinamicamente via JS -->
+                                    </div>
+                                </div>
+                                
+                                <div id="gameFeedback" class="fs-6 fw-bold mt-3" style="min-height: 24px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 4: MEUS BRAÇOS SALVOS -->
+            <div class="tab-pane fade" id="saved-content" role="tabpanel" aria-labelledby="saved-tab">
+                <div class="mb-2 p-3 bg-body-secondary border rounded-3">
+                    <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+                        <h6 class="fw-bold mb-0 text-primary"><i class="bi bi-collection-fill"></i> Gerenciar Meus Estudos</h6>
+                        <div class="d-flex gap-2">
+                            <button id="btnUpdateMap" class="btn btn-sm btn-outline-primary fw-bold" disabled><i class="bi bi-pencil-square"></i> Atualizar selecionado</button>
+                            <button id="btnDeleteMap" class="btn btn-sm btn-outline-danger fw-bold" disabled><i class="bi bi-trash"></i> Excluir selecionado</button>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-lg-4">
+                            <label class="form-label fw-bold fs-8 text-muted">Título do Estudo</label>
+                            <input id="mapTitle" type="text" class="form-control form-control-sm fw-bold" maxlength="150" placeholder="Nome do estudo">
+                        </div>
+                        <div class="col-12 col-lg-8">
+                            <label class="form-label fw-bold fs-8 text-muted">Observação/Descrição</label>
+                            <input id="mapDescription" type="text" class="form-control form-control-sm" placeholder="Observações opcionais sobre a escala, digitação, etc.">
+                        </div>
+                    </div>
+                    <label class="form-label fw-bold fs-8 text-muted mb-2">Seus Estudos Salvos</label>
+                    <div id="savedMapsList" class="saved-map-list d-grid gap-2">
+                        <div class="text-muted fs-7 p-2">Nenhum braço salvo ainda.</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div>
-            <h5 class="fw-extrabold mb-3 text-center text-body-emphasis">Clique nas notas para acender ou apagar e montar seu estudo.</h5>
+        <!-- Área Central do Braço (Destaque principal) -->
+        <div class="mt-4">
+            <h5 class="fw-extrabold mb-3 text-center text-body-emphasis" id="fretboardMainTitle">Clique nas notas para acender ou apagar e montar seu estudo.</h5>
             <div class="overflow-hidden rounded-3 border border-secondary-subtle">
                 <div id="practiceFretboard"></div>
             </div>
         </div>
     </div>
 </fieldset>
-                </div>
-
-                <div id="savedMapsList" class="saved-map-list d-grid gap-2">
-                    <div class="text-muted fs-7">Nenhum braço salvo ainda.</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -255,7 +367,7 @@
     let blockNextClick = false;
 
     // Variáveis para o metrônomo dedicado da tela
-    let bpmValue = 100;
+    let bpmValue = 94;
     let isMetronomeRunning = false;
     let metronomeIntervalId = null;
     let metronomeBeatCount = 0;
@@ -301,6 +413,9 @@
 
         // Carrega o banco de dados de fôrmas de acordes de forma assíncrona em segundo plano
         loadChordsDatabase();
+
+        // Inicializa o módulo interativo de treino do braço (Quiz)
+        initGameModule();
     });
 
     function bindEvents() {
@@ -430,7 +545,7 @@
 
         if (inputBpm) {
             inputBpm.addEventListener("change", () => {
-                let val = parseInt(inputBpm.value) || 100;
+                let val = parseInt(inputBpm.value) || 94;
                 if (val < 40) val = 40;
                 if (val > 440) val = 440;
                 updateBpm(val);
@@ -439,7 +554,7 @@
 
         if (sliderBpm) {
             sliderBpm.addEventListener("input", () => {
-                updateBpm(parseInt(sliderBpm.value) || 100);
+                updateBpm(parseInt(sliderBpm.value) || 94);
             });
         }
 
@@ -562,6 +677,11 @@
     }
 
     function handleNoteClickInEditor(noteData) {
+        if (gameActive) {
+            checkNoteClickInGame(noteData);
+            return;
+        }
+
         if (blockNextClick) {
             blockNextClick = false;
             return;
@@ -881,7 +1001,7 @@
         updateConnectionModeUI();
 
         // Carrega o BPM salvo
-        updateBpm(item.bpm || 100);
+        updateBpm(item.bpm || 94);
 
         applySavedNotes(item.notes);
         renderSavedMapsList();
@@ -1572,6 +1692,49 @@
         const choice = new Array(n);
 
         function evaluate() {
+            // 1. Evitar sétima (menor ou maior) no baixo (acordes fundamentais normais)
+            let bassChoice = null;
+            for (let i = 0; i < n; i++) {
+                if (choice[i].fret !== -1) {
+                    bassChoice = choice[i];
+                    break;
+                }
+            }
+            if (bassChoice) {
+                const bassSemitones = (bassChoice.pc - rootPc + 12) % 12;
+                if (bassSemitones === 10 || bassSemitones === 11) {
+                    return; // Descarta se o baixo for sétima menor (10) ou maior (11)
+                }
+            }
+
+            // 2. Validação anatômica de dedos humanos (máximo 4 dedos livres)
+            const pressedFrets = choice.map(c => c.fret).filter(f => f > 0);
+            if (pressedFrets.length > 0) {
+                const minFret = Math.min(...pressedFrets);
+                const maxFret = Math.max(...pressedFrets);
+
+                // Alcance máximo saudável de 4 casas
+                if ((maxFret - minFret) > 4) {
+                    return;
+                }
+
+                // Conta notas na menor casa pressionada para ver se há pestana
+                const numAtMin = pressedFrets.filter(f => f === minFret).length;
+                const canBarre = numAtMin >= 2;
+
+                let fingersNeeded = 0;
+                if (canBarre) {
+                    const numAboveMin = pressedFrets.filter(f => f > minFret).length;
+                    fingersNeeded = 1 + numAboveMin;
+                } else {
+                    fingersNeeded = pressedFrets.length;
+                }
+
+                if (fingersNeeded > 4) {
+                    return; // Descarta se precisar de mais de 4 dedos
+                }
+            }
+
             const covered = new Map();
             let totalDistance = 0;
             let extraMutes = 0;
@@ -1791,5 +1954,355 @@
             targetCell?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
         }
     }
+
+    // =====================================================================
+    // MÓDULO DO JOGO INTERATIVO (QUIZ DE RECONHECIMENTO DO BRAÇO)
+    // =====================================================================
+    let gameActive = false;
+    let gameType = "find-note";
+    let gameDifficulty = "naturals";
+    let gameRange = "basic";
+    let gameScore = 0;
+    let gameHits = 0;
+    let gameMisses = 0;
+    let currentTargetNote = "";
+    let currentTargetCell = null;
+    let streakCount = 0;
+
+    const naturalNotes = ["C", "D", "E", "F", "G", "A", "B"];
+    const chromaticNotesSharps = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    const chromaticNotesFlats = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+
+    function initGameModule() {
+        // Registrar cliques nas abas para pausar o jogo caso o usuário navegue para fora
+        const tabElList = document.querySelectorAll('#practiceTabs button');
+        tabElList.forEach(tabEl => {
+            tabEl.addEventListener('show.bs.tab', (event) => {
+                if (gameActive && event.target.id !== 'game-tab') {
+                    stopGame();
+                }
+            });
+        });
+
+        document.getElementById("btnToggleGame").addEventListener("click", () => {
+            if (gameActive) {
+                stopGame();
+            } else {
+                startGame();
+            }
+        });
+
+        document.getElementById("gameTypeSelect").addEventListener("change", (e) => {
+            gameType = e.target.value;
+            if (gameActive) {
+                startGame(); // Reinicia com o novo tipo
+            }
+        });
+
+        document.getElementById("gameDifficulty").addEventListener("change", (e) => {
+            gameDifficulty = e.target.value;
+            if (gameActive) {
+                startGame();
+            }
+        });
+
+        document.getElementById("gameRange").addEventListener("change", (e) => {
+            gameRange = e.target.value;
+            if (gameActive) {
+                startGame();
+            }
+        });
+    }
+
+    function startGame() {
+        gameActive = true;
+        gameScore = 0;
+        gameHits = 0;
+        gameMisses = 0;
+        streakCount = 0;
+        
+        document.getElementById("gameScore").textContent = "0";
+        document.getElementById("gameHits").textContent = "0";
+        document.getElementById("gameMisses").textContent = "0";
+
+        document.getElementById("gameStartPrompt").classList.add("d-none");
+        document.getElementById("gameActivePanel").classList.remove("d-none");
+        document.getElementById("btnToggleGame").innerHTML = '<i class="bi bi-stop-fill"></i> Parar Desafio';
+        document.getElementById("btnToggleGame").classList.replace("btn-warning", "btn-danger");
+        document.getElementById("btnToggleGame").classList.remove("text-dark");
+
+        // Altera o título instrutivo acima do braço
+        document.getElementById("fretboardMainTitle").innerHTML = '<span class="text-warning fw-extrabold"><i class="bi bi-controller"></i> MODO DESAFIO ATIVO!</span> Siga as instruções do painel acima.';
+
+        nextGameTurn();
+    }
+
+    function stopGame() {
+        gameActive = false;
+        document.getElementById("gameStartPrompt").classList.remove("d-none");
+        document.getElementById("gameActivePanel").classList.add("d-none");
+        document.getElementById("btnToggleGame").innerHTML = '<i class="bi bi-play-fill"></i> Iniciar Desafio';
+        document.getElementById("btnToggleGame").classList.replace("btn-danger", "btn-warning");
+        document.getElementById("btnToggleGame").classList.add("text-dark");
+        document.getElementById("fretboardMainTitle").textContent = "Clique nas notas para acender ou apagar e montar seu estudo.";
+        
+        clearFretboardSilently();
+        fretboard.renderNotesContent();
+        fretboard.renderExecutionPath(collectVisibleNotes(), connections, connectionMode);
+    }
+
+    function nextGameTurn() {
+        clearFretboardSilently();
+        document.getElementById("gameFeedback").textContent = "";
+        document.getElementById("gameFeedback").className = "fs-6 fw-bold mt-3";
+
+        // Modo do jogo
+        document.getElementById("gameModeBadge").textContent = gameType === "find-note" ? "Modo: Achar a Nota" : "Modo: Adivinhar Nota";
+
+        if (gameType === "find-note") {
+            document.getElementById("gameFindNoteQuestion").classList.remove("d-none");
+            document.getElementById("gameIdentifyNoteQuestion").classList.add("d-none");
+
+            // Escolhe uma nota cromática ou natural baseada nas opções
+            const notesPool = gameDifficulty === "naturals" ? naturalNotes : (fretboard.options.preference === "flats" ? chromaticNotesFlats : chromaticNotesSharps);
+            currentTargetNote = notesPool[Math.floor(Math.random() * notesPool.length)];
+
+            document.getElementById("targetNoteDisplay").textContent = currentTargetNote;
+            
+            let rangeText = "no braço inteiro.";
+            if (gameRange === "basic") rangeText = "entre as casas 0 e 5 (região iniciante).";
+            else if (gameRange === "medium") rangeText = "entre as casas 0 e 12.";
+            document.getElementById("targetNoteDetail").textContent = `Dica: clique em qualquer casa (${rangeText}) que possua a nota ${currentTargetNote}.`;
+        } else {
+            document.getElementById("gameFindNoteQuestion").classList.add("d-none");
+            document.getElementById("gameIdentifyNoteQuestion").classList.remove("d-none");
+
+            // Seleciona uma célula aleatória do braço dentro do range
+            let maxFret = 22;
+            if (gameRange === "basic") maxFret = 5;
+            else if (gameRange === "medium") maxFret = 12;
+
+            const minFret = 1; // Evita casa 0 pois é corda solta (mais fácil achar nas casas)
+            const randomString = Math.floor(Math.random() * 6) + 1; // 1 a 6
+            const randomFret = Math.floor(Math.random() * (maxFret - minFret + 1)) + minFret; // min a max
+
+            const cellSelector = `.fretboard-cell[data-string="${randomString}"][data-fret="${randomFret}"]`;
+            const cell = fretboard.fretboardEl.querySelector(cellSelector);
+            
+            if (!cell) {
+                // Caso falhe por algum motivo, tenta novamente
+                nextGameTurn();
+                return;
+            }
+
+            const noteName = cell.getAttribute("data-note");
+            
+            // Valida dificuldade
+            if (gameDifficulty === "naturals" && !naturalNotes.includes(noteName)) {
+                nextGameTurn();
+                return;
+            }
+
+            currentTargetCell = {
+                string: randomString,
+                fret: randomFret,
+                note: noteName,
+                freq: cell.getAttribute("data-freq"),
+                cellEl: cell
+            };
+
+            // Acende apenas essa nota no braço (ponto dourado brilhante)
+            const badge = cell.querySelector(".fret-note");
+            if (badge) {
+                badge.setAttribute("data-note-type", "blue_note"); // Usa estilo blue_note para destacar
+                badge.style.backgroundColor = "#ffc107"; // Força cor dourada
+                badge.style.boxShadow = "0 0 15px #ffc107";
+                setBadgeVisible(badge, true);
+            }
+
+            document.getElementById("targetCellDetail").innerHTML = `<i class="bi bi-music-note-beamed text-warning"></i> Corda <strong class="text-white">${randomString}</strong>, Casa <strong class="text-white">${randomFret}</strong>`;
+
+            // Rolagem suave até a nota para facilitar
+            cell.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+
+            // Gera opções de múltipla escolha
+            generateMultipleChoiceOptions(noteName);
+        }
+    }
+
+    function generateMultipleChoiceOptions(correctNote) {
+        const container = document.getElementById("gameOptionsContainer");
+        container.innerHTML = "";
+
+        const notesPool = gameDifficulty === "naturals" ? naturalNotes : (fretboard.options.preference === "flats" ? chromaticNotesFlats : chromaticNotesSharps);
+        
+        // Seleciona 3 distratores
+        const distractors = notesPool.filter(n => !fretboard.isNotesEqual(n, correctNote));
+        const shuffledDistractors = distractors.sort(() => 0.5 - Math.random()).slice(0, 3);
+        
+        // Junta com a correta e embaralha
+        const options = [...shuffledDistractors, correctNote].sort(() => 0.5 - Math.random());
+
+        options.forEach(option => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "btn btn-outline-light btn-lg fw-bold col-5 m-1 py-3 game-option-btn";
+            btn.style.fontSize = "1.2rem";
+            btn.textContent = option;
+            btn.addEventListener("click", () => {
+                checkMultipleChoiceAnswer(option, btn);
+            });
+            container.appendChild(btn);
+        });
+    }
+
+    function checkNoteClickInGame(noteData) {
+        if (gameType !== "find-note") return;
+
+        const { noteBadge, string, fret, note } = noteData;
+        
+        // Verifica limites de range do jogo
+        let maxFret = 22;
+        if (gameRange === "basic") maxFret = 5;
+        else if (gameRange === "medium") maxFret = 12;
+
+        if (fret > maxFret) {
+            showToast(`Clique em uma casa de 0 a ${maxFret} conforme a região selecionada!`, "warning");
+            return;
+        }
+
+        const feedback = document.getElementById("gameFeedback");
+
+        if (fretboard.isNotesEqual(note, currentTargetNote)) {
+            // ACERTOU!
+            gameHits++;
+            streakCount++;
+            gameScore += 10 + Math.floor(streakCount / 3) * 5; // Bônus de streak!
+
+            document.getElementById("gameScore").textContent = gameScore;
+            document.getElementById("gameHits").textContent = gameHits;
+
+            // Feedback visual e sonoro imediato
+            feedback.textContent = `🎉 Excelente! Você acertou! Nota ${note} na Corda ${string}, Casa ${fret}. (+10 pts)`;
+            feedback.className = "fs-6 fw-bold mt-3 text-success";
+            
+            noteBadge.setAttribute("data-note-type", "scale_note");
+            noteBadge.style.backgroundColor = "#22c55e"; // Verde forte de sucesso
+            noteBadge.style.boxShadow = "0 0 15px #22c55e";
+            setBadgeVisible(noteBadge, true);
+
+            const cell = fretboard.fretboardEl.querySelector(`.fretboard-cell[data-string="${string}"][data-fret="${fret}"]`);
+            const freq = cell?.getAttribute("data-freq");
+            if (freq) {
+                audioEngine.playNote(parseFloat(freq));
+            }
+
+            // Bloqueia cliques adicionais rápidos para evitar bugs
+            blockNextClick = true;
+
+            setTimeout(() => {
+                nextGameTurn();
+                blockNextClick = false;
+            }, 1800);
+        } else {
+            // ERROU!
+            gameMisses++;
+            streakCount = 0;
+            gameScore = Math.max(0, gameScore - 3); // Perde 3 pontos por erro
+
+            document.getElementById("gameScore").textContent = gameScore;
+            document.getElementById("gameMisses").textContent = gameMisses;
+
+            feedback.textContent = `❌ Ops! Essa é a nota ${note}. Tente achar a nota ${currentTargetNote}! (-3 pts)`;
+            feedback.className = "fs-6 fw-bold mt-3 text-danger animate-bounce";
+
+            noteBadge.setAttribute("data-note-type", "root");
+            noteBadge.style.backgroundColor = "#ef4444"; // Vermelho de erro
+            noteBadge.style.boxShadow = "0 0 15px #ef4444";
+            setBadgeVisible(noteBadge, true);
+            
+            const cell = fretboard.fretboardEl.querySelector(`.fretboard-cell[data-string="${string}"][data-fret="${fret}"]`);
+            const freq = cell?.getAttribute("data-freq");
+            if (freq) {
+                audioEngine.playNote(parseFloat(freq));
+            }
+
+            setTimeout(() => {
+                setBadgeVisible(noteBadge, false);
+            }, 1000);
+        }
+    }
+
+    function checkMultipleChoiceAnswer(selectedNote, btnElement) {
+        if (!gameActive || gameType !== "name-note") return;
+
+        const feedback = document.getElementById("gameFeedback");
+        const correctNote = currentTargetCell.note;
+
+        // Desabilita os botões de opção para evitar cliques múltiplos
+        document.querySelectorAll(".game-option-btn").forEach(btn => {
+            btn.disabled = true;
+            if (fretboard.isNotesEqual(btn.textContent, correctNote)) {
+                btn.className = "btn btn-success btn-lg fw-bold col-5 m-1 py-3"; // Destaca a correta
+            } else if (fretboard.isNotesEqual(btn.textContent, selectedNote)) {
+                btn.className = "btn btn-danger btn-lg fw-bold col-5 m-1 py-3"; // Destaca a selecionada errada se for o caso
+            }
+        });
+
+        if (fretboard.isNotesEqual(selectedNote, correctNote)) {
+            // ACERTOU!
+            gameHits++;
+            streakCount++;
+            gameScore += 10 + Math.floor(streakCount / 3) * 5;
+
+            document.getElementById("gameScore").textContent = gameScore;
+            document.getElementById("gameHits").textContent = gameHits;
+
+            feedback.textContent = `🎉 Correto! A nota destacada é ${correctNote}! (+10 pts)`;
+            feedback.className = "fs-6 fw-bold mt-3 text-success";
+
+            // Brilha a nota em verde no braço
+            const badge = currentTargetCell.cellEl.querySelector(".fret-note");
+            if (badge) {
+                badge.style.backgroundColor = "#22c55e";
+                badge.style.boxShadow = "0 0 15px #22c55e";
+            }
+
+            if (currentTargetCell.freq) {
+                audioEngine.playNote(parseFloat(currentTargetCell.freq));
+            }
+
+            setTimeout(() => {
+                nextGameTurn();
+            }, 1800);
+        } else {
+            // ERROU!
+            gameMisses++;
+            streakCount = 0;
+            gameScore = Math.max(0, gameScore - 5); // Perde 5 pontos por erro na múltipla escolha
+
+            document.getElementById("gameScore").textContent = gameScore;
+            document.getElementById("gameMisses").textContent = gameMisses;
+
+            feedback.textContent = `❌ Incorreto! A nota era ${correctNote}. Continue estudando! (-5 pts)`;
+            feedback.className = "fs-6 fw-bold mt-3 text-danger";
+
+            // Brilha a nota em vermelho no braço
+            const badge = currentTargetCell.cellEl.querySelector(".fret-note");
+            if (badge) {
+                badge.style.backgroundColor = "#ef4444";
+                badge.style.boxShadow = "0 0 15px #ef4444";
+            }
+
+            if (currentTargetCell.freq) {
+                audioEngine.playNote(parseFloat(currentTargetCell.freq));
+            }
+
+            setTimeout(() => {
+                nextGameTurn();
+            }, 2200);
+        }
+    }
+
 </script>
 {% endblock %}

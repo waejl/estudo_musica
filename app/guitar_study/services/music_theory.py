@@ -610,36 +610,36 @@ class MusicTheoryService:
 
     @staticmethod
     def _is_playable(frets: List[int]) -> bool:
-        """Verifica se um voicing é humanamente tocável."""
+        """Verifica se um voicing é humanamente tocável com no máximo 4 dedos."""
         pressed = [f for f in frets if f is not None and f > 0]
         if not pressed:
             return True
 
         min_fret = min(pressed)
-        unique_frets = sorted(list(set(pressed)))
+        max_fret = max(pressed)
         
-        # Contagem de casas que precisam de um dedo
-        strings_at_min = len([f for f in pressed if f == min_fret])
-        can_barre = strings_at_min >= 2
-        
-        # Dedos necessários: 1 para o barre + 1 para cada outra casa única
-        other_unique_frets = [f for f in unique_frets if f != min_fret]
-        fingers_needed = (1 if can_barre else len(unique_frets))
-        if can_barre:
-            fingers_needed += len(other_unique_frets)
+        # O alcance (span) entre a menor e maior casa pressionada não pode ser maior que 4 casas
+        # (ex: da casa 1 à casa 5 é alcance de 4, que é o limite anatômico saudável para a mão humana)
+        if (max_fret - min_fret) > 4:
+            return False
 
-        # Se precisar de mais de 4 dedos, impossível
+        # Verifica se podemos fazer pestana (barre) na menor casa pressionada
+        # Ela só faz sentido se cobrir 2 ou mais notas na menor casa
+        num_at_min = len([f for f in pressed if f == min_fret])
+        can_barre = num_at_min >= 2
+
+        if can_barre:
+            # 1 dedo reservado para a pestana + 1 dedo individual para cada nota acima da menor casa
+            num_above_min = len([f for f in pressed if f > min_fret])
+            fingers_needed = 1 + num_above_min
+        else:
+            # Sem pestana, cada nota pressionada precisa de um dedo individual
+            fingers_needed = len(pressed)
+
+        # Um ser humano tem no máximo 4 dedos disponíveis para pressionar o braço da guitarra
         if fingers_needed > 4:
             return False
-            
-        # Calcula o "span" (alcance) da mão
-        span = max(pressed) - min_fret
-        
-        # Se não houver pestana (barre), 4 dedos e um alcance de 4 casas é impossível
-        if not can_barre and fingers_needed == 4 and span >= 4:
-            return False
-            
-        # Dedos esticados (ex: casa 1, 3, 5) são difíceis, mas possíveis
+
         return True
 
     @staticmethod
@@ -745,9 +745,18 @@ class MusicTheoryService:
                         continue
 
                     # 4. Adiciona o voicing válido à lista
-                    bass_note_idx = combo[-1]['note_idx'] # A última nota da combinação é a mais grave
+                    # A afinação é definida do grave para o agudo (ex: E A D G B E),
+                    # portanto, a corda de menor índice (combo[0]) é a nota do baixo (mais grave).
+                    bass_note_idx = combo[0]['note_idx']
+
+                    # Evita colocar a sétima (menor ou maior) como nota mais grave/baixo do acorde,
+                    # respeitando as regras musicais harmônicas estáveis (mantém tônica, terça ou quinta no baixo)
+                    bass_semitones = (bass_note_idx - root_idx) % 12
+                    if bass_semitones in (10, 11):
+                        continue
+
                     min_fret = min(pressed_frets) if pressed_frets else 0
-                    
+
                     all_voicings.append({
                         "frets": full_fret_pattern, # Array com 6 posições
                         "played_strings": num_played_strings,

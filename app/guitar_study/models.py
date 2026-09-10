@@ -466,3 +466,20 @@ class LessonProgress(db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+class SheetMusic(db.Model):
+    """Modelo para armazenar partituras criadas pelos usuários."""
+    __tablename__ = 'sheet_music'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete="CASCADE"), nullable=False, index=True)
+    title = db.Column(db.String(255), nullable=False)
+    data = db.Column(db.Text, nullable=False)  # Armazena a partitura em formato JSON
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    user = db.relationship('User', backref=db.backref('sheet_musics', lazy='dynamic', cascade="all, delete-orphan"))
+
+    def __repr__(self):
+        return f'<SheetMusic {self.id}: {self.title}>'

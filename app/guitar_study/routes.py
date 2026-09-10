@@ -231,6 +231,14 @@ def song_view(song_id):
     return render_template("guitar_study/song_view.html", song=song)
 
 
+@guitar_study.route("/songs/<int:song_id>/plus")
+@login_required
+def song_view_plus(song_id):
+    """Visualizador de Cifra Plus com abas e player de tablatura interativa."""
+    song = Song.query.filter_by(id=song_id, user_id=current_user.id).first_or_404()
+    return render_template("guitar_study/song_view_plus.html", song=song)
+
+
 @guitar_study.route("/harmony")
 @login_required
 def harmony():
@@ -316,6 +324,14 @@ def triads_arpeggios():
     settings = current_user.settings
     from app.guitar_study.services.music_theory import SHARPS_SCALE
     return render_template("guitar_study/triads_arpeggios.html", settings=settings, chromatic_notes=SHARPS_SCALE)
+
+
+@guitar_study.route("/partitura")
+@login_required
+def partitura():
+    """Renderiza a página do editor de partituras."""
+    settings = current_user.settings
+    return render_template("guitar_study/sheet_music.html", settings=settings, current_user=current_user)
 
 
 # --- Rotas de Aulas ---

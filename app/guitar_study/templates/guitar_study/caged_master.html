@@ -594,11 +594,8 @@
                 }
             }
 
-            // Toca arpejado rápido para simular o som da palhetada
-            for (let i = 0; i < frequencies.length; i++) {
-                audioEngine.playTone(frequencies[i], "sine", 0.6);
-                await new Promise(r => setTimeout(r, 60));
-            }
+            // Toca o acorde polifonicamente de forma realista usando o audioEngine
+            audioEngine.playChord(frequencies);
         }
 
         function stopCycleChallenge() {
@@ -697,20 +694,26 @@
             playChordNotes(root, shape);
         });
 
-        document.getElementById("btnPlayPentaScale").addEventListener("click", async () => {
-            const root = document.getElementById("pentaRoot").value;
-            const mode = document.getElementById("pentaMode").value;
-            const isMinor = (mode === "minor");
-            const scaleNotes = getPentatonicNotes(root, isMinor);
+        document.getElementById("btnPlayPentaScale").addEventListener("click", () => {
+            // Coleta todas as notas visíveis e acesas no braço correspondentes à escala
+            const activeScaleBadges = document.querySelectorAll("#cagedMasterFretboard .fretboard-cell .fret-note.visible");
+            const frequencies = [];
+            activeScaleBadges.forEach(badge => {
+                const cell = badge.closest(".fretboard-cell");
+                const freq = parseFloat(cell.getAttribute("data-frequency"));
+                if (freq) frequencies.push(freq);
+            });
 
-            // Busca as frequências dessas notas na 3ª ou 2ª oitava para tocar uma escala limpa
-            for (let i = 0; i < scaleNotes.length; i++) {
-                // Toque sequencial de notas usando frequências aproximadas
-                const baseNoteIdx = CHROMATIC.indexOf(scaleNotes[i]);
-                const baseFreq = 220 * Math.pow(2, baseNoteIdx / 12); // Tonalidade média agradável
-                audioEngine.playTone(baseFreq, "triangle", 0.4);
-                await new Promise(r => setTimeout(r, 400));
-            }
+            if (frequencies.length === 0) return;
+
+            // Ordena as frequências de forma crescente para soar como uma escala limpa ascendente
+            frequencies.sort((a, b) => a - b);
+            
+            // Remove duplicatas
+            const uniqueFreqs = Array.from(new Set(frequencies));
+
+            // Toca a escala de forma ascendente e encadeada de forma nativa e limpa
+            audioEngine.playScale(uniqueFreqs, 400);
         });
 
         // Listeners do Módulo 2 (Campo Harmônico)
@@ -756,12 +759,8 @@
                 }
             });
 
-            // Toca a tríade de forma arpejada rápida
-            frequencies.forEach((freq, idx) => {
-                setTimeout(() => {
-                    audioEngine.playTone(freq, "sine", 0.5);
-                }, idx * 80);
-            });
+            // Toca as frequências da tríade polifonicamente de forma realista
+            audioEngine.playChord(frequencies);
         });
 
         // Inicialização primária na abertura da página

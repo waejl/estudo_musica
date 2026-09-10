@@ -589,7 +589,7 @@
             for (const [str, fret] of Object.entries(fretsObj)) {
                 const cell = document.querySelector(`#cagedMasterFretboard .fretboard-cell[data-string="${str}"][data-fret="${fret}"]`);
                 if (cell) {
-                    const freq = parseFloat(cell.getAttribute("data-frequency"));
+                    const freq = parseFloat(cell.getAttribute("data-freq"));
                     if (freq) frequencies.push(freq);
                 }
             }
@@ -700,7 +700,7 @@
             const frequencies = [];
             activeScaleBadges.forEach(badge => {
                 const cell = badge.closest(".fretboard-cell");
-                const freq = parseFloat(cell.getAttribute("data-frequency"));
+                const freq = parseFloat(cell.getAttribute("data-freq"));
                 if (freq) frequencies.push(freq);
             });
 
@@ -753,7 +753,7 @@
                 if (fret !== undefined) {
                     const cell = document.querySelector(`#cagedMasterFretboard .fretboard-cell[data-string="${str}"][data-fret="${fret}"]`);
                     if (cell) {
-                        const freq = parseFloat(cell.getAttribute("data-frequency"));
+                        const freq = parseFloat(cell.getAttribute("data-freq"));
                         if (freq) frequencies.push(freq);
                     }
                 }

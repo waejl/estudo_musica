@@ -59,16 +59,9 @@ class AudioEngine {
     }
 
     async preloadSamples() {
-        if (this.isPreloading) return;
-        this.isPreloading = true;
-        for (let n = 1; n <= 6; n++) {
-            try {
-                const r = await fetch(this.sampleUrls[n]);
-                if (!r.ok) continue;
-                const ab = await r.arrayBuffer();
-                this.ctx.decodeAudioData(ab, buf => { this.samplesCache[n] = buf; });
-            } catch (_) {}
-        }
+        // Desativado por completo para evitar requisições 404 de arquivos MP3 inexistentes.
+        // O motor de áudio utiliza a síntese física matemática (Karplus-Strong) em tempo real via Web Audio API.
+        return;
     }
 
     // -----------------------------------------------------------------------
@@ -314,6 +307,44 @@ class AudioEngine {
     // -----------------------------------------------------------------------
     // playFreq — reproduz uma frequência com a cadeia correta por timbre
     // -----------------------------------------------------------------------
+    _playVirtualGuitar(freq, duration, now, gainNode) {
+        const ctx = this.ctx;
+        
+        // Oscilador 1: Senóide (fundamental, som quente)
+        const osc1 = ctx.createOscillator();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(freq, now);
+
+        // Oscilador 2: Triângulo (harmônico para brilho e simulação do corpo de madeira)
+        const osc2 = ctx.createOscillator();
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(freq * 2, now); // Uma oitava acima
+
+        // Filtro Passa-Baixa dinâmico (simula o ataque brilhante da palheta que escurece rapidamente no sustain)
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.Q.value = 1.0;
+        filter.frequency.setValueAtTime(freq * 4, now); // Inicialmente brilhante
+        filter.frequency.exponentialRampToValueAtTime(freq * 1.5, now + 0.35); // Filtra frequências altas rapidamente
+
+        const osc2Gain = ctx.createGain();
+        osc2Gain.gain.setValueAtTime(0.15, now);
+
+        osc1.connect(filter);
+        osc2.connect(osc2Gain);
+        osc2Gain.connect(filter);
+
+        filter.connect(gainNode);
+
+        osc1.start(now);
+        osc2.start(now);
+
+        osc1.stop(now + duration);
+        osc2.stop(now + duration);
+
+        return [osc1, osc2];
+    }
+
     playFreq(freq, duration = 1.8, delay = 0) {
         if (!freq || freq <= 0) return;
         this.initContext();
@@ -331,26 +362,14 @@ class AudioEngine {
         let stopNodes = [];
 
         if (timbre === 'les_paul_crunch' || timbre === 'les_paul_drive') {
-            // Fonte híbrida KS + sawtooth para elétrica com ganho
+            // Fonte híbrida para elétrica com ganho
             const hybrid = this._hybridSource(freq, timbre, now);
             stopNodes = hybrid.stopNodes;
             this._buildElectricChain(timbre, hybrid.outputNode, gainNode, now);
-
         } else {
-            // Fonte única: amostra MP3 ou KS puro
-            const sample = this._bestSample(freq);
-            let srcNode;
-            if (sample) {
-                srcNode = ctx.createBufferSource();
-                srcNode.buffer = sample.buffer;
-                srcNode.playbackRate.setValueAtTime(freq / sample.baseFreq, now);
-            } else {
-                srcNode = ctx.createBufferSource();
-                srcNode.buffer = this._ksBuffer(freq, timbre);
-            }
-            srcNode.start(now);
-            stopNodes = [srcNode];
-            this._buildAcousticChain(timbre, srcNode, gainNode, now);
+            // Usa o sintetizador de modelagem física de guitarra direta (0% arquivos MP3, 100% JS puro)
+            stopNodes = this._playVirtualGuitar(freq, duration, now, gainNode);
+            this._buildAcousticChain(timbre, stopNodes[0], gainNode, now);
         }
 
         gainNode.connect(ctx.destination);

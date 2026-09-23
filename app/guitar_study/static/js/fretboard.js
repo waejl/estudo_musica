@@ -26,6 +26,7 @@ export class Fretboard {
             tonic: options.tonic || "C", // Tônica padrão de referência
             highlightedNotes: options.highlightedNotes || [], // Array de strings de notas a destacar (ex: ["C", "E", "G"])
             onNoteClick: options.onNoteClick || null, // Callback ao clicar em uma nota
+            showAutoBarres: options.showAutoBarres !== false,
             ...options
         };
 
@@ -97,50 +98,8 @@ export class Fretboard {
             this.pathOverlay.appendChild(newDefs);
         }
 
-        // DESENHO AUTOMÁTICO DE PESTANAS (BARRE CHORDS)
-        // Agrupa as notas visíveis que estão na mesma casa (fret > 0)
-        const notesByFret = {};
-        notes.forEach(note => {
-            const f = parseInt(note.fret);
-            if (f > 0) {
-                if (!notesByFret[f]) notesByFret[f] = [];
-                notesByFret[f].push(note);
-            }
-        });
-
-        // Para cada casa com 3 ou mais notas visíveis, desenhamos uma barra vertical grossa de pestana
-        for (const [fret, fretNotes] of Object.entries(notesByFret)) {
-            if (fretNotes.length >= 3) {
-                // Ordena por corda para encontrar o intervalo (da corda menor à maior)
-                fretNotes.sort((a, b) => a.string - b.string);
-                const minStr = fretNotes[0].string;
-                const maxStr = fretNotes[fretNotes.length - 1].string;
-
-                const cellMin = this.fretboardEl.querySelector(`.fretboard-cell[data-string="${minStr}"][data-fret="${fret}"]`);
-                const cellMax = this.fretboardEl.querySelector(`.fretboard-cell[data-string="${maxStr}"][data-fret="${fret}"]`);
-
-                if (cellMin && cellMax) {
-                    const rectMin = cellMin.getBoundingClientRect();
-                    const rectMax = cellMax.getBoundingClientRect();
-                    const containerRect = this.container.getBoundingClientRect();
-
-                    const x = rectMin.left - containerRect.left + rectMin.width / 2;
-                    const y1 = rectMin.top - containerRect.top + rectMin.height / 2;
-                    const y2 = rectMax.top - containerRect.top + rectMax.height / 2;
-
-                    const barreLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                    barreLine.setAttribute('x1', x);
-                    barreLine.setAttribute('y1', y1);
-                    barreLine.setAttribute('x2', x);
-                    barreLine.setAttribute('y2', y2);
-                    barreLine.setAttribute('stroke', 'rgba(255, 193, 7, 0.45)'); // Amarelo translúcido didático
-                    barreLine.setAttribute('stroke-width', '18'); // Espessura de 18px cobrindo a casa como um dedo
-                    barreLine.setAttribute('stroke-linecap', 'round');
-                    barreLine.style.pointerEvents = 'none';
-
-                    this.pathOverlay.appendChild(barreLine);
-                }
-            }
+        if (this.options.showAutoBarres) {
+            this.renderizarPestanasAutomaticas(notes);
         }
 
         const linkNotesSwitch = document.getElementById('linkNotesSwitch');
@@ -171,6 +130,53 @@ export class Fretboard {
                     conn.color || '#ffc107'
                 );
             });
+        }
+    }
+
+    /**
+     * Desenha pestanas automáticas quando há três ou mais notas visíveis na mesma casa.
+     */
+    renderizarPestanasAutomaticas(notes) {
+        const notesByFret = {};
+        notes.forEach(note => {
+            const f = parseInt(note.fret);
+            if (f > 0) {
+                if (!notesByFret[f]) notesByFret[f] = [];
+                notesByFret[f].push(note);
+            }
+        });
+
+        for (const [fret, fretNotes] of Object.entries(notesByFret)) {
+            if (fretNotes.length < 3) continue;
+
+            fretNotes.sort((a, b) => a.string - b.string);
+            const minStr = fretNotes[0].string;
+            const maxStr = fretNotes[fretNotes.length - 1].string;
+
+            const cellMin = this.fretboardEl.querySelector(`.fretboard-cell[data-string="${minStr}"][data-fret="${fret}"]`);
+            const cellMax = this.fretboardEl.querySelector(`.fretboard-cell[data-string="${maxStr}"][data-fret="${fret}"]`);
+
+            if (cellMin && cellMax) {
+                const rectMin = cellMin.getBoundingClientRect();
+                const rectMax = cellMax.getBoundingClientRect();
+                const containerRect = this.container.getBoundingClientRect();
+
+                const x = rectMin.left - containerRect.left + rectMin.width / 2;
+                const y1 = rectMin.top - containerRect.top + rectMin.height / 2;
+                const y2 = rectMax.top - containerRect.top + rectMax.height / 2;
+
+                const barreLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                barreLine.setAttribute('x1', x);
+                barreLine.setAttribute('y1', y1);
+                barreLine.setAttribute('x2', x);
+                barreLine.setAttribute('y2', y2);
+                barreLine.setAttribute('stroke', 'rgba(255, 193, 7, 0.45)');
+                barreLine.setAttribute('stroke-width', '18');
+                barreLine.setAttribute('stroke-linecap', 'round');
+                barreLine.style.pointerEvents = 'none';
+
+                this.pathOverlay.appendChild(barreLine);
+            }
         }
     }
 
@@ -635,7 +641,7 @@ export class Fretboard {
             } else if (noteType === "muted") {
                 noteBadge.textContent = "X";
             } else if (this.options.displayType === "intervals" || this.options.displayType === "degrees") {
-                const intervalSymbol = this.calculateIntervalSymbol(this.options.tonic, noteName);
+                const intervalSymbol = this.calculateIntervalSymbol(this.options.tonic, noteName, cell);
                 noteBadge.textContent = intervalSymbol;
             } else {
                 // Se a célula for a tônica, force o texto a ser o da seleção original.
@@ -643,7 +649,7 @@ export class Fretboard {
                 if (isTonic && this.options.tonic) {
                     noteBadge.textContent = this.options.tonic;
                 } else {
-                    noteBadge.textContent = noteName;
+                    noteBadge.textContent = this.formatarNomeNotaPorReferencia(this.options.tonic, noteName, cell);
                 }
             }
         });
@@ -727,7 +733,7 @@ export class Fretboard {
     /**
      * Calcula o símbolo do intervalo em relação à tônica.
      */
-    calculateIntervalSymbol(root, target) {
+    calculateIntervalSymbol(root, target, cell = null) {
         const sharps = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
         const flats = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
 
@@ -739,12 +745,126 @@ export class Fretboard {
 
         if (rIdx === -1 || tIdx === -1) return "1";
 
-        const diff = (tIdx - rIdx + 12) % 12;
-        const symbols = {
-            0: "1", 1: "b2", 2: "2", 3: "b3", 4: "3", 5: "4", 6: "b5",
-            7: "5", 8: "b6", 9: "6", 10: "b7", 11: "7"
+        const referenceFrequency = this.obterFrequenciaReferenciaIntervalo(root, cell);
+        const targetFrequency = cell ? parseFloat(cell.getAttribute("data-freq")) : null;
+        if (!referenceFrequency || !targetFrequency) {
+            const diff = (tIdx - rIdx + 12) % 12;
+            return this.formatarIntervaloPorSemitons(diff);
+        }
+
+        let semitones = Math.round(12 * Math.log2(targetFrequency / referenceFrequency));
+        while (semitones < 0) semitones += 12;
+        return this.formatarIntervaloPorSemitons(semitones);
+    }
+
+    /**
+     * Encontra a frequência da tônica de referência para nomear intervalos por oitava real.
+     * Prioriza a tônica visível mais grave; se não houver, usa a tônica mais grave do braço.
+     */
+    obterFrequenciaReferenciaIntervalo(root, currentCell = null) {
+        if (!this.fretboardEl || !root) return null;
+
+        const tonicCells = [...this.fretboardEl.querySelectorAll(".fretboard-cell")]
+            .filter(cell => this.isNotesEqual(cell.getAttribute("data-note"), root))
+            .map(cell => {
+                const badge = cell.querySelector(".fret-note");
+                return {
+                    frequency: parseFloat(cell.getAttribute("data-freq")),
+                    visible: badge?.classList.contains("visible")
+                };
+            })
+            .filter(item => Number.isFinite(item.frequency));
+
+        const visibleTonic = tonicCells
+            .filter(item => item.visible)
+            .sort((a, b) => a.frequency - b.frequency)[0];
+        if (visibleTonic) return visibleTonic.frequency;
+
+        const currentFrequency = currentCell ? parseFloat(currentCell.getAttribute("data-freq")) : null;
+        const lowerTonic = tonicCells
+            .filter(item => Number.isFinite(currentFrequency) && item.frequency <= currentFrequency)
+            .sort((a, b) => b.frequency - a.frequency)[0];
+        if (lowerTonic) return lowerTonic.frequency;
+
+        return tonicCells.sort((a, b) => a.frequency - b.frequency)[0]?.frequency || null;
+    }
+
+    /**
+     * Formata semitons acima da tônica como intervalos estendidos de 1 a 13.
+     */
+    formatarIntervaloPorSemitons(semitones) {
+        const octave = Math.floor(semitones / 12);
+        const diff = semitones % 12;
+        const baseSymbols = {
+            0: octave === 0 ? "1" : String(octave * 7 + 1),
+            1: octave === 0 ? "b2" : `b${octave * 7 + 2}`,
+            2: octave === 0 ? "2" : String(octave * 7 + 2),
+            3: octave === 0 ? "b3" : `#${octave * 7 + 2}`,
+            4: octave === 0 ? "3" : String(octave * 7 + 3),
+            5: octave === 0 ? "4" : String(octave * 7 + 4),
+            6: octave === 0 ? "#4" : `#${octave * 7 + 4}`,
+            7: octave === 0 ? "5" : String(octave * 7 + 5),
+            8: octave === 0 ? "b6" : `b${octave * 7 + 6}`,
+            9: octave === 0 ? "6" : String(octave * 7 + 6),
+            10: octave === 0 ? "b7" : `b${octave * 7 + 7}`,
+            11: octave === 0 ? "7" : String(octave * 7 + 7)
         };
-        return symbols[diff] || "1";
+
+        return baseSymbols[diff] || "1";
+    }
+
+    /**
+     * Escreve o nome da nota considerando a função intervalar em relação à tônica.
+     */
+    formatarNomeNotaPorReferencia(root, target, cell = null) {
+        if (!root || !cell) return target;
+
+        const sharps = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        const flats = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+        const naturalLetters = ["C", "D", "E", "F", "G", "A", "B"];
+        const naturalSemitones = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+        const preferredIntervals = {
+            0: { degreeOffset: 0, alteration: 0 },
+            1: { degreeOffset: 1, alteration: -1 },
+            2: { degreeOffset: 1, alteration: 0 },
+            3: { degreeOffset: 2, alteration: -1 },
+            4: { degreeOffset: 2, alteration: 0 },
+            5: { degreeOffset: 3, alteration: 0 },
+            6: { degreeOffset: 4, alteration: -1 },
+            7: { degreeOffset: 4, alteration: 0 },
+            8: { degreeOffset: 5, alteration: -1 },
+            9: { degreeOffset: 5, alteration: 0 },
+            10: { degreeOffset: 6, alteration: -1 },
+            11: { degreeOffset: 6, alteration: 0 }
+        };
+
+        let indiceReferencia = sharps.indexOf(root);
+        if (indiceReferencia === -1) indiceReferencia = flats.indexOf(root);
+        if (indiceReferencia === -1) return target;
+
+        const frequenciaReferencia = this.obterFrequenciaReferenciaIntervalo(root, cell);
+        const frequenciaAlvo = parseFloat(cell.getAttribute("data-freq"));
+        if (!frequenciaReferencia || !Number.isFinite(frequenciaAlvo)) return target;
+
+        const semitons = Math.round(12 * Math.log2(frequenciaAlvo / frequenciaReferencia));
+        const intervaloClasse = ((semitons % 12) + 12) % 12;
+        const regra = preferredIntervals[intervaloClasse];
+        if (!regra) return target;
+
+        const letraReferencia = root.charAt(0).toUpperCase();
+        const indiceLetraReferencia = naturalLetters.indexOf(letraReferencia);
+        if (indiceLetraReferencia === -1) return target;
+
+        const letraAlvo = naturalLetters[(indiceLetraReferencia + regra.degreeOffset) % 7];
+        const semitomNaturalAlvo = naturalSemitones[letraAlvo];
+        const semitomEsperado = (indiceReferencia + intervaloClasse) % 12;
+        const diferenca = ((semitomEsperado - semitomNaturalAlvo + 18) % 12) - 6;
+
+        if (diferenca === -2) return `${letraAlvo}bb`;
+        if (diferenca === -1) return `${letraAlvo}b`;
+        if (diferenca === 1) return `${letraAlvo}#`;
+        if (diferenca === 2) return `${letraAlvo}##`;
+        return letraAlvo;
     }
 
     /**

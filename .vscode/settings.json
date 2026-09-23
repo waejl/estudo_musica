@@ -1,0 +1,22 @@
+{
+    "files.watcherExclude": {
+        "**/logs/**": true,
+        "**/__pycache__/**": true,
+        "**/.pytest_cache/**": true,
+        "**/private_media/**": true,
+        "**/base_mp3/**": true,
+        "**/bases/**": true
+    },
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/*.pyc": true
+    },
+    "search.exclude": {
+        "**/logs/**": true,
+        "**/__pycache__/**": true,
+        "**/bases/**": true,
+        "**/private_media/**": true,
+        "**/base_mp3/**": true
+    }
+}

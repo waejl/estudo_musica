@@ -65,6 +65,17 @@
         border: 2px dashed #94a3b8;
         box-shadow: none;
     }
+    .free-notes-panel {
+        border: 1px solid var(--bs-border-color-translucent);
+        background:
+            linear-gradient(135deg, rgba(13, 110, 253, 0.08), transparent 42%),
+            var(--bs-tertiary-bg);
+    }
+    .free-notes-chip {
+        border: 1px solid var(--bs-border-color-translucent);
+        background: var(--bs-body-bg);
+        color: var(--bs-body-color);
+    }
 
 </style>
 {% endblock %}
@@ -179,6 +190,11 @@
                             <label class="form-check-label fw-semibold fs-7" for="linkNotesSwitch">Ligar Notas</label>
                         </div>
 
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" role="switch" id="autoBarreSwitch" checked>
+                            <label class="form-check-label fw-semibold fs-7" for="autoBarreSwitch">Pestana Auto</label>
+                        </div>
+
                         <div id="connectionColorPalette" class="d-flex align-items-center gap-1" style="display: none !important;" title="Cor das linhas de conexão">
                             <button type="button" class="connection-color-btn rounded-circle border-0 p-0" data-color="#06b6d4" style="background:#06b6d4;width:22px;height:22px;outline:2px solid white;flex-shrink:0;"></button>
                             <button type="button" class="connection-color-btn rounded-circle border-0 p-0" data-color="#8b5cf6" style="background:#8b5cf6;width:22px;height:22px;flex-shrink:0;"></button>
@@ -221,6 +237,34 @@
                         <span class="text-muted fw-bold" style="font-size: 11px;">BPM</span>
                         <button type="button" id="btnBpmPlusPractice" class="btn btn-sm btn-outline-secondary px-1.5 py-0 fw-bold border-0">+</button>
                         <input type="range" id="sliderBpmPractice" class="form-range d-none d-md-block ms-1" min="40" max="440" value="94" style="width: 70px;">
+                    </div>
+                </div>
+
+                <div class="free-notes-panel rounded-3 p-3 mb-4">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <div>
+                            <h6 class="fw-extrabold mb-1 text-primary"><i class="bi bi-magic"></i> Braço Livre: Criar Notas</h6>
+                            <span class="text-muted fs-8">Digite notas soltas, tríades, tétrades ou tensões para o braço montar as posições certas.</span>
+                        </div>
+                        <div id="freeNotesPreview" class="d-flex flex-wrap gap-1"></div>
+                    </div>
+                    <div class="row g-3 align-items-end">
+                        <div class="col-12 col-lg-5">
+                            <label for="inputFreeNotes" class="form-label fw-bold fs-8 text-muted text-uppercase">Notas</label>
+                            <input type="text" id="inputFreeNotes" class="form-control form-control-sm fw-bold" placeholder="Ex: C E G Bb ou A C E G B">
+                        </div>
+                        <div class="col-6 col-lg-2">
+                            <label for="freeNotesStartFret" class="form-label fw-bold fs-8 text-muted text-uppercase">Casa inicial</label>
+                            <input type="number" id="freeNotesStartFret" class="form-control form-control-sm" min="0" max="{{ settings.fret_count if settings else 22 }}" value="0">
+                        </div>
+                        <div class="col-6 col-lg-2">
+                            <label for="freeNotesEndFret" class="form-label fw-bold fs-8 text-muted text-uppercase">Casa final</label>
+                            <input type="number" id="freeNotesEndFret" class="form-control form-control-sm" min="0" max="{{ settings.fret_count if settings else 22 }}" value="{{ settings.fret_count if settings else 22 }}">
+                        </div>
+                        <div class="col-12 col-lg-3 d-flex flex-wrap gap-2">
+                            <button type="button" id="btnMapFreeNotes" class="btn btn-sm btn-primary fw-bold flex-fill"><i class="bi bi-grid-3x3-gap"></i> Mapear Todas</button>
+                            <button type="button" id="btnBuildFreeVoicing" class="btn btn-sm btn-warning text-dark fw-bold flex-fill"><i class="bi bi-hand-index-thumb"></i> Montar Voicing</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -410,6 +454,7 @@
             displayType: "notes",
             handOrientation: settings.handOrientation,
             preference: accidentalsPreference,
+            showAutoBarres: true,
             onNoteClick: handleNoteClickInEditor
         });
 
@@ -499,6 +544,11 @@
             fretboard.renderExecutionPath(collectVisibleNotes(), connections, connectionMode);
         });
 
+        document.getElementById("autoBarreSwitch").addEventListener("change", (event) => {
+            fretboard.options.showAutoBarres = event.target.checked;
+            fretboard.renderExecutionPath(collectVisibleNotes(), connections, connectionMode);
+        });
+
         document.getElementById("connectionModeToggle").addEventListener("click", (event) => {
             const button = event.target.closest("button");
             if (!button) return;
@@ -572,6 +622,9 @@
 
         document.getElementById("btnLoadScale").addEventListener("click", loadScaleIntoFretboard);
         document.getElementById("btnClearFretboard").addEventListener("click", clearFretboard);
+        document.getElementById("btnMapFreeNotes").addEventListener("click", mapearNotasLivresNoBraco);
+        document.getElementById("btnBuildFreeVoicing").addEventListener("click", montarVoicingDeNotasLivres);
+        document.getElementById("inputFreeNotes").addEventListener("input", atualizarPreviaNotasLivres);
         document.getElementById("btnNewMap").addEventListener("click", resetEditor);
         document.getElementById("btnSaveMap").addEventListener("click", createSavedMap);
         document.getElementById("btnUpdateMap").addEventListener("click", updateSavedMap);
@@ -872,6 +925,272 @@
                 }
             }
         });
+        fretboard.renderExecutionPath(collectVisibleNotes(), connections, connectionMode);
+        fretboard.updateTabAndSheet();
+    }
+
+    const notasCromaticasSustenidosLivre = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    const notasCromaticasBemoisLivre = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+
+    /**
+     * Normaliza uma nota digitada pelo usuário para o padrão cromático usado no braço livre.
+     */
+    function normalizarNotaLivre(valorNota) {
+        const notaLimpa = String(valorNota || "").trim()
+            .replace("♯", "#")
+            .replace("♭", "b");
+        if (!notaLimpa) return "";
+
+        const letra = notaLimpa.charAt(0).toUpperCase();
+        const acidente = notaLimpa.slice(1);
+        const nota = `${letra}${acidente}`;
+        if (notasCromaticasSustenidosLivre.includes(nota) || notasCromaticasBemoisLivre.includes(nota)) {
+            return nota;
+        }
+        return "";
+    }
+
+    /**
+     * Retorna o índice cromático de uma nota, aceitando sustenidos e bemóis.
+     */
+    function obterIndiceNotaLivre(nota) {
+        let indice = notasCromaticasSustenidosLivre.indexOf(nota);
+        if (indice === -1) indice = notasCromaticasBemoisLivre.indexOf(nota);
+        return indice;
+    }
+
+    /**
+     * Lê, valida e remove duplicidades das notas livres digitadas no campo principal.
+     */
+    function lerNotasLivresDigitadas() {
+        const entrada = document.getElementById("inputFreeNotes").value;
+        const partes = entrada.split(/[\s,;|-]+/).filter(Boolean);
+        const notas = [];
+        const indices = new Set();
+
+        partes.forEach(parte => {
+            const nota = normalizarNotaLivre(parte);
+            const indice = obterIndiceNotaLivre(nota);
+            if (nota && indice !== -1 && !indices.has(indice)) {
+                indices.add(indice);
+                notas.push(nota);
+            }
+        });
+
+        return notas;
+    }
+
+    /**
+     * Obtém o intervalo de casas informado para criação automática de mapas livres.
+     */
+    function obterIntervaloCasasLivre() {
+        const limite = settings.fretCount;
+        let casaInicial = parseInt(document.getElementById("freeNotesStartFret").value, 10);
+        let casaFinal = parseInt(document.getElementById("freeNotesEndFret").value, 10);
+
+        if (Number.isNaN(casaInicial)) casaInicial = 0;
+        if (Number.isNaN(casaFinal)) casaFinal = limite;
+
+        casaInicial = Math.max(0, Math.min(limite, casaInicial));
+        casaFinal = Math.max(0, Math.min(limite, casaFinal));
+
+        if (casaInicial > casaFinal) {
+            const temporaria = casaInicial;
+            casaInicial = casaFinal;
+            casaFinal = temporaria;
+        }
+
+        document.getElementById("freeNotesStartFret").value = casaInicial;
+        document.getElementById("freeNotesEndFret").value = casaFinal;
+
+        return { casaInicial, casaFinal };
+    }
+
+    /**
+     * Atualiza a prévia visual das notas que serão usadas pelo braço livre.
+     */
+    function atualizarPreviaNotasLivres() {
+        const previa = document.getElementById("freeNotesPreview");
+        const notas = lerNotasLivresDigitadas();
+
+        previa.innerHTML = "";
+        notas.forEach((nota, indice) => {
+            const chip = document.createElement("span");
+            chip.className = `free-notes-chip rounded-pill px-2 py-1 fw-bold fs-8 ${indice === 0 ? "text-danger" : ""}`;
+            chip.textContent = indice === 0 ? `${nota} tônica` : nota;
+            previa.appendChild(chip);
+        });
+    }
+
+    /**
+     * Marca no braço todas as ocorrências corretas das notas informadas pelo usuário.
+     */
+    function mapearNotasLivresNoBraco() {
+        const notas = lerNotasLivresDigitadas();
+        if (!notas.length) {
+            showToast("Digite notas válidas. Exemplo: C E G Bb", "warning");
+            return;
+        }
+
+        const { casaInicial, casaFinal } = obterIntervaloCasasLivre();
+        const indicesNotas = notas.map(obterIndiceNotaLivre);
+        clearFretboardSilently();
+        connections = [];
+
+        document.getElementById("tonicSelect").value = notas[0];
+        fretboard.options.tonic = notas[0];
+
+        let sequencia = 1;
+        fretboard.fretboardEl.querySelectorAll(".fretboard-cell").forEach(cell => {
+            const casa = Number(cell.getAttribute("data-fret"));
+            const indiceNota = obterIndiceNotaLivre(cell.getAttribute("data-note"));
+            if (casa < casaInicial || casa > casaFinal || !indicesNotas.includes(indiceNota)) return;
+
+            const badge = cell.querySelector(".fret-note");
+            const notaEhTonica = indiceNota === indicesNotas[0];
+            badge.setAttribute("data-note-type", notaEhTonica ? "root" : "scale_note");
+            badge.setAttribute("data-sequence", sequencia++);
+            applyBadgeColor(badge, notaEhTonica ? "#ef4444" : currentNoteColor);
+            setBadgeVisible(badge, true);
+        });
+
+        fretboard.renderNotesContent();
+        fretboard.renderExecutionPath(collectVisibleNotes(), connections, connectionMode);
+        fretboard.updateTabAndSheet();
+        showToast(`${notas.join(" ")} mapeadas corretamente no braço.`, "success");
+    }
+
+    /**
+     * Monta automaticamente um voicing tocável a partir das notas livres informadas.
+     */
+    function montarVoicingDeNotasLivres() {
+        const notas = lerNotasLivresDigitadas();
+        if (notas.length < 2) {
+            showToast("Digite ao menos duas notas para montar um voicing.", "warning");
+            return;
+        }
+
+        const { casaInicial, casaFinal } = obterIntervaloCasasLivre();
+        const indicesNotas = notas.map(obterIndiceNotaLivre);
+        const voicing = encontrarVoicingLivre(indicesNotas, casaInicial, casaFinal);
+
+        if (!voicing) {
+            showToast("Não encontrei um desenho confortável nessa região. Amplie o intervalo de casas.", "warning");
+            return;
+        }
+
+        desenharVoicingLivre(voicing, indicesNotas, notas[0]);
+        showToast(`Voicing de ${notas.join(" ")} montado no braço.`, "success");
+    }
+
+    /**
+     * Busca uma combinação de uma nota por corda, priorizando cobertura das notas e digitação compacta.
+     */
+    function encontrarVoicingLivre(indicesNotas, casaInicial, casaFinal) {
+        const opcoesPorCorda = [];
+
+        for (let corda = 1; corda <= 6; corda++) {
+            const melhoresPorNota = new Map();
+            for (let casa = casaInicial; casa <= casaFinal; casa++) {
+                const cell = fretboard.fretboardEl.querySelector(`.fretboard-cell[data-string="${corda}"][data-fret="${casa}"]`);
+                if (!cell) continue;
+
+                const indiceNota = obterIndiceNotaLivre(cell.getAttribute("data-note"));
+                if (!indicesNotas.includes(indiceNota)) continue;
+
+                const distanciaCentro = Math.abs(casa - ((casaInicial + casaFinal) / 2));
+                const atual = melhoresPorNota.get(indiceNota);
+                if (!atual || distanciaCentro < atual.distanciaCentro) {
+                    melhoresPorNota.set(indiceNota, {
+                        corda,
+                        casa,
+                        indiceNota,
+                        frequencia: parseFloat(cell.getAttribute("data-freq")),
+                        distanciaCentro
+                    });
+                }
+            }
+
+            opcoesPorCorda.push([{ corda, casa: -1, indiceNota: null, frequencia: 0, distanciaCentro: 0 }, ...melhoresPorNota.values()]);
+        }
+
+        let melhor = null;
+        const escolha = [];
+
+        function avaliarVoicing() {
+            const notasAtivas = escolha.filter(item => item.casa !== -1);
+            if (notasAtivas.length < Math.min(indicesNotas.length, 3)) return;
+
+            const notasCobertas = new Set(notasAtivas.map(item => item.indiceNota));
+            if (!notasCobertas.has(indicesNotas[0])) return;
+
+            const casasPressionadas = notasAtivas.map(item => item.casa).filter(casa => casa > 0);
+            if (casasPressionadas.length) {
+                const menorCasa = Math.min(...casasPressionadas);
+                const maiorCasa = Math.max(...casasPressionadas);
+                if ((maiorCasa - menorCasa) > 4) return;
+            }
+
+            const cordasAbafadas = escolha.filter(item => item.casa === -1).length;
+            const distanciaTotal = notasAtivas.reduce((total, item) => total + item.distanciaCentro, 0);
+            const score = notasCobertas.size * 1000 + notasAtivas.length * 35 - cordasAbafadas * 18 - distanciaTotal;
+
+            if (!melhor || score > melhor.score) {
+                melhor = { score, notas: escolha.map(item => ({ ...item })) };
+            }
+        }
+
+        function percorrerOpcoes(indiceCorda) {
+            if (indiceCorda === opcoesPorCorda.length) {
+                avaliarVoicing();
+                return;
+            }
+
+            opcoesPorCorda[indiceCorda].forEach(opcao => {
+                escolha[indiceCorda] = opcao;
+                percorrerOpcoes(indiceCorda + 1);
+            });
+        }
+
+        percorrerOpcoes(0);
+        return melhor?.notas || null;
+    }
+
+    /**
+     * Desenha no braço o voicing calculado pelo motor de notas livres.
+     */
+    function desenharVoicingLivre(voicing, indicesNotas, tonica) {
+        clearFretboardSilently();
+        connections = [];
+
+        document.getElementById("tonicSelect").value = tonica;
+        fretboard.options.tonic = tonica;
+
+        voicing.forEach((item, indice) => {
+            const casaDesenho = item.casa === -1 ? 0 : item.casa;
+            const cell = fretboard.fretboardEl.querySelector(`.fretboard-cell[data-string="${item.corda}"][data-fret="${casaDesenho}"]`);
+            const badge = cell?.querySelector(".fret-note");
+            if (!badge) return;
+
+            setBadgeVisible(badge, true);
+            if (item.casa === -1) {
+                badge.setAttribute("data-note-type", "muted");
+                badge.textContent = "X";
+                return;
+            }
+
+            if (item.casa === 0) {
+                badge.setAttribute("data-note-type", "open");
+                badge.textContent = "O";
+            } else {
+                const notaEhTonica = item.indiceNota === indicesNotas[0];
+                badge.setAttribute("data-note-type", notaEhTonica ? "root" : "scale_note");
+                applyBadgeColor(badge, notaEhTonica ? "#ef4444" : currentNoteColor);
+                badge.setAttribute("data-sequence", indice + 1);
+            }
+        });
+
+        fretboard.renderNotesContent();
         fretboard.renderExecutionPath(collectVisibleNotes(), connections, connectionMode);
         fretboard.updateTabAndSheet();
     }
